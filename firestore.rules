@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // We check admin from users col
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // We check driver
+    function isDriver() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    }
+
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid
+          && data.email is string && data.email.size() <= 200
+          && (!('name' in data) || (data.name is string && data.name.size() <= 100))
+          && data.role in ['admin', 'driver', 'user']
+          && (!('phone' in data) || (data.phone is string && data.phone.size() <= 20))
+          && data.createdAt is timestamp;
+      }
+
+      allow get: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId 
+        && isValidUser(incoming())
+        && incoming().keys().hasAll(['userId', 'email', 'role', 'createdAt']) && incoming().keys().size() <= 6
+        && incoming().createdAt == request.time
+        && (incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'ebiz1986@gmail.com'));
+        
+      allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && (
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone']) && incoming().role == existing().role) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'role']))
+      );
+    }
+    
+    match /vehicles/{vehicleId} {
+      function isValidVehicle(data) {
+        return data.type in ['wagon r', 'cab', 'van', 'bus', 'car']
+          && data.registrationNumber is string && data.registrationNumber.size() <= 30
+          && data.status in ['available', 'on_trip', 'maintenance']
+          && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
+          && (!('lat' in data) || (data.lat is number))
+          && (!('lng' in data) || (data.lng is number))
+          && (!('lastUpdated' in data) || (data.lastUpdated is timestamp));
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(vehicleId) && isValidVehicle(incoming())
+        && incoming().keys().hasAll(['type', 'registrationNumber', 'status']) && incoming().keys().size() <= 7;
+        
+      allow update: if isSignedIn() && isValidId(vehicleId) && isValidVehicle(incoming()) && (
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['type', 'registrationNumber', 'status', 'driverId', 'lat', 'lng', 'lastUpdated'])) ||
+        (isDriver() && existing().driverId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'lat', 'lng', 'lastUpdated']) && incoming().lastUpdated == request.time)
+      );
+      
+      allow delete: if isAdmin();
+    }
+    
+    match /trips/{tripId} {
+      function isValidTrip(data) {
+        return data.userId is string && data.userId.size() <= 128
+          && data.status in ['pending', 'allocated', 'in_progress', 'completed', 'cancelled']
+          && data.pickupAddress is string && data.pickupAddress.size() <= 500
+          && data.dropoffAddress is string && data.dropoffAddress.size() <= 500
+          && data.pickupLat is number
+          && data.pickupLng is number
+          && data.dropoffLat is number
+          && data.dropoffLng is number
+          && data.pickupTime is number
+          && (!('vehicleId' in data) || (data.vehicleId is string && data.vehicleId.size() <= 128))
+          && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
+          && (!('dropoffTime' in data) || (data.dropoffTime is number))
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+      }
+
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid ||
+        ('driverId' in resource.data && resource.data.driverId == request.auth.uid)
+      );
+      
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid ||
+        ('driverId' in resource.data && resource.data.driverId == request.auth.uid)
+      );
+
+      allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
+        && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'dropoffAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt']) 
+        && incoming().keys().size() <= 14
+        && incoming().userId == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'vehicleId', 'updatedAt'])) ||
+        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime'])) ||
+        (existing().userId == request.auth.uid && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+      );
+    }
+    
+    match /timesheets/{timesheetId} {
+      function isValidTimesheet(data) {
+        return data.driverId is string && data.driverId.size() <= 128
+          && data.date is string && data.date.size() <= 15
+          && data.totalHours is number
+          && data.tripsCompleted is number
+          && data.createdAt is timestamp;
+      }
+      
+      allow get: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      
+      allow create: if isSignedIn() && isValidId(timesheetId) && isValidTimesheet(incoming())
+        && incoming().keys().hasAll(['driverId', 'date', 'totalHours', 'tripsCompleted', 'createdAt'])
+        && incoming().keys().size() <= 5
+        && incoming().driverId == request.auth.uid
+        && incoming().createdAt == request.time;
+        
+      allow update: if isSignedIn() && isValidId(timesheetId) && isValidTimesheet(incoming()) && (
+        (isDriver() && existing().driverId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['totalHours', 'tripsCompleted'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['totalHours', 'tripsCompleted']))
+      );
+    }
+  }
+}

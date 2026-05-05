@@ -1,0 +1,8 @@
+{
+  "name": "FleetTrack Booking",
+  "description": "A comprehensive vehicle booking, dispatch, and tracking system with specific roles for Users, Drivers, and Admins.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}

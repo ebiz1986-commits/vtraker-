@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application, representing admins, drivers, or standard users.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "driver", "user"] },
+        "phone": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["userId", "email", "role", "createdAt"]
+    },
+    "UserSecret": {
+      "title": "UserSecret",
+      "description": "Private PII data for a user.",
+      "type": "object",
+      "properties": {
+        "phone": {"type": "string"}
+      }
+    },
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "A vehicle available for booking.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["wagon r", "cab", "van", "bus", "car"] },
+        "registrationNumber": { "type": "string" },
+        "driverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "on_trip", "maintenance"] },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "lastUpdated": { "type": "integer" }
+      },
+      "required": ["type", "registrationNumber", "status"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A booking request and active trip.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "allocated", "in_progress", "completed", "cancelled"] },
+        "pickupAddress": { "type": "string" },
+        "dropoffAddress": { "type": "string" },
+        "pickupLat": { "type": "number" },
+        "pickupLng": { "type": "number" },
+        "dropoffLat": { "type": "number" },
+        "dropoffLng": { "type": "number" },
+        "pickupTime": { "type": "integer" },
+        "dropoffTime": { "type": "integer" },
+        "createdAt": { "type": "integer" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["userId", "status", "pickupAddress", "dropoffAddress", "pickupLat", "pickupLng", "dropoffLat", "dropoffLng", "pickupTime", "createdAt", "updatedAt"]
+    },
+    "Timesheet": {
+      "title": "Timesheet",
+      "description": "Daily timesheet for drivers.",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "date": { "type": "string" },
+        "totalHours": { "type": "number" },
+        "tripsCompleted": { "type": "integer" }
+      },
+      "required": ["driverId", "date", "totalHours", "tripsCompleted"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Public profiles and roles for all users."
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": { "$ref": "#/entities/Vehicle" },
+      "description": "Vehicles available in the system."
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Bookings and active trips."
+    },
+    "/timesheets/{timesheetId}": {
+      "schema": { "$ref": "#/entities/Timesheet" },
+      "description": "Driver timesheets."
+    }
+  }
+}
