@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} { allow read, write: if false; }
 
-    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function isSignedIn() { return request.auth != null && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'password'); }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
@@ -22,7 +22,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       function isValidUser(data) {
-        return data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid
+        return data.userId is string && data.userId.size() <= 128
           && data.email is string && data.email.size() <= 200
           && (!('name' in data) || (data.name is string && data.name.size() <= 100))
           && data.role in ['admin', 'driver', 'user']
@@ -30,14 +30,16 @@ service cloud.firestore {
           && data.createdAt is timestamp;
       }
 
-      allow get: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow get: if isSignedIn() && (isAdmin() || userId == request.auth.uid);
       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
       
-      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId 
-        && isValidUser(incoming())
+      allow create: if isSignedIn() && isValidId(userId) && isValidUser(incoming())
         && incoming().keys().hasAll(['userId', 'email', 'role', 'createdAt']) && incoming().keys().size() <= 6
         && incoming().createdAt == request.time
-        && (incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'ebiz1986@gmail.com'));
+        && (
+          (request.auth.uid == userId && (incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'ebiz1986@gmail.com'))) ||
+          isAdmin()
+        );
         
       allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && (
         (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone']) && incoming().role == existing().role) ||
@@ -79,9 +81,13 @@ service cloud.firestore {
           && data.dropoffLat is number
           && data.dropoffLng is number
           && data.pickupTime is number
+          && (!('requestedStartTime' in data) || (data.requestedStartTime is string && data.requestedStartTime.size() <= 50))
+          && (!('passengerCount' in data) || (data.passengerCount is number))
           && (!('vehicleId' in data) || (data.vehicleId is string && data.vehicleId.size() <= 128))
           && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
           && (!('dropoffTime' in data) || (data.dropoffTime is number))
+          && (!('startOdometer' in data) || (data.startOdometer is number))
+          && (!('endOdometer' in data) || (data.endOdometer is number))
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
@@ -99,8 +105,8 @@ service cloud.firestore {
       );
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
-        && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'dropoffAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt']) 
-        && incoming().keys().size() <= 14
+        && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'dropoffAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt', 'requestedStartTime', 'passengerCount']) 
+        && incoming().keys().size() <= 18
         && incoming().userId == request.auth.uid
         && incoming().status == 'pending'
         && incoming().createdAt == request.time
@@ -108,8 +114,9 @@ service cloud.firestore {
         
       allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
         (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'vehicleId', 'updatedAt'])) ||
-        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime'])) ||
-        (existing().userId == request.auth.uid && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled')
+        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime', 'startOdometer', 'endOdometer'])) ||
+        (existing().userId == request.auth.uid && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
+        (existing().userId == request.auth.uid && existing().status == 'in_progress' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime']) && incoming().status == 'completed')
       );
     }
     

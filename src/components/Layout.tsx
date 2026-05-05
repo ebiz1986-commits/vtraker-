@@ -12,15 +12,15 @@ export default function Layout({ children, title }: { children: React.ReactNode,
   };
   
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="bg-slate-950 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-sm text-zinc-500 capitalize">{profile?.role} Panel</p>
+          <h1 className="text-xl font-bold tracking-tight text-white">{title}</h1>
+          <p className="text-sm text-amber-500 capitalize font-medium">{profile?.role} Panel</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-slate-200">
           <span className="text-sm font-medium hidden sm:inline-block">{profile?.name || profile?.email}</span>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="border-slate-700 hover:bg-slate-800 hover:text-white text-slate-300">
             Sign Out
           </Button>
         </div>

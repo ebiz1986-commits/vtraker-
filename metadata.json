@@ -1,6 +1,6 @@
 {
-  "name": "FleetTrack Booking",
-  "description": "A comprehensive vehicle booking, dispatch, and tracking system with specific roles for Users, Drivers, and Admins.",
+  "name": "SANKENOVERSEAS VBooking",
+  "description": "Premium vehicle booking, dispatch, and tracking system.",
   "requestFramePermissions": [
     "geolocation"
   ],

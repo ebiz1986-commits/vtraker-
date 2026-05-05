@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 
 export default function UserDashboard() {
   const { profile } = useAuth();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  const initialLoadRef = useRef(true);
+
   // Form State
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
+  const [requestedStartTime, setRequestedStartTime] = useState('');
+  const [passengerCount, setPassengerCount] = useState(1);
   // Simulating coordinates for now
   
   useEffect(() => {
@@ -25,11 +30,34 @@ export default function UserDashboard() {
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!initialLoadRef.current) {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'modified') {
+            const trip = change.doc.data();
+            if (trip.status === 'allocated') {
+              toast.success('Driver Allocated!', {
+                description: `Your trip to ${trip.dropoffAddress} has been assigned a driver.`,
+                duration: 5000,
+              });
+            } else if (trip.status === 'in_progress') {
+              toast.info('Trip Started', {
+                description: 'Your driver has started the trip.',
+              });
+            } else if (trip.status === 'completed') {
+              toast.success('Trip Completed', {
+                description: 'You have reached your destination.',
+              });
+            }
+          }
+        });
+      }
+
       const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
       // Sort in memory since we don't have an index yet
       tripsData.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
       setTrips(tripsData);
       setLoading(false);
+      initialLoadRef.current = false;
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'trips');
     });
@@ -39,7 +67,7 @@ export default function UserDashboard() {
   
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pickupAddress || !dropoffAddress) return;
+    if (!pickupAddress || !dropoffAddress || !requestedStartTime || passengerCount < 1) return;
     
     try {
       await addDoc(collection(db, 'trips'), {
@@ -47,6 +75,8 @@ export default function UserDashboard() {
         status: 'pending',
         pickupAddress,
         dropoffAddress,
+        requestedStartTime,
+        passengerCount,
         pickupLat: 0, // Mock for now
         pickupLng: 0,
         dropoffLat: 0,
@@ -57,6 +87,8 @@ export default function UserDashboard() {
       });
       setPickupAddress('');
       setDropoffAddress('');
+      setRequestedStartTime('');
+      setPassengerCount(1);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'trips');
     }
@@ -105,6 +137,30 @@ export default function UserDashboard() {
                     placeholder="Enter destination"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-700">Start Time</label>
+                    <input 
+                      type="time" 
+                      required
+                      value={requestedStartTime}
+                      onChange={(e) => setRequestedStartTime(e.target.value)}
+                      className="w-full p-2 border border-zinc-300 rounded-md focus:ring-2 focus:ring-zinc-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-700">Passengers</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      max="100"
+                      required
+                      value={passengerCount}
+                      onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
+                      className="w-full p-2 border border-zinc-300 rounded-md focus:ring-2 focus:ring-zinc-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
                 <Button type="submit" className="w-full mt-2">Request Booking</Button>
               </form>
             </CardContent>
@@ -141,6 +197,12 @@ export default function UserDashboard() {
                         </div>
                         <div className="text-sm font-medium">From: <span className="font-normal text-zinc-600">{trip.pickupAddress}</span></div>
                         <div className="text-sm font-medium">To: <span className="font-normal text-zinc-600">{trip.dropoffAddress}</span></div>
+                        {trip.requestedStartTime && (
+                          <div className="text-sm font-medium mt-1">Requested Start: <span className="font-normal text-zinc-600">{trip.requestedStartTime}</span></div>
+                        )}
+                        {trip.passengerCount && (
+                          <div className="text-sm font-medium">Passengers: <span className="font-normal text-zinc-600">{trip.passengerCount}</span></div>
+                        )}
                         {trip.driverId && (
                           <div className="text-sm mt-1 text-zinc-500">Driver Assigned! Check map for details.</div>
                         )}
@@ -149,6 +211,21 @@ export default function UserDashboard() {
                       {trip.status === 'pending' && (
                         <Button variant="outline" size="sm" onClick={() => handleCancelTrip(trip.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shrink-0">
                           Cancel
+                        </Button>
+                      )}
+                      {trip.status === 'in_progress' && (
+                        <Button variant="outline" size="sm" onClick={async () => {
+                          try {
+                            await updateDoc(doc(db, 'trips', trip.id), {
+                              status: 'completed',
+                              dropoffTime: Date.now(),
+                              updatedAt: serverTimestamp()
+                            });
+                          } catch (error) {
+                            handleFirestoreError(error, OperationType.UPDATE, `trips/${trip.id}`);
+                          }
+                        }} className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 border-emerald-300 shrink-0">
+                          End Trip
                         </Button>
                       )}
                     </div>

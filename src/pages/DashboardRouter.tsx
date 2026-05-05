@@ -1,20 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AdminDashboard from './AdminDashboard';
 import DriverDashboard from './DriverDashboard';
 import UserDashboard from './UserDashboard';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 export default function DashboardRouter() {
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   
+  useEffect(() => {
+    if (!loading && user && !profile) {
+      // Auto-bootstrap profile if missing
+      const createProfile = async () => {
+        try {
+           const role = user.email === 'ebiz1986@gmail.com' ? 'admin' : 'user';
+           await setDoc(doc(db, 'users', user.uid), {
+             userId: user.uid,
+             email: user.email,
+             name: user.displayName || '',
+             role,
+             createdAt: serverTimestamp()
+           });
+        } catch (e) {
+           console.error("Failed to bootstrap user", e);
+           handleFirestoreError(e, OperationType.CREATE, `users/${user.uid}`);
+        }
+      };
+      createProfile();
+    }
+  }, [user, profile, loading]);
+
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading Role...</div>;
+    return <div className="flex h-screen items-center justify-center text-zinc-500 font-medium tracking-tight">Authenticating...</div>;
   }
   
   if (!profile) {
-    // Has user object but no profile doc yet, maybe it's still being created.
-    return <div className="flex h-screen items-center justify-center">Setting up your profile...</div>;
+    return <div className="flex h-screen items-center justify-center text-zinc-500 font-medium tracking-tight">Setting up your profile...</div>;
   }
 
   return (
@@ -28,3 +51,4 @@ export default function DashboardRouter() {
     </Routes>
   );
 }
+
