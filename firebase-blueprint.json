@@ -46,8 +46,11 @@
         "driverId": { "type": "string" },
         "vehicleId": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "allocated", "in_progress", "completed", "cancelled"] },
+        "tripType": { "type": "string", "enum": ["dropoff", "return"] },
         "pickupAddress": { "type": "string" },
         "dropoffAddress": { "type": "string" },
+        "returnLocations": { "type": "string" },
+        "remarks": { "type": "string" },
         "pickupLat": { "type": "number" },
         "pickupLng": { "type": "number" },
         "dropoffLat": { "type": "number" },
@@ -57,7 +60,7 @@
         "createdAt": { "type": "integer" },
         "updatedAt": { "type": "integer" }
       },
-      "required": ["userId", "status", "pickupAddress", "dropoffAddress", "pickupLat", "pickupLng", "dropoffLat", "dropoffLng", "pickupTime", "createdAt", "updatedAt"]
+      "required": ["userId", "status", "pickupAddress", "pickupLat", "pickupLng", "dropoffLat", "dropoffLng", "pickupTime", "createdAt", "updatedAt"]
     },
     "Timesheet": {
       "title": "Timesheet",

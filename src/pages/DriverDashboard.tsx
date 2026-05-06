@@ -34,15 +34,16 @@ export default function DriverDashboard() {
         snapshot.docChanges().forEach(change => {
           if (change.type === 'added' || change.type === 'modified') {
             const trip = change.doc.data();
+            const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
             if (trip.status === 'allocated' && change.type === 'added') {
               // Usually added when assigned for the first time
               toast.success('New Trip Assigned!', {
-                description: `${trip.pickupAddress} to ${trip.dropoffAddress}`,
+                description: `${trip.pickupAddress} to ${destination}`,
                 duration: 5000,
               });
             } else if (trip.status === 'cancelled') {
               toast.error('A trip was cancelled by the user.', {
-                 description: `${trip.pickupAddress} to ${trip.dropoffAddress}`
+                 description: `${trip.pickupAddress} to ${destination}`
               });
             }
           }
@@ -170,8 +171,13 @@ export default function DriverDashboard() {
                     <div key={trip.id} className="border border-zinc-200 rounded-lg p-5">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h4 className="font-semibold text-lg mb-1">
+                          <h4 className="font-semibold text-lg mb-1 flex items-center gap-2">
                             {trip.status === 'allocated' ? 'Upcoming Trip' : 'Active Trip'}
+                            {trip.tripType && (
+                              <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                                {trip.tripType}
+                              </span>
+                            )}
                           </h4>
                           <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider
                             ${trip.status === 'allocated' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
@@ -190,10 +196,17 @@ export default function DriverDashboard() {
                           <p className="font-medium text-zinc-900">{trip.pickupAddress}</p>
                         </div>
                         <div className="w-px h-4 bg-zinc-300 ml-2"></div>
-                        <div>
-                          <p className="text-xs font-semibold text-zinc-500 uppercase">Dropoff Location</p>
-                          <p className="font-medium text-zinc-900">{trip.dropoffAddress}</p>
-                        </div>
+                        {trip.tripType === 'return' ? (
+                          <div>
+                            <p className="text-xs font-semibold text-zinc-500 uppercase">Destinations</p>
+                            <p className="font-medium text-zinc-900">{trip.returnLocations}</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-xs font-semibold text-zinc-500 uppercase">Dropoff Location</p>
+                            <p className="font-medium text-zinc-900">{trip.dropoffAddress}</p>
+                          </div>
+                        )}
                         {trip.requestedStartTime && (
                           <>
                             <div className="w-px h-4 bg-zinc-300 ml-2 mt-2"></div>
@@ -209,6 +222,15 @@ export default function DriverDashboard() {
                             <div className="mt-2">
                               <p className="text-xs font-semibold text-zinc-500 uppercase">Passengers</p>
                               <p className="font-medium text-zinc-900">{trip.passengerCount}</p>
+                            </div>
+                          </>
+                        )}
+                        {trip.remarks && (
+                          <>
+                            <div className="w-px h-4 bg-zinc-300 ml-2 mt-2"></div>
+                            <div className="mt-2">
+                              <p className="text-xs font-semibold text-zinc-500 uppercase">Remarks / Notes</p>
+                              <p className="italic text-zinc-600">"{trip.remarks}"</p>
                             </div>
                           </>
                         )}

@@ -74,8 +74,11 @@ service cloud.firestore {
       function isValidTrip(data) {
         return data.userId is string && data.userId.size() <= 128
           && data.status in ['pending', 'allocated', 'in_progress', 'completed', 'cancelled']
+          && (!('tripType' in data) || data.tripType in ['dropoff', 'return'])
           && data.pickupAddress is string && data.pickupAddress.size() <= 500
-          && data.dropoffAddress is string && data.dropoffAddress.size() <= 500
+          && (!('dropoffAddress' in data) || data.dropoffAddress == null || (data.dropoffAddress is string && data.dropoffAddress.size() <= 500))
+          && (!('returnLocations' in data) || data.returnLocations == null || (data.returnLocations is string && data.returnLocations.size() <= 1500))
+          && (!('remarks' in data) || data.remarks == null || (data.remarks is string && data.remarks.size() <= 1000))
           && data.pickupLat is number
           && data.pickupLng is number
           && data.dropoffLat is number
@@ -105,8 +108,8 @@ service cloud.firestore {
       );
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
-        && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'dropoffAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt', 'requestedStartTime', 'passengerCount']) 
-        && incoming().keys().size() <= 18
+        && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt']) 
+        && incoming().keys().size() <= 22
         && incoming().userId == request.auth.uid
         && incoming().status == 'pending'
         && incoming().createdAt == request.time

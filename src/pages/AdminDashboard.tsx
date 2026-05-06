@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -39,9 +39,10 @@ export default function AdminDashboard() {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
             const trip = change.doc.data();
+            const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
             if (trip.status === 'pending') {
               toast('New Trip Request', {
-                description: `From ${trip.pickupAddress} to ${trip.dropoffAddress}`,
+                description: `From ${trip.pickupAddress} to ${destination}`,
                 action: {
                   label: 'View',
                   onClick: () => window.scrollTo(0, 0),
@@ -127,6 +128,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to permanently remove this user from the system?")) return;
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      toast.success("User removed from the system");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `users/${userId}`);
+    }
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUser.email || !newUser.pin || newUser.pin.length < 6) return;
@@ -167,9 +178,9 @@ export default function AdminDashboard() {
     }
 
     const headers = [
-      'Trip ID', 'Status', 'Date', 'User Name', 'User Email', 'Driver Name', 
-      'Vehicle ID', 'Pickup Address', 'Dropoff Address', 'Requested Start', 
-      'Passengers', 'Start ODO', 'End ODO', 'KM Traveled'
+      'Trip ID', 'Status', 'Date', 'Type', 'User Name', 'User Email', 'Driver Name', 
+      'Vehicle ID', 'Pickup Address', 'Dropoff Address', 'Return Locations', 'Requested Start', 
+      'Passengers', 'Remarks', 'Start ODO', 'End ODO', 'KM Traveled'
     ];
     
     let csvContent = headers.join(',') + '\n';
@@ -188,14 +199,17 @@ export default function AdminDashboard() {
         trip.id,
         trip.status,
         tripDate,
+        `"${trip.tripType || 'dropoff'}"`,
         `"${user.name || ''}"`,
         `"${user.email || ''}"`,
         `"${driver.name || ''}"`,
         `"${vehicle.registrationNumber || ''}"`,
         `"${(trip.pickupAddress || '').replace(/"/g, '""')}"`,
         `"${(trip.dropoffAddress || '').replace(/"/g, '""')}"`,
+        `"${(trip.returnLocations || '').replace(/"/g, '""')}"`,
         `"${trip.requestedStartTime || ''}"`,
         trip.passengerCount || 1,
+        `"${(trip.remarks || '').replace(/"/g, '""')}"`,
         startOdo,
         endOdo,
         kmTraveled
@@ -348,16 +362,22 @@ export default function AdminDashboard() {
                <ul className="text-sm divide-y divide-zinc-100 max-h-64 overflow-y-auto pr-2">
                   {allUsers.length === 0 && <li className="py-2 text-zinc-500">No users found.</li>}
                   {allUsers.filter(u => u.role !== 'admin').map(u => (
-                    <li key={u.id} className="py-2 flex justify-between items-center">
+                    <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                       <div>
-                        <span className="font-medium block">{u.name || u.email}</span>
-                        <span className="text-xs text-zinc-500 capitalize">{u.role}</span>
+                        <span className="font-medium block mb-1">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-mono text-zinc-600 bg-zinc-50 border border-zinc-200 px-1.5 py-0.5 rounded">{u.email}</span>
+                          <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded capitalize">{u.role}</span>
+                        </div>
                       </div>
-                      {u.role === 'user' ? (
-                        <Button size="sm" variant="outline" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</Button>
-                      ) : (
-                        <Button size="sm" variant="ghost" onClick={() => handleSetRole(u.userId, 'user')}>Remove</Button>
-                      )}
+                      <div className="flex flex-col gap-1 sm:flex-row">
+                        {u.role === 'user' ? (
+                          <Button size="sm" variant="outline" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</Button>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => handleSetRole(u.userId, 'user')}>Make User</Button>
+                        )}
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(u.userId)}>Remove</Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -383,16 +403,28 @@ export default function AdminDashboard() {
                     <div key={trip.id} className="border border-zinc-200 rounded-lg p-4">
                       <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
                         <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-semibold uppercase text-zinc-500">
+                              {trip.tripType || 'dropoff'}
+                            </span>
+                          </div>
                           <p className="text-sm font-medium">From: <span className="font-normal">{trip.pickupAddress}</span></p>
-                          <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
+                          {trip.tripType === 'return' ? (
+                            <p className="text-sm font-medium">Destinations: <span className="font-normal">{trip.returnLocations}</span></p>
+                          ) : (
+                            <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
+                          )}
                           {trip.requestedStartTime && (
-                            <p className="text-sm font-medium">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
+                            <p className="text-sm font-medium mt-1">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
                           )}
                           {trip.passengerCount && (
                             <p className="text-sm font-medium">Passengers: <span className="font-normal">{trip.passengerCount}</span></p>
                           )}
+                          {trip.remarks && (
+                            <p className="text-sm font-medium mt-1">Remarks: <span className="italic font-normal text-zinc-600">"{trip.remarks}"</span></p>
+                          )}
                         </div>
-                        <div className="shrink-0 shrink-0 text-right">
+                        <div className="shrink-0 text-right">
                           <p className="text-xs text-zinc-500">Time: {new Date(trip.pickupTime).toLocaleString()}</p>
                         </div>
                       </div>
@@ -453,11 +485,15 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {activeTrips.map(trip => {
                     const driver = drivers.find(d => d.userId === trip.driverId);
+                    const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
                     return (
                       <div key={trip.id} className="border border-zinc-200 rounded-lg p-4 flex justify-between items-center text-sm">
                         <div>
                           <p><span className="font-semibold text-zinc-900">{driver?.name || 'Unknown'}</span> is on trip</p>
-                          <p className="text-zinc-500 mt-1">{trip.pickupAddress} &rarr; {trip.dropoffAddress}</p>
+                          <p className="text-zinc-500 mt-1">{trip.pickupAddress} &rarr; {destination}</p>
+                          {trip.tripType && (
+                            <span className="text-xs text-zinc-400 uppercase tracking-widest block mt-1">{trip.tripType}</span>
+                          )}
                         </div>
                         <span className={`px-2 py-0.5 rounded-full font-medium ${trip.status === 'in_progress' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                           {trip.status.replace('_', ' ')}
