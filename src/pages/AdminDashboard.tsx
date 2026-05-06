@@ -100,6 +100,36 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleRejectTrip = async (tripId: string) => {
+    if (!window.confirm("Are you sure you want to reject this trip request?")) return;
+    try {
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'cancelled',
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Trip rejected");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
+  const handleAmendTrip = async (tripId: string, newTimeStr: string) => {
+    try {
+      const timeParts = newTimeStr.split(':');
+      const now = new Date();
+      now.setHours(parseInt(timeParts[0] || '0', 10), parseInt(timeParts[1] || '0', 10), 0, 0);
+      
+      await updateDoc(doc(db, 'trips', tripId), {
+        requestedStartTime: newTimeStr,
+        pickupTime: now.getTime(),
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Trip time amended");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVehicle.reg) return;
@@ -164,7 +194,11 @@ export default function AdminDashboard() {
       setIsCreatingUser(false);
     } catch (error: any) {
       setIsCreatingUser(false);
-      alert("Error creating user: " + error.message);
+      if (error.message.includes('auth/email-already-in-use')) {
+        alert("This email is already in the Authentication database. Since this is a client application, you must go to your Firebase Console -> Authentication to fully delete the user identity before recreating them here.");
+      } else {
+        alert("Error creating user: " + error.message);
+      }
     }
   };
 
@@ -359,24 +393,24 @@ export default function AdminDashboard() {
               <CardTitle>User Roles</CardTitle>
             </CardHeader>
             <CardContent>
-               <ul className="text-sm divide-y divide-zinc-100 max-h-64 overflow-y-auto pr-2">
-                  {allUsers.length === 0 && <li className="py-2 text-zinc-500">No users found.</li>}
+                <ul className="text-sm divide-y divide-zinc-100 max-h-64 overflow-y-auto pr-2">
+                  {allUsers.length === 0 && <li className="py-2 text-zinc-500 text-xs">No users found.</li>}
                   {allUsers.filter(u => u.role !== 'admin').map(u => (
-                    <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                      <div>
-                        <span className="font-medium block mb-1">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono text-zinc-600 bg-zinc-50 border border-zinc-200 px-1.5 py-0.5 rounded">{u.email}</span>
-                          <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded capitalize">{u.role}</span>
+                    <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-zinc-50 transition-all hover:bg-slate-50/50 -mx-2 px-2 rounded-md">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs text-slate-700">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded truncate max-w-[130px] sm:max-w-xs">{u.email}</span>
+                          <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-50 px-1.5 py-0.5 rounded capitalize">{u.role}</span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-1 sm:flex-row">
+                      <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0">
                         {u.role === 'user' ? (
-                          <Button size="sm" variant="outline" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</Button>
+                          <button className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</button>
                         ) : (
-                          <Button size="sm" variant="outline" onClick={() => handleSetRole(u.userId, 'user')}>Make User</Button>
+                          <button className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'user')}>Make User</button>
                         )}
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(u.userId)}>Remove</Button>
+                        <button className="text-[10px] bg-red-50 border border-red-200 text-red-600 px-2.5 py-1 rounded shadow-sm hover:bg-red-100 transition-colors font-medium cursor-pointer" onClick={() => handleDeleteUser(u.userId)}>Remove</button>
                       </div>
                     </li>
                   ))}
@@ -462,7 +496,14 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       ) : (
-                        <Button onClick={() => setAllocatingTrip(trip.id)} size="sm">Allocate Driver</Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button onClick={() => setAllocatingTrip(trip.id)} size="sm">Allocate Driver</Button>
+                          <Button onClick={() => {
+                            const nt = prompt("Amend Time (HH:MM) - 24 hour format", trip.requestedStartTime || "08:00");
+                            if (nt) handleAmendTrip(trip.id, nt);
+                          }} size="sm" variant="outline">Amend Time</Button>
+                          <Button onClick={() => handleRejectTrip(trip.id)} size="sm" variant="destructive">Reject</Button>
+                        </div>
                       )}
                     </div>
                   ))}

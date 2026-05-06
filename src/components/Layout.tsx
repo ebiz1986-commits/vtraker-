@@ -1,11 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/Button';
+import { Download } from 'lucide-react';
 
 export default function Layout({ children, title }: { children: React.ReactNode, title: string }) {
   const { profile } = useAuth();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
   
   const handleSignOut = () => {
     signOut(auth);
@@ -30,6 +57,11 @@ export default function Layout({ children, title }: { children: React.ReactNode,
           </div>
         </div>
         <div className="flex items-center gap-4 text-slate-600">
+          {isInstallable && (
+            <Button variant="outline" size="sm" onClick={handleInstallClick} className="border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 text-emerald-700 transition-colors gap-2 items-center flex">
+              <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Install App</span>
+            </Button>
+          )}
           <span className="text-sm font-medium hidden sm:inline-block bg-blue-50 px-3 py-1 rounded-full text-blue-800 border border-blue-100">{profile?.name || profile?.email}</span>
           <Button variant="outline" size="sm" onClick={handleSignOut} className="border-blue-200 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors">
             Sign Out

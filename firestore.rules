@@ -45,6 +45,8 @@ service cloud.firestore {
         (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone']) && incoming().role == existing().role) ||
         (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'role']))
       );
+      
+      allow delete: if isAdmin();
     }
     
     match /vehicles/{vehicleId} {
@@ -116,7 +118,7 @@ service cloud.firestore {
         && incoming().updatedAt == request.time;
         
       allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'vehicleId', 'updatedAt'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'vehicleId', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks'])) ||
         (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime', 'startOdometer', 'endOdometer'])) ||
         (existing().userId == request.auth.uid && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
         (existing().userId == request.auth.uid && existing().status == 'in_progress' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime']) && incoming().status == 'completed')
