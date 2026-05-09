@@ -33,11 +33,11 @@ export default function DashboardRouter() {
   }, [user, profile, loading]);
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center text-zinc-500 font-medium tracking-tight">Authenticating...</div>;
+    return <div className="flex h-screen items-center justify-center bg-[#0a0f1c] text-slate-400 font-medium tracking-tight">Authenticating...</div>;
   }
   
   if (!profile) {
-    return <div className="flex h-screen items-center justify-center text-zinc-500 font-medium tracking-tight">Setting up your profile...</div>;
+    return <div className="flex h-screen items-center justify-center bg-[#0a0f1c] text-slate-400 font-medium tracking-tight">Setting up your profile...</div>;
   }
 
   return (

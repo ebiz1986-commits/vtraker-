@@ -7,6 +7,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp }
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { sendPushNotification } from '../lib/utils';
 
 export default function DriverDashboard() {
   const { profile } = useAuth();
@@ -15,12 +16,15 @@ export default function DriverDashboard() {
   const [completedHours, setCompletedHours] = useState('0.0');
   const [totalKmLogged, setTotalKmLogged] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [odometerValues, setOdometerValues] = useState<{[key: string]: string}>({});
   
   const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!profile?.userId) return;
+    
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     
     // Get all trips for this driver
     const q = query(
@@ -35,15 +39,22 @@ export default function DriverDashboard() {
           if (change.type === 'added' || change.type === 'modified') {
             const trip = change.doc.data();
             const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+            const jointText = trip.isJointTrip ? ' (JOINT TRIP)' : '';
             if (trip.status === 'allocated' && change.type === 'added') {
               // Usually added when assigned for the first time
-              toast.success('New Trip Assigned!', {
+              toast.success(`New Trip Assigned!${jointText}`, {
                 description: `${trip.pickupAddress} to ${destination}`,
                 duration: 5000,
+              });
+              sendPushNotification(`New Trip Assigned!${jointText}`, {
+                body: `${trip.pickupAddress} to ${destination}`
               });
             } else if (trip.status === 'cancelled') {
               toast.error('A trip was cancelled by the user.', {
                  description: `${trip.pickupAddress} to ${destination}`
+              });
+              sendPushNotification('Trip Cancelled', {
+                body: `A trip from ${trip.pickupAddress} to ${destination} was cancelled.`
               });
             }
           }
@@ -52,7 +63,7 @@ export default function DriverDashboard() {
 
       const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
       
-      const active = tripsData.filter(t => t.status === 'allocated' || t.status === 'in_progress');
+      const active = tripsData.filter(t => t.status === 'allocated' || t.status === 'driver_started' || t.status === 'in_progress' || t.status === 'driver_ended');
       active.sort((a, b) => (a.pickupTime || 0) - (b.pickupTime || 0)); // earliest first
       setActiveTrips(active);
       
@@ -90,35 +101,21 @@ export default function DriverDashboard() {
   
   const handleUpdateStatus = async (tripId: string, currentStatus: string) => {
     try {
-      const odoStr = odometerValues[tripId];
-      if (!odoStr || isNaN(Number(odoStr))) {
-        alert("Please enter a valid numeric odometer reading (KM).");
-        return;
-      }
-      const odometer = Number(odoStr);
-
       const updates: any = {
         updatedAt: serverTimestamp()
       };
       
       if (currentStatus === 'allocated') {
-        updates.status = 'in_progress';
-        updates.startOdometer = odometer;
+        updates.status = 'driver_started';
+        toast.info("Status updated! Waiting for passenger to enter Start Odometer.", { duration: 5000 });
       } else if (currentStatus === 'in_progress') {
-        // Validation: end shouldn't be less than start if we can check it
-        // However, we wait until server check, but doing a quick client check is good if we fetch it
-        updates.status = 'completed';
-        updates.dropoffTime = Date.now();
-        updates.endOdometer = odometer;
+        updates.status = 'driver_ended';
+        updates.driverEndedTime = Date.now();
+        toast.info("Status updated! Waiting for passenger to enter End Odometer.", { duration: 5000 });
       }
       
       await updateDoc(doc(db, 'trips', tripId), updates);
       
-      setOdometerValues(prev => {
-        const next = {...prev};
-        delete next[tripId];
-        return next;
-      });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -128,26 +125,26 @@ export default function DriverDashboard() {
     <Layout title="Driver Console">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <Card className="bg-blue-50/70 backdrop-blur-md border border-blue-200/60 shadow-lg text-blue-900">
+          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
             <CardHeader>
-              <CardTitle className="text-blue-950 font-bold">Daily Summary</CardTitle>
+              <CardTitle className="text-slate-100 font-bold">Daily Summary</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wider">Date</p>
+                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Date</p>
                   <p className="text-xl font-medium">{format(new Date(), 'MMM dd, yyyy')}</p>
                 </div>
                 <div>
-                  <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wider">Trips Completed Today</p>
+                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Trips Completed Today</p>
                   <p className="text-4xl font-bold">{completedTripsCount}</p>
                 </div>
                 <div>
-                  <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wider">KM Traveled</p>
+                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">KM Traveled</p>
                   <p className="text-3xl font-semibold">{totalKmLogged} km</p>
                 </div>
                 <div>
-                  <p className="text-blue-600/80 text-sm font-semibold uppercase tracking-wider">Hours Logged</p>
+                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Hours Logged</p>
                   <p className="text-3xl font-semibold">{completedHours}h</p>
                 </div>
               </div>
@@ -156,99 +153,101 @@ export default function DriverDashboard() {
         </div>
         
         <div className="lg:col-span-2">
-          <Card className="h-full">
+          <Card className="h-full bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
             <CardHeader>
               <CardTitle>My Active Trips</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-zinc-500">Loading trips...</div>
+                <div className="text-slate-400">Loading trips...</div>
               ) : activeTrips.length === 0 ? (
-                <div className="text-zinc-500 text-center py-8">No assigned trips right now. You will be notified when Admin assigns you a trip.</div>
+                <div className="text-slate-400 text-center py-8">No assigned trips right now. You will be notified when Admin assigns you a trip.</div>
               ) : (
                 <div className="space-y-4">
-                  {activeTrips.map(trip => (
-                    <div key={trip.id} className="border border-zinc-200 rounded-lg p-5">
+                  {activeTrips.map((trip, index) => (
+                    <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-5 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h4 className="font-semibold text-lg mb-1 flex items-center gap-2">
                             {trip.status === 'allocated' ? 'Upcoming Trip' : 'Active Trip'}
+                            {trip.isJointTrip && (
+                              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
+                                JOINT
+                              </span>
+                            )}
                             {trip.tripType && (
-                              <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
                                 {trip.tripType}
                               </span>
                             )}
                           </h4>
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider
-                            ${trip.status === 'allocated' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border
+                            ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-purple-900/30 text-purple-400 border-purple-900/50'}`}>
                             {trip.status.replace('_', ' ')}
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-zinc-500">Pickup Time</p>
+                          <p className="text-sm font-medium text-slate-400">Pickup Time</p>
                           <p className="font-semibold">{format(new Date(trip.pickupTime), 'h:mm a')}</p>
                         </div>
                       </div>
                       
-                      <div className="space-y-3 mb-6 bg-zinc-50 p-4 rounded-md">
+                      <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md">
                         <div>
-                          <p className="text-xs font-semibold text-zinc-500 uppercase">Pickup Location</p>
-                          <p className="font-medium text-zinc-900">{trip.pickupAddress}</p>
+                          <p className="text-xs font-semibold text-slate-400 uppercase">Pickup Location</p>
+                          <p className="font-medium text-slate-100">{trip.pickupAddress}</p>
                         </div>
-                        <div className="w-px h-4 bg-zinc-300 ml-2"></div>
+                        <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
                         {trip.tripType === 'return' ? (
                           <div>
-                            <p className="text-xs font-semibold text-zinc-500 uppercase">Destinations</p>
-                            <p className="font-medium text-zinc-900">{trip.returnLocations}</p>
+                            <p className="text-xs font-semibold text-slate-400 uppercase">Destinations</p>
+                            <p className="font-medium text-slate-100">{trip.returnLocations}</p>
                           </div>
                         ) : (
                           <div>
-                            <p className="text-xs font-semibold text-zinc-500 uppercase">Dropoff Location</p>
-                            <p className="font-medium text-zinc-900">{trip.dropoffAddress}</p>
+                            <p className="text-xs font-semibold text-slate-400 uppercase">Dropoff Location</p>
+                            <p className="font-medium text-slate-100">{trip.dropoffAddress}</p>
                           </div>
                         )}
                         {trip.requestedStartTime && (
                           <>
-                            <div className="w-px h-4 bg-zinc-300 ml-2 mt-2"></div>
+                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
                             <div className="mt-2">
-                              <p className="text-xs font-semibold text-zinc-500 uppercase">Requested Start</p>
-                              <p className="font-medium text-zinc-900">{trip.requestedStartTime}</p>
+                              <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
+                              <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
+                            </div>
+                          </>
+                        )}
+                        {trip.estimatedDestinationTime && (
+                          <>
+                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
+                            <div className="mt-2">
+                              <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
+                              <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
                             </div>
                           </>
                         )}
                         {trip.passengerCount && (
                           <>
-                            <div className="w-px h-4 bg-zinc-300 ml-2 mt-2"></div>
+                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
                             <div className="mt-2">
-                              <p className="text-xs font-semibold text-zinc-500 uppercase">Passengers</p>
-                              <p className="font-medium text-zinc-900">{trip.passengerCount}</p>
+                              <p className="text-xs font-semibold text-slate-400 uppercase">Passengers</p>
+                              <p className="font-medium text-slate-100">{trip.passengerCount}</p>
                             </div>
                           </>
                         )}
                         {trip.remarks && (
                           <>
-                            <div className="w-px h-4 bg-zinc-300 ml-2 mt-2"></div>
+                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
                             <div className="mt-2">
-                              <p className="text-xs font-semibold text-zinc-500 uppercase">Remarks / Notes</p>
-                              <p className="italic text-zinc-600">"{trip.remarks}"</p>
+                              <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
+                              <p className="italic text-slate-300">"{trip.remarks}"</p>
                             </div>
                           </>
                         )}
                       </div>
                       
                       <div className="flex flex-col gap-3">
-                        <div className="w-full">
-                          <label className="text-xs font-semibold text-zinc-500 uppercase block mb-1">
-                            {trip.status === 'allocated' ? 'Start Odometer (KM)' : 'End Odometer (KM)'}
-                          </label>
-                          <input 
-                            type="number"
-                            className="w-full p-2 border border-zinc-300 rounded"
-                            placeholder="e.g. 15020"
-                            value={odometerValues[trip.id] || ''}
-                            onChange={(e) => setOdometerValues({...odometerValues, [trip.id]: e.target.value})}
-                          />
-                        </div>
                         <div className="flex gap-3">
                           {trip.status === 'allocated' && (
                             <Button 
@@ -258,13 +257,23 @@ export default function DriverDashboard() {
                               Start Trip
                             </Button>
                           )}
+                          {trip.status === 'driver_started' && (
+                            <div className="p-3 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded text-sm text-center font-medium">
+                              Waiting for passenger to enter Start Odometer...
+                            </div>
+                          )}
                           {trip.status === 'in_progress' && (
                             <Button 
                               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" 
                               onClick={() => handleUpdateStatus(trip.id, trip.status)}
                             >
-                              Complete Trip
+                              End Trip (Drop-off)
                             </Button>
+                          )}
+                          {trip.status === 'driver_ended' && (
+                            <div className="p-3 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded text-sm text-center font-medium">
+                              Waiting for passenger to enter End Odometer...
+                            </div>
                           )}
                         </div>
                       </div>

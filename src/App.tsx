@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LandingPage from './pages/LandingPage';
 import DashboardRouter from './pages/DashboardRouter';
+import { InstallPWA } from './components/InstallPWA';
 import './index.css';
 import { Toaster } from 'sonner';
 
@@ -25,6 +26,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Toaster position="top-right" />
+        <InstallPWA />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard/*" element={

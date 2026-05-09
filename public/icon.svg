@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <g transform="translate(42, 60)">
+    <g transform="rotate(45)">
+      <rect x="-24" y="-24" width="48" height="48" fill="#4B9CD3" />
+    </g>
+    <g transform="translate(18, 0) rotate(45)">
+      <rect x="-24" y="-24" width="48" height="48" fill="#75B6E4" opacity="0.85" />
+    </g>
+    <g transform="translate(36, 0) rotate(45)">
+      <rect x="-24" y="-24" width="48" height="48" fill="#99CDEE" opacity="0.8" />
+    </g>
+  </g>
+</svg>

@@ -38,37 +38,40 @@ export default function Layout({ children, title }: { children: React.ReactNode,
     signOut(auth);
   };
   
+  const isDarkTheme = true;
+  
   return (
-    <div className="min-h-screen bg-[#f0f4f8] flex flex-col font-sans">
-      <header className="bg-white border-b border-blue-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-        <div className="flex items-center gap-4">
-          {/* Logo Mimic */}
-          <div className="hidden sm:flex relative w-10 h-10 items-center justify-center mr-2">
-            <div className="absolute w-5 h-5 bg-[#4a90e2] rounded-[1px] rotate-45 -translate-x-2 opacity-90"></div>
-            <div className="absolute w-5 h-5 bg-[#6ca6ed] rounded-[1px] rotate-45 opacity-80 mix-blend-multiply"></div>
-            <div className="absolute w-5 h-5 bg-[#8ab4f8] rounded-[1px] rotate-45 translate-x-2 opacity-70 mix-blend-multiply"></div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">
-              <span className="font-serif italic mr-1 text-[#4a90e2]">Sanken</span>
-              {title}
-            </h1>
-            <p className="text-xs text-[#5c9ce6] uppercase tracking-wider font-bold mt-0.5">{profile?.role} Panel</p>
+    <div className={`min-h-screen flex flex-col font-sans ${isDarkTheme ? 'bg-[#0a0f1c] text-slate-100' : 'bg-[#f0f4f8] text-slate-800'}`}>
+      <header className={`${isDarkTheme ? 'bg-[#111827] border-[#1f2937]' : 'bg-white border-blue-100'} border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm`}>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <img 
+            src="/icon.svg" 
+            alt="Logo" 
+            className="hidden sm:block w-12 h-12 object-contain animate-in spin-in-12 duration-700" 
+          />
+          <div className="flex flex-col pt-1">
+            <div className="flex items-center gap-1.5 leading-none">
+              <span className={`text-xl sm:text-2xl font-serif font-black tracking-wider italic ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>Sanken</span>
+              <span className={`text-xl sm:text-2xl font-serif font-black tracking-wider italic ${isDarkTheme ? 'text-slate-100' : 'text-slate-800'}`}>Overseas</span>
+            </div>
+            <p className={`text-[10px] uppercase tracking-wider font-bold mt-1.5 max-w-[200px] sm:max-w-none truncate ${isDarkTheme ? 'text-[#ff9900]' : 'text-[#4B90D6]'}`}>{title} - {profile?.role}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-slate-600">
+        <div className={`flex items-center gap-4 ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}>
           {isInstallable && (
-            <Button variant="outline" size="sm" onClick={handleInstallClick} className="border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 text-emerald-700 transition-colors gap-2 items-center flex">
-              <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Install App</span>
+            <Button variant="outline" size="sm" onClick={handleInstallClick} className={`gap-2 items-center flex ${isDarkTheme ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40' : 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 text-emerald-700'}`}>
+              <Download className="w-3.5 h-3.5" /> <span>Install App</span>
             </Button>
           )}
-          <span className="text-sm font-medium hidden sm:inline-block bg-blue-50 px-3 py-1 rounded-full text-blue-800 border border-blue-100">{profile?.name || profile?.email}</span>
-          <Button variant="outline" size="sm" onClick={handleSignOut} className="border-blue-200 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors">
+          <span className={`text-sm font-medium hidden sm:inline-block px-3 py-1 rounded-full border ${isDarkTheme ? 'bg-[#1e293b] text-slate-200 border-[#334155]' : 'bg-blue-50 text-blue-800 border-blue-100'}`}>{profile?.name || profile?.email}</span>
+          <Button variant="outline" size="sm" onClick={handleSignOut} className={`transition-colors ${isDarkTheme ? 'border-[#334155] bg-[#1e293b] hover:bg-[#334155] text-slate-300 hover:text-white' : 'border-blue-200 hover:bg-blue-50 hover:text-blue-700 text-slate-600'}`}>
             Sign Out
           </Button>
         </div>
       </header>
-      <main className="flex-1 p-6 w-full max-w-7xl mx-auto">
+      <main 
+        className="flex-1 p-6 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
+      >
         {children}
       </main>
     </div>
