@@ -33,7 +33,7 @@ export default function LandingPage() {
       try {
         result = await signInWithEmailAndPassword(auth, generatedEmail, pin);
       } catch (authError: any) {
-        if (pin === '445566') {
+        if (pin === '445566' || pin === '111111' || pin === '222222') {
           try {
             result = await createUserWithEmailAndPassword(auth, generatedEmail, pin);
           } catch (createError) {
@@ -50,7 +50,7 @@ export default function LandingPage() {
       const userDoc = await getDoc(userDocRef);
       
       if (!userDoc.exists()) {
-        const role = pin === '445566' ? 'admin' : 'user';
+        const role = pin === '445566' ? 'admin' : pin === '222222' ? 'driver' : 'user';
         const userData: any = {
           userId: loggedUser.uid,
           email: loggedUser.email,
@@ -133,8 +133,10 @@ export default function LandingPage() {
             </form>
 
             <div className="text-center pt-4 animate-in fade-in duration-1000 delay-300">
-              <p className="text-xs text-slate-500">
-                Contact admin department to get your pin code.
+              <p className="text-xs text-slate-500 flex flex-col gap-1">
+                <span>Admin PIN: <strong className="text-slate-300">445566</strong></span>
+                <span>User PIN: <strong className="text-slate-300">111111</strong></span>
+                <span>Driver PIN: <strong className="text-slate-300">222222</strong></span>
               </p>
             </div>
           </CardContent>
