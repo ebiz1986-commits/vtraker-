@@ -15,10 +15,10 @@ export default function LandingPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && profile) {
+    if (!loading && user && profile && !isLoggingIn) {
       navigate('/dashboard');
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading, isLoggingIn, navigate]);
 
   const handlePinLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +49,9 @@ export default function LandingPage() {
       const userDocRef = doc(db, 'users', loggedUser.uid);
       const userDoc = await getDoc(userDocRef);
       
+      const role = pin === '445566' ? 'admin' : pin === '222222' ? 'driver' : 'user';
+
       if (!userDoc.exists()) {
-        const role = pin === '445566' ? 'admin' : pin === '222222' ? 'driver' : 'user';
         const userData: any = {
           userId: loggedUser.uid,
           email: loggedUser.email,
@@ -61,6 +62,15 @@ export default function LandingPage() {
           await setDoc(userDocRef, userData);
         } catch (error) {
           handleFirestoreError(error, OperationType.CREATE, 'users');
+        }
+      } else if (pin === '445566' || pin === '222222') {
+        const data = userDoc.data();
+        if (data && data.role !== role) {
+           try {
+             await setDoc(userDocRef, { role }, { merge: true });
+           } catch (e) {
+             console.error("Failed to update user role", e);
+           }
         }
       }
       
@@ -133,10 +143,8 @@ export default function LandingPage() {
             </form>
 
             <div className="text-center pt-4 animate-in fade-in duration-1000 delay-300">
-              <p className="text-xs text-slate-500 flex flex-col gap-1">
-                <span>Admin PIN: <strong className="text-slate-300">445566</strong></span>
-                <span>User PIN: <strong className="text-slate-300">111111</strong></span>
-                <span>Driver PIN: <strong className="text-slate-300">222222</strong></span>
+              <p className="text-xs text-slate-500">
+                Contact your Admin Department to get your PIN.
               </p>
             </div>
           </CardContent>

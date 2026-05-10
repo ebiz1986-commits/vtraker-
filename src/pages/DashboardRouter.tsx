@@ -15,7 +15,7 @@ export default function DashboardRouter() {
       // Auto-bootstrap profile if missing
       const createProfile = async () => {
         try {
-           const role = user.email === 'ebiz1986@gmail.com' ? 'admin' : 'user';
+        const role = user.email === 'ebiz1986@gmail.com' || user.email === '445566@sanken.app' ? 'admin' : user.email === '222222@sanken.app' ? 'driver' : 'user';
            await setDoc(doc(db, 'users', user.uid), {
              userId: user.uid,
              email: user.email,

@@ -125,6 +125,9 @@ export default function AdminDashboard() {
       const driver = drivers.find(d => d.id === selectedDriver);
       const vehicle = vehicles.find(v => v.id === selectedVehicle);
       
+      const coupledTripDocs = pendingTrips.filter(t => coupledTripIds.includes(t.id));
+      const jointPassengers = coupledTripDocs.map(t => ({ name: t.passengerName || 'Unknown', department: t.passengerDepartment || '' }));
+
       const promises = coupledTripIds.map(id => updateDoc(doc(db, 'trips', id), {
         status: 'allocated',
         driverId: selectedDriver,
@@ -133,6 +136,7 @@ export default function AdminDashboard() {
         vehicleId: selectedVehicle,
         vehicleName: vehicle ? `${vehicle.registrationNumber} (${vehicle.type})` : 'Unknown Vehicle',
         isJointTrip: true,
+        jointPassengers,
         allocatedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }));
@@ -741,7 +745,8 @@ export default function AdminDashboard() {
                               )}
                             </div>
                           </div>
-                          <span className={`px-2 py-0.5 rounded-full font-medium ${trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                          <span className={`px-2 py-0.5 rounded-full font-medium flex items-center gap-2 ${trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 animate-pulse' : 'bg-blue-900/30 text-blue-400 animate-pulse'}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
                             {trip.status.replace('_', ' ')}
                           </span>
                         </div>

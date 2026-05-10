@@ -181,8 +181,9 @@ export default function DriverDashboard() {
                               </span>
                             )}
                           </h4>
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border
-                            ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-purple-900/30 text-purple-400 border-purple-900/50'}`}>
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2
+                            ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' : 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse'}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
                             {trip.status.replace('_', ' ')}
                           </span>
                         </div>
@@ -207,6 +208,19 @@ export default function DriverDashboard() {
                           <div>
                             <p className="text-xs font-semibold text-slate-400 uppercase">Dropoff Location</p>
                             <p className="font-medium text-slate-100">{trip.dropoffAddress}</p>
+                          </div>
+                        )}
+                        {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 && (
+                          <div className="pt-3 mt-3 border-t border-slate-700/50">
+                            <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
+                            <div className="grid gap-1">
+                              {trip.jointPassengers.map((p: any, i: number) => (
+                                <div key={i} className="flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border border-slate-700">
+                                  <span className="text-sm font-medium text-slate-200">{p.name || 'Unknown User'}</span>
+                                  {p.department && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{p.department}</span>}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {trip.requestedStartTime && (

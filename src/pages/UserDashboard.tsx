@@ -17,7 +17,7 @@ export default function UserDashboard() {
 
   // Form State
   const [pickupAddress, setPickupAddress] = useState('');
-  const [tripType, setTripType] = useState<'dropoff' | 'return'>('return');
+  const [tripType, setTripType] = useState<'dropoff' | 'return'>('dropoff');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [returnLocations, setReturnLocations] = useState('');
   const [requestedStartTime, setRequestedStartTime] = useState('');
@@ -154,6 +154,8 @@ export default function UserDashboard() {
     try {
       await addDoc(collection(db, 'trips'), {
         userId: profile!.userId,
+        passengerName: profile?.name || 'Unknown',
+        passengerDepartment: profile?.department || '',
         status: 'pending',
         pickupAddress,
         tripType,
@@ -305,10 +307,10 @@ export default function UserDashboard() {
           </Card>
         </div>
         
-        <div className="lg:col-span-2">
-          <Card className="h-full bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
             <CardHeader>
-              <CardTitle>My Trip History</CardTitle>
+              <CardTitle>My Active Trips</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -318,28 +320,29 @@ export default function UserDashboard() {
               ) : (
                 <div className="space-y-4">
                   {trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length === 0 ? (
-                    <div className="text-slate-400 text-center py-8">No active trips found.</div>
+                    <div className="text-slate-400 text-center py-4">No active trips found.</div>
                   ) : (
                     trips.filter(t => !['completed', 'cancelled'].includes(t.status)).map((trip, index) => (
                       <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-4 flex flex-col sm:flex-row justify-between gap-4 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
                         <div>
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
 
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize border
-                            ${trip.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50' : 
-                              trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' :
-                              trip.status === 'driver_started' ? 'bg-blue-800/30 text-blue-300 border-blue-800/50' :
-                              trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' :
-                              trip.status === 'driver_ended' ? 'bg-amber-900/30 text-amber-400 border-amber-900/50' :
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize border flex items-center gap-2
+                            ${trip.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50 animate-pulse' : 
+                              trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' :
+                              trip.status === 'driver_started' ? 'bg-blue-800/30 text-blue-300 border-blue-800/50 animate-pulse' :
+                              trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse' :
+                              trip.status === 'driver_ended' ? 'bg-amber-900/30 text-amber-400 border-amber-900/50 animate-pulse' :
                               trip.status === 'completed' ? 'bg-green-900/30 text-green-400 border-green-900/50' :
                               'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                            {trip.status !== 'completed' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
                             {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
                           </span>
                           <span className="text-xs text-slate-500">
                             {trip.createdAt?.toDate ? new Date(trip.createdAt.toDate()).toLocaleString() : 'Just now'}
                           </span>
                           {trip.isJointTrip && (
-                            <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
+                            <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 animate-pulse">
                               JOINT
                             </span>
                           )}
@@ -367,6 +370,20 @@ export default function UserDashboard() {
                           )}
                           {trip.remarks && (
                             <div className="italic text-slate-500 mt-1">"{trip.remarks}"</div>
+                          )}
+                          
+                          {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 1 && (
+                            <div className="mt-3 pt-2 border-t border-slate-700/50 max-w-sm">
+                              <span className="text-xs text-[#ff9900] font-semibold mb-2 block tracking-wider uppercase">Traveling With</span>
+                              <div className="grid gap-1.5">
+                                {trip.jointPassengers.filter((p: any) => p.name !== profile?.name).map((p: any, i: number) => (
+                                  <div key={i} className="text-xs text-slate-300 flex justify-between items-center bg-slate-800/80 px-2 py-1.5 rounded border border-slate-700">
+                                    <span className="font-medium">{p.name || 'Unknown User'}</span>
+                                    {p.department && <span className="text-[#ff9900] bg-[#ff9900]/10 px-1.5 py-0.5 rounded uppercase tracking-widest text-[9px] font-semibold">{p.department}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                         {trip.driverId && (
@@ -425,6 +442,44 @@ export default function UserDashboard() {
                       </div>
                     </div>
                   )))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
+            <CardHeader>
+              <CardTitle>My Trip History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!loading && trips.filter(t => ['completed', 'cancelled'].includes(t.status)).length === 0 ? (
+                <div className="text-slate-400 text-center py-4">No completed trips.</div>
+              ) : (
+                <div className="space-y-4">
+                  {trips.filter(t => ['completed', 'cancelled'].includes(t.status)).map((trip, index) => (
+                    <div key={trip.id} className="border border-[#1f2937] bg-black/40 rounded-lg p-4 flex flex-col sm:flex-row justify-between gap-4 opacity-75">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize border
+                            ${trip.status === 'cancelled' ? 'bg-red-900/30 text-red-500 border-red-900/50' : 
+                              trip.status === 'completed' ? 'bg-green-900/30 text-green-500 border-green-900/50' : ''}`}>
+                            {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {trip.createdAt?.toDate ? new Date(trip.createdAt.toDate()).toLocaleDateString() : ''}
+                          </span>
+                        </div>
+                        <div className="text-sm flex flex-col space-y-1 text-slate-400">
+                          <div>From: {trip.pickupAddress}</div>
+                          <div>To: {trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress}</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 text-sm text-slate-400">
+                        {trip.startOdometer && <div>Start Odo: <span className="font-medium text-slate-300">{trip.startOdometer}</span> KM</div>}
+                        {trip.endOdometer && <div>End Odo: <span className="font-medium text-slate-300">{trip.endOdometer}</span> KM</div>}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

@@ -9,6 +9,7 @@ export interface UserProfile {
   userId: string;
   email: string;
   name?: string;
+  department?: string;
   role: UserRole;
   phone?: string;
   createdAt: any;

@@ -15,9 +15,63 @@ export default defineConfig(({mode}) => {
         devOptions: {
           enabled: true
         },
-        injectRegister: 'auto',
+        injectRegister: 'script-defer',
+        manifestFilename: 'manifest.json',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        },
+        manifest: {
+          name: 'SO VBooking',
+          short_name: 'SO VBooking',
+          description: 'A fleet management app for employees and drivers',
+          start_url: '/',
+          display: 'standalone',
+          display_override: ['window-controls-overlay', 'standalone'],
+          background_color: '#0a0f1c',
+          theme_color: '#0f172a',
+          lang: 'en',
+          scope: '/',
+          id: 'so_herath',
+          dir: 'auto',
+          orientation: 'any',
+          categories: ['travel'],
+          screenshots: [
+            {
+              src: '/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'SO VBooking Desktop'
+            },
+            {
+              src: '/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'SO VBooking Mobile'
+            }
+          ],
+          edge_side_panel: {
+            preferred_width: 480
+          },
+          icons: [
+            {
+              src: '/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: '/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            },
+            {
+              src: '/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ]
         }
       })
     ],
