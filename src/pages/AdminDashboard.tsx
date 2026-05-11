@@ -282,7 +282,7 @@ export default function AdminDashboard() {
     }
 
     const headers = [
-      'Trip ID', 'Status', 'Date', 'Type', 'User Name', 'User Email', 'Driver Name', 
+      'Trip ID', 'Status', 'Date', 'Requested Date', 'Type', 'User Name', 'User Email', 'Driver Name', 
       'Vehicle ID', 'Pickup Address', 'Dropoff Address', 'Return Locations', 'Requested Start', 
       'Passengers', 'Remarks', 'Start ODO', 'End ODO', 'KM Traveled'
     ];
@@ -303,6 +303,7 @@ export default function AdminDashboard() {
         trip.id,
         trip.status,
         tripDate,
+        `"${trip.requestedDate || ''}"`,
         `"${trip.tripType || 'dropoff'}"`,
         `"${user.name || ''}"`,
         `"${user.email || ''}"`,
@@ -663,6 +664,9 @@ export default function AdminDashboard() {
                             ) : (
                               <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
                             )}
+                            {trip.requestedDate && (
+                              <p className="text-sm font-medium mt-1">Requested Date: <span className="font-normal">{trip.requestedDate}</span></p>
+                            )}
                             {trip.requestedStartTime && (
                               <p className="text-sm font-medium mt-1">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
                             )}
@@ -736,6 +740,9 @@ export default function AdminDashboard() {
                           <div>
                             <p><span className="font-semibold text-slate-100">{driver?.name || 'Unknown'}</span> is on trip</p>
                             <p className="text-slate-400 mt-1">{trip.pickupAddress} &rarr; {destination}</p>
+                            {trip.requestedDate && (
+                              <p className="text-xs text-slate-500 mt-1">Date: <span className="font-medium text-slate-300">{trip.requestedDate}</span></p>
+                            )}
                             <div className="flex gap-2 items-center mt-1">
                               {trip.isJointTrip && (
                                 <span className="text-xs text-[#ff9900] bg-[#ff9900]/20 uppercase tracking-widest px-1.5 py-0.5 rounded">JOINT</span>

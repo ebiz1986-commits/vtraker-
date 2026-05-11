@@ -20,6 +20,7 @@ export default function UserDashboard() {
   const [tripType, setTripType] = useState<'dropoff' | 'return'>('dropoff');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [returnLocations, setReturnLocations] = useState('');
+  const [requestedDate, setRequestedDate] = useState('');
   const [requestedStartTime, setRequestedStartTime] = useState('');
   const [estimatedDestinationTime, setEstimatedDestinationTime] = useState('');
   const [passengerCount, setPassengerCount] = useState(1);
@@ -147,7 +148,7 @@ export default function UserDashboard() {
   
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pickupAddress || !requestedStartTime || passengerCount < 1) return;
+    if (!pickupAddress || !requestedDate || !requestedStartTime || passengerCount < 1) return;
     if (tripType === 'dropoff' && !dropoffAddress) return;
     if (tripType === 'return' && !returnLocations) return;
     
@@ -161,6 +162,7 @@ export default function UserDashboard() {
         tripType,
         dropoffAddress: tripType === 'dropoff' ? dropoffAddress : null,
         returnLocations: tripType === 'return' ? returnLocations : null,
+        requestedDate,
         requestedStartTime,
         estimatedDestinationTime: estimatedDestinationTime ? estimatedDestinationTime : null,
         passengerCount,
@@ -177,6 +179,7 @@ export default function UserDashboard() {
       setTripType('dropoff');
       setDropoffAddress('');
       setReturnLocations('');
+      setRequestedDate('');
       setRequestedStartTime('');
       setEstimatedDestinationTime('');
       setPassengerCount(1);
@@ -256,6 +259,18 @@ export default function UserDashboard() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-slate-300">Date</label>
+                    <input 
+                      type="date" 
+                      required
+                      min={new Date().toISOString().split('T')[0]}
+                      max={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                      value={requestedDate}
+                      onChange={(e) => setRequestedDate(e.target.value)}
+                      className="w-full p-2 border border-[#1e293b] rounded-md focus:ring-2 focus:ring-[#ff9900] focus:outline-none bg-[#0a0f1c] text-slate-100 [color-scheme:dark]"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-slate-300">Start Time</label>
                     <input 
@@ -358,6 +373,9 @@ export default function UserDashboard() {
                             <div><span className="font-medium text-slate-300">Destinations:</span> <span className="text-slate-400">{trip.returnLocations}</span></div>
                           ) : (
                             <div><span className="font-medium text-slate-300">To:</span> <span className="text-slate-400">{trip.dropoffAddress}</span></div>
+                          )}
+                          {trip.requestedDate && (
+                            <div><span className="font-medium text-slate-300">Date:</span> <span className="text-slate-400">{trip.requestedDate}</span></div>
                           )}
                           {trip.requestedStartTime && (
                             <div><span className="font-medium text-slate-300">Time:</span> <span className="text-slate-400">{trip.requestedStartTime}</span></div>

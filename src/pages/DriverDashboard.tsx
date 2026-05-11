@@ -223,6 +223,15 @@ export default function DriverDashboard() {
                             </div>
                           </div>
                         )}
+                        {trip.requestedDate && (
+                          <>
+                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
+                            <div className="mt-2">
+                              <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
+                              <p className="font-medium text-slate-100">{trip.requestedDate}</p>
+                            </div>
+                          </>
+                        )}
                         {trip.requestedStartTime && (
                           <>
                             <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
