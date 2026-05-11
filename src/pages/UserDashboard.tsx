@@ -334,132 +334,170 @@ export default function UserDashboard() {
                 <div className="text-slate-400 text-center py-8">No trips found. Book a vehicle to get started!</div>
               ) : (
                 <div className="space-y-4">
-                  {trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length === 0 ? (
-                    <div className="text-slate-400 text-center py-4">No active trips found.</div>
-                  ) : (
-                    trips.filter(t => !['completed', 'cancelled'].includes(t.status)).map((trip, index) => (
-                      <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-4 flex flex-col sm:flex-row justify-between gap-4 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize border flex items-center gap-2
-                            ${trip.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50 animate-pulse' : 
-                              trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' :
-                              trip.status === 'driver_started' ? 'bg-blue-800/30 text-blue-300 border-blue-800/50 animate-pulse' :
-                              trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse' :
-                              trip.status === 'driver_ended' ? 'bg-amber-900/30 text-amber-400 border-amber-900/50 animate-pulse' :
-                              trip.status === 'completed' ? 'bg-green-900/30 text-green-400 border-green-900/50' :
-                              'bg-slate-800 text-slate-300 border-slate-700'}`}>
-                            {trip.status !== 'completed' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
-                            {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {trip.createdAt?.toDate ? new Date(trip.createdAt.toDate()).toLocaleString() : 'Just now'}
-                          </span>
-                          {trip.isJointTrip && (
-                            <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 animate-pulse">
-                              JOINT
-                            </span>
-                          )}
-                          {trip.tripType && (
-                            <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                              {trip.tripType}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm flex flex-col space-y-1">
-                          <div><span className="font-medium text-slate-300">From:</span> <span className="text-slate-400">{trip.pickupAddress}</span></div>
-                          {trip.tripType === 'return' ? (
-                            <div><span className="font-medium text-slate-300">Destinations:</span> <span className="text-slate-400">{trip.returnLocations}</span></div>
-                          ) : (
-                            <div><span className="font-medium text-slate-300">To:</span> <span className="text-slate-400">{trip.dropoffAddress}</span></div>
-                          )}
-                          {trip.requestedDate && (
-                            <div><span className="font-medium text-slate-300">Date:</span> <span className="text-slate-400">{trip.requestedDate}</span></div>
-                          )}
-                          {trip.requestedStartTime && (
-                            <div><span className="font-medium text-slate-300">Time:</span> <span className="text-slate-400">{trip.requestedStartTime}</span></div>
-                          )}
-                          {trip.estimatedDestinationTime && (
-                            <div><span className="font-medium text-slate-300">Total Est. Time:</span> <span className="text-slate-400">{trip.estimatedDestinationTime}</span></div>
-                          )}
-                          {trip.passengerCount && (
-                            <div><span className="font-medium text-slate-300">Passengers:</span> <span className="text-slate-400">{trip.passengerCount}</span></div>
-                          )}
-                          {trip.remarks && (
-                            <div className="italic text-slate-500 mt-1">"{trip.remarks}"</div>
-                          )}
-                          
-                          {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 1 && (
-                            <div className="mt-3 pt-2 border-t border-slate-700/50 max-w-sm">
-                              <span className="text-xs text-[#ff9900] font-semibold mb-2 block tracking-wider uppercase">Traveling With</span>
-                              <div className="grid gap-1.5">
-                                {trip.jointPassengers.filter((p: any) => p.name !== profile?.name).map((p: any, i: number) => (
-                                  <div key={i} className="text-xs text-slate-300 flex justify-between items-center bg-slate-800/80 px-2 py-1.5 rounded border border-slate-700">
-                                    <span className="font-medium">{p.name || 'Unknown User'}</span>
-                                    {p.department && <span className="text-[#ff9900] bg-[#ff9900]/10 px-1.5 py-0.5 rounded uppercase tracking-widest text-[9px] font-semibold">{p.department}</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {trip.driverId && (
-                          <div className="mt-4 p-3 bg-emerald-900/10 border border-emerald-900/30 rounded-lg text-sm text-emerald-400 mt-4">
-                            <div className="font-semibold text-emerald-300 mb-1 flex items-center gap-2">
-                              <span>✓ Driver Assigned</span>
-                            </div>
-                            <div className="flex flex-col space-y-1 text-emerald-400/80">
-                              {trip.driverName && <div><span className="font-medium text-emerald-300">Driver:</span> {trip.driverName}</div>}
-                              {trip.vehicleName && <div><span className="font-medium text-emerald-300">Vehicle:</span> {trip.vehicleName}</div>}
-                              {trip.driverPhone && <div><span className="font-medium text-emerald-300">Phone:</span> {trip.driverPhone}</div>}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                  {(() => {
+                    const activeTrips = trips.filter(t => !['completed', 'cancelled'].includes(t.status));
+                    if (activeTrips.length === 0) return <div className="text-slate-400 text-center py-4">No active trips found.</div>;
+                    
+                    const groups: { [key: string]: typeof activeTrips } = {};
+                    activeTrips.forEach(trip => {
+                      const date = trip.requestedDate || 'Unspecified Date';
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(trip);
+                    });
+                    
+                    const sortedDates = Object.keys(groups).sort((a, b) => {
+                      if (a === 'Unspecified Date') return 1;
+                      if (b === 'Unspecified Date') return -1;
+                      return a.localeCompare(b);
+                    });
+                    
+                    return sortedDates.map(date => {
+                      const isToday = date === new Date().toISOString().split('T')[0];
+                      const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                      const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
                       
-                      <div className="flex flex-col gap-2 shrink-0">
-                        {trip.status === 'pending' && (
-                          <Button variant="outline" size="sm" onClick={() => handleCancelTrip(trip.id)} className="text-red-400 hover:text-red-300 hover:bg-red-950/30 border-red-900/50">
-                            Cancel
-                          </Button>
-                        )}
-                        {trip.status === 'driver_started' && (
-                          <div className="flex flex-col gap-2 p-3 bg-blue-900/20 border border-blue-900/50 rounded text-sm min-w-[200px]">
-                            <p className="font-semibold text-blue-300">Driver Arrived</p>
-                            <label className="text-blue-400 text-xs uppercase font-semibold">Start Odometer (KM)</label>
-                            <input 
-                              type="number" 
-                              className="w-full p-1.5 border border-[#1e293b] bg-[#0a0f1c] text-white rounded text-sm focus:outline-none focus:border-blue-500"
-                              placeholder="e.g. 15020"
-                              value={userOdometerValues[trip.id] || ''} 
-                              onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
-                            />
-                            <Button size="sm" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0">Confirm Start</Button>
+                      return (
+                        <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
+                                'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                              {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                              {dateLabel}
+                            </div>
+                            <div className="h-px bg-slate-800 flex-1"></div>
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Bookings</span>
                           </div>
-                        )}
-                        {trip.status === 'in_progress' && (
-                          <div className="text-sm font-medium text-emerald-400 bg-emerald-900/20 px-3 py-2 rounded border border-emerald-900/50 text-center">
-                            Trip in Progress
+                          
+                          <div className="space-y-4">
+                            {groups[date].map((trip, index) => (
+                              <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-4 flex flex-col sm:flex-row justify-between gap-4 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize border flex items-center gap-2
+                                      ${trip.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-900/50 animate-pulse' : 
+                                        trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' :
+                                        trip.status === 'driver_started' ? 'bg-blue-800/30 text-blue-300 border-blue-800/50 animate-pulse' :
+                                        trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse' :
+                                        trip.status === 'driver_ended' ? 'bg-amber-900/30 text-amber-400 border-amber-900/50 animate-pulse' :
+                                        trip.status === 'completed' ? 'bg-green-900/30 text-green-400 border-green-900/50' :
+                                        'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                                      {trip.status !== 'completed' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                                      {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                      {trip.createdAt?.toDate ? new Date(trip.createdAt.toDate()).toLocaleString() : 'Just now'}
+                                    </span>
+                                    {trip.isJointTrip && (
+                                      <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 animate-pulse">
+                                        JOINT
+                                      </span>
+                                    )}
+                                    {trip.tripType && (
+                                      <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                                        {trip.tripType}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-sm flex flex-col space-y-1">
+                                    <div><span className="font-medium text-slate-300">From:</span> <span className="text-slate-400">{trip.pickupAddress}</span></div>
+                                    {trip.tripType === 'return' ? (
+                                      <div><span className="font-medium text-slate-300">Destinations:</span> <span className="text-slate-400">{trip.returnLocations}</span></div>
+                                    ) : (
+                                      <div><span className="font-medium text-slate-300">To:</span> <span className="text-slate-400">{trip.dropoffAddress}</span></div>
+                                    )}
+                                    {trip.requestedStartTime && (
+                                      <div><span className="font-medium text-slate-300">Time:</span> <span className="text-slate-400">{trip.requestedStartTime}</span></div>
+                                    )}
+                                    {trip.estimatedDestinationTime && (
+                                      <div><span className="font-medium text-slate-300">Total Est. Time:</span> <span className="text-slate-400">{trip.estimatedDestinationTime}</span></div>
+                                    )}
+                                    {trip.passengerCount && (
+                                      <div><span className="font-medium text-slate-300">Passengers:</span> <span className="text-slate-400">{trip.passengerCount}</span></div>
+                                    )}
+                                    {trip.remarks && (
+                                      <div className="italic text-slate-500 mt-1">"{trip.remarks}"</div>
+                                    )}
+                                    
+                                    {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 1 && (
+                                      <div className="mt-3 pt-2 border-t border-slate-700/50 max-w-sm">
+                                        <span className="text-xs text-[#ff9900] font-semibold mb-2 block tracking-wider uppercase">Traveling With</span>
+                                        <div className="grid gap-1.5">
+                                          {trip.jointPassengers.map((p: any, i: number) => {
+                                            const isMe = p.name === profile?.name;
+                                            return (
+                                              <div key={i} className={`text-xs flex justify-between items-center px-2 py-1.5 rounded border ${isMe ? 'bg-blue-900/20 border-blue-900/50 text-blue-300' : 'bg-slate-800/80 border-slate-700 text-slate-300'}`}>
+                                                <span className="font-medium">{p.name || 'Unknown User'} {isMe ? '(Me)' : ''}</span>
+                                                {p.department && <span className={`px-1.5 py-0.5 rounded uppercase tracking-widest text-[9px] font-semibold ${isMe ? 'text-blue-400 bg-blue-900/30' : 'text-[#ff9900] bg-[#ff9900]/10'}`}>{p.department}</span>}
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {trip.driverId && (
+                                    <div className="mt-4 p-3 bg-emerald-900/10 border border-emerald-900/30 rounded-lg text-sm text-emerald-400 mt-4">
+                                      <div className="font-semibold text-emerald-300 mb-1 flex items-center gap-2">
+                                        <span>✓ Driver Assigned</span>
+                                      </div>
+                                      <div className="flex flex-col space-y-1 text-emerald-400/80">
+                                        {trip.driverName && <div><span className="font-medium text-emerald-300">Driver:</span> {trip.driverName}</div>}
+                                        {trip.vehicleName && <div><span className="font-medium text-emerald-300">Vehicle:</span> {trip.vehicleName}</div>}
+                                        {trip.driverPhone && <div><span className="font-medium text-emerald-300">Phone:</span> {trip.driverPhone}</div>}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="flex flex-col gap-2 shrink-0">
+                                  {trip.status === 'pending' && (
+                                    <Button variant="outline" size="sm" onClick={() => handleCancelTrip(trip.id)} className="text-red-400 hover:text-red-300 hover:bg-red-950/30 border-red-900/50">
+                                      Cancel
+                                    </Button>
+                                  )}
+                                  {trip.status === 'driver_started' && (
+                                    <div className="flex flex-col gap-2 p-3 bg-blue-900/20 border border-blue-900/50 rounded text-sm min-w-[200px]">
+                                      <p className="font-semibold text-blue-300">Driver Arrived</p>
+                                      <label className="text-blue-400 text-xs uppercase font-semibold">Start Odometer (KM)</label>
+                                      <input 
+                                        type="number" 
+                                        className="w-full p-1.5 border border-[#1e293b] bg-[#0a0f1c] text-white rounded text-sm focus:outline-none focus:border-blue-500"
+                                        placeholder="e.g. 15020"
+                                        value={userOdometerValues[trip.id] || ''} 
+                                        onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
+                                      />
+                                      <Button size="sm" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0">Confirm Start</Button>
+                                    </div>
+                                  )}
+                                  {trip.status === 'in_progress' && (
+                                    <div className="text-sm font-medium text-emerald-400 bg-emerald-900/20 px-3 py-2 rounded border border-emerald-900/50 text-center">
+                                      Trip in Progress
+                                    </div>
+                                  )}
+                                  {trip.status === 'driver_ended' && (
+                                    <div className="flex flex-col gap-2 p-3 bg-amber-900/20 border border-amber-900/50 rounded text-sm min-w-[200px]">
+                                      <p className="font-semibold text-amber-300">Driver Ended Trip</p>
+                                      <label className="text-amber-400 text-xs uppercase font-semibold">End Odometer (KM)</label>
+                                      <input 
+                                        type="number" 
+                                        className="w-full p-1.5 border border-[#1e293b] bg-[#0a0f1c] text-white rounded text-sm focus:outline-none focus:border-amber-500"
+                                        placeholder="e.g. 15045"
+                                        value={userOdometerValues[trip.id] || ''} 
+                                        onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
+                                      />
+                                      <Button size="sm" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-amber-600 hover:bg-amber-700 text-white border-0">Confirm End</Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                        {trip.status === 'driver_ended' && (
-                          <div className="flex flex-col gap-2 p-3 bg-amber-900/20 border border-amber-900/50 rounded text-sm min-w-[200px]">
-                            <p className="font-semibold text-amber-300">Driver Ended Trip</p>
-                            <label className="text-amber-400 text-xs uppercase font-semibold">End Odometer (KM)</label>
-                            <input 
-                              type="number" 
-                              className="w-full p-1.5 border border-[#1e293b] bg-[#0a0f1c] text-white rounded text-sm focus:outline-none focus:border-amber-500"
-                              placeholder="e.g. 15050"
-                              value={userOdometerValues[trip.id] || ''} 
-                              onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
-                            />
-                            <Button size="sm" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-amber-600 hover:bg-amber-700 text-white border-0">Confirm End</Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )))}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </CardContent>

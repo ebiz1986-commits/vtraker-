@@ -32,7 +32,7 @@ export default defineConfig(({mode}) => {
           lang: 'en',
           scope: '/',
           id: 'so_herath',
-          dir: 'auto',
+          dir: 'ltr',
           orientation: 'any',
           categories: ['travel'],
           screenshots: [

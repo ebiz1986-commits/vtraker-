@@ -634,50 +634,84 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
-                  {pendingTrips.map(trip => (
-                    <div key={trip.id} className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-[#ff9900] bg-[#ff9900]/10/30' : 'border-[#1f2937]'} rounded-lg p-4`}>
-                      <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
-                        <div className="flex items-start gap-3">
-                          {isCouplingMode && (
-                            <div className="pt-1">
-                              <input 
-                                type="checkbox" 
-                                className="w-5 h-5 accent-orange-600"
-                                checked={coupledTripIds.includes(trip.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) setCoupledTripIds(prev => [...prev, trip.id]);
-                                  else setCoupledTripIds(prev => prev.filter(id => id !== trip.id));
-                                }}
-                              />
+                  {(() => {
+                    const groups: { [key: string]: typeof pendingTrips } = {};
+                    pendingTrips.forEach(trip => {
+                      const date = trip.requestedDate || 'Unspecified Date';
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(trip);
+                    });
+                    
+                    const sortedDates = Object.keys(groups).sort((a, b) => {
+                      if (a === 'Unspecified Date') return 1;
+                      if (b === 'Unspecified Date') return -1;
+                      return a.localeCompare(b);
+                    });
+                    
+                    return sortedDates.map(date => {
+                      const isToday = date === new Date().toISOString().split('T')[0];
+                      const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                      const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
+                      
+                      return (
+                        <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
+                                'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                              {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                              {dateLabel}
                             </div>
-                          )}
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-semibold uppercase text-slate-400">
-                                {trip.tripType || 'dropoff'}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium">User: <span className="font-normal">{allUsers.find(u => u.userId === trip.userId)?.name || 'Unknown'}</span></p>
-                            <p className="text-sm font-medium">From: <span className="font-normal">{trip.pickupAddress}</span></p>
-                            {trip.tripType === 'return' ? (
-                              <p className="text-sm font-medium">Destinations: <span className="font-normal">{trip.returnLocations}</span></p>
-                            ) : (
-                              <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
-                            )}
-                            {trip.requestedDate && (
-                              <p className="text-sm font-medium mt-1">Requested Date: <span className="font-normal">{trip.requestedDate}</span></p>
-                            )}
-                            {trip.requestedStartTime && (
-                              <p className="text-sm font-medium mt-1">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
-                            )}
-                            {trip.estimatedDestinationTime && (
-                              <p className="text-sm font-medium">Total Est. Time: <span className="font-normal">{trip.estimatedDestinationTime}</span></p>
-                            )}
-                            {trip.passengerCount && (
-                              <p className="text-sm font-medium">Passengers: <span className="font-normal">{trip.passengerCount}</span></p>
-                            )}
-                            {trip.remarks && (
-                              <p className="text-sm font-medium mt-1">Remarks: <span className="italic font-normal text-slate-400">"{trip.remarks}"</span></p>
+                            <div className="h-px bg-slate-800 flex-1"></div>
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Bookings</span>
+                          </div>
+
+                          <div className="space-y-4">
+                            {groups[date].map(trip => (
+                              <div key={trip.id} className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-[#ff9900] bg-[#ff9900]/10/30' : 'border-[#1f2937]'} rounded-lg p-4`}>
+                                <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
+                                  <div className="flex items-start gap-3">
+                                    {isCouplingMode && (
+                                      <div className="pt-1">
+                                        <input 
+                                          type="checkbox" 
+                                          className="w-5 h-5 accent-orange-600"
+                                          checked={coupledTripIds.includes(trip.id)}
+                                          onChange={(e) => {
+                                            if (e.target.checked) setCoupledTripIds(prev => [...prev, trip.id]);
+                                            else setCoupledTripIds(prev => prev.filter(id => id !== trip.id));
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-semibold uppercase text-slate-400">
+                                          {trip.tripType || 'dropoff'}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm font-medium">User: <span className="font-normal">{allUsers.find(u => u.userId === trip.userId)?.name || 'Unknown'}</span></p>
+                                      <p className="text-sm font-medium">From: <span className="font-normal">{trip.pickupAddress}</span></p>
+                                      {trip.tripType === 'return' ? (
+                                        <p className="text-sm font-medium">Destinations: <span className="font-normal">{trip.returnLocations}</span></p>
+                                      ) : (
+                                        <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
+                                      )}
+                                      {trip.requestedDate && (
+                                        <p className="text-sm font-medium mt-1">Requested Date: <span className="font-normal">{trip.requestedDate}</span></p>
+                                      )}
+                                      {trip.requestedStartTime && (
+                                        <p className="text-sm font-medium mt-1">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
+                                      )}
+                                      {trip.estimatedDestinationTime && (
+                                        <p className="text-sm font-medium">Total Est. Time: <span className="font-normal">{trip.estimatedDestinationTime}</span></p>
+                                      )}
+                                      {trip.passengerCount && (
+                                        <p className="text-sm font-medium">Passengers: <span className="font-normal">{trip.passengerCount}</span></p>
+                                      )}
+                                      {trip.remarks && (
+                                        <p className="text-sm font-medium mt-1">Remarks: <span className="italic font-normal text-slate-400">"{trip.remarks}"</span></p>
                             )}
                           </div>
                         </div>
@@ -713,7 +747,12 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                  ))}
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </CardContent>
@@ -731,43 +770,82 @@ export default function AdminDashboard() {
                 <div className="text-slate-400 text-center">No active trips.</div>
               ) : (
                 <div className="space-y-4">
-                  {activeTrips.map(trip => {
-                    const driver = drivers.find(d => d.userId === trip.driverId);
-                    const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-                    return (
-                      <div key={trip.id} className="border border-[#1f2937] rounded-lg p-4 flex flex-col gap-2 text-sm">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p><span className="font-semibold text-slate-100">{driver?.name || 'Unknown'}</span> is on trip</p>
-                            <p className="text-slate-400 mt-1">{trip.pickupAddress} &rarr; {destination}</p>
-                            {trip.requestedDate && (
-                              <p className="text-xs text-slate-500 mt-1">Date: <span className="font-medium text-slate-300">{trip.requestedDate}</span></p>
-                            )}
-                            <div className="flex gap-2 items-center mt-1">
-                              {trip.isJointTrip && (
-                                <span className="text-xs text-[#ff9900] bg-[#ff9900]/20 uppercase tracking-widest px-1.5 py-0.5 rounded">JOINT</span>
-                              )}
-                              {trip.tripType && (
-                                <span className="text-xs text-slate-400 uppercase tracking-widest block">{trip.tripType}</span>
-                              )}
+                  {(() => {
+                    const groups: { [key: string]: typeof activeTrips } = {};
+                    activeTrips.forEach(trip => {
+                      const date = trip.requestedDate || 'Unspecified Date';
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(trip);
+                    });
+                    
+                    const sortedDates = Object.keys(groups).sort((a, b) => {
+                      if (a === 'Unspecified Date') return 1;
+                      if (b === 'Unspecified Date') return -1;
+                      return a.localeCompare(b);
+                    });
+                    
+                    return sortedDates.map(date => {
+                      const isToday = date === new Date().toISOString().split('T')[0];
+                      const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                      const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
+                      
+                      return (
+                        <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
+                                'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                              {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                              {dateLabel}
                             </div>
+                            <div className="h-px bg-slate-800 flex-1"></div>
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Active Bookings</span>
                           </div>
-                          <span className={`px-2 py-0.5 rounded-full font-medium flex items-center gap-2 ${trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 animate-pulse' : 'bg-blue-900/30 text-blue-400 animate-pulse'}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-                            {trip.status.replace('_', ' ')}
-                          </span>
+
+                          <div className="space-y-4">
+                            {groups[date].map(trip => {
+                              const driver = drivers.find(d => d.userId === trip.driverId);
+                              const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+                              return (
+                                <div key={trip.id} className="border border-[#1f2937] rounded-lg p-4 flex flex-col gap-2 text-sm">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <p><span className="font-semibold text-slate-100">{driver?.name || 'Unknown'}</span> is on trip</p>
+                                      <p className="text-slate-400 mt-1">{trip.pickupAddress} &rarr; {destination}</p>
+                                      {trip.requestedDate && (
+                                        <p className="text-xs text-slate-500 mt-1">Date: <span className="font-medium text-slate-300">{trip.requestedDate}</span></p>
+                                      )}
+                                      <div className="flex gap-2 items-center mt-1">
+                                        {trip.isJointTrip && (
+                                          <span className="text-xs text-[#ff9900] bg-[#ff9900]/20 uppercase tracking-widest px-1.5 py-0.5 rounded">JOINT</span>
+                                        )}
+                                        {trip.tripType && (
+                                          <span className="text-xs text-slate-400 uppercase tracking-widest block">{trip.tripType}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-full font-medium flex items-center gap-2 ${trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 animate-pulse' : 'bg-blue-900/30 text-blue-400 animate-pulse'}`}>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+                                      {trip.status.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
+                                    <div className="mt-2 p-2 bg-red-900/30 text-red-400 border border-red-900/50 rounded text-xs font-semibold flex flex-col gap-2">
+                                      <span>⚠️ Driver ended this trip &gt;10 mins ago, but passenger has not confirmed End Odometer.</span>
+                                      <Button size="sm" variant="destructive" className="w-fit" onClick={() => handleForceCompleteTrip(trip.id)}>
+                                        Force Complete Trip
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
-                        {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
-                          <div className="mt-2 p-2 bg-red-900/30 text-red-400 border border-red-900/50 rounded text-xs font-semibold flex flex-col gap-2">
-                            <span>⚠️ Driver ended this trip &gt;10 mins ago, but passenger has not confirmed End Odometer.</span>
-                            <Button size="sm" variant="destructive" className="w-fit" onClick={() => handleForceCompleteTrip(trip.id)}>
-                              Force Complete Trip
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </CardContent>

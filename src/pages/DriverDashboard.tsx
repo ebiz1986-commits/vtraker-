@@ -164,90 +164,132 @@ export default function DriverDashboard() {
                 <div className="text-slate-400 text-center py-8">No assigned trips right now. You will be notified when Admin assigns you a trip.</div>
               ) : (
                 <div className="space-y-4">
-                  {activeTrips.map((trip, index) => (
-                    <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-5 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="font-semibold text-lg mb-1 flex items-center gap-2">
-                            {trip.status === 'allocated' ? 'Upcoming Trip' : 'Active Trip'}
-                            {trip.isJointTrip && (
-                              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
-                                JOINT
-                              </span>
-                            )}
-                            {trip.tripType && (
-                              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                                {trip.tripType}
-                              </span>
-                            )}
-                          </h4>
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2
-                            ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' : 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse'}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-                            {trip.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-slate-400">Pickup Time</p>
-                          <p className="font-semibold">{format(new Date(trip.pickupTime), 'h:mm a')}</p>
-                        </div>
-                      </div>
+                  {(() => {
+                    const groups: { [key: string]: typeof activeTrips } = {};
+                    activeTrips.forEach(trip => {
+                      const date = trip.requestedDate || 'Unspecified Date';
+                      if (!groups[date]) groups[date] = [];
+                      groups[date].push(trip);
+                    });
+                    
+                    const sortedDates = Object.keys(groups).sort((a, b) => {
+                      if (a === 'Unspecified Date') return 1;
+                      if (b === 'Unspecified Date') return -1;
+                      return a.localeCompare(b);
+                    });
+                    
+                    return sortedDates.map(date => {
+                      const isToday = date === new Date().toISOString().split('T')[0];
+                      const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                      const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
                       
-                      <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md">
-                        <div>
-                          <p className="text-xs font-semibold text-slate-400 uppercase">Pickup Location</p>
-                          <p className="font-medium text-slate-100">{trip.pickupAddress}</p>
-                        </div>
-                        <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
-                        {trip.tripType === 'return' ? (
-                          <div>
-                            <p className="text-xs font-semibold text-slate-400 uppercase">Destinations</p>
-                            <p className="font-medium text-slate-100">{trip.returnLocations}</p>
+                      return (
+                        <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
+                                'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                              {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                              {dateLabel}
+                            </div>
+                            <div className="h-px bg-slate-800 flex-1"></div>
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Bookings</span>
                           </div>
-                        ) : (
-                          <div>
-                            <p className="text-xs font-semibold text-slate-400 uppercase">Dropoff Location</p>
-                            <p className="font-medium text-slate-100">{trip.dropoffAddress}</p>
-                          </div>
-                        )}
-                        {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 && (
-                          <div className="pt-3 mt-3 border-t border-slate-700/50">
-                            <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
-                            <div className="grid gap-1">
-                              {trip.jointPassengers.map((p: any, i: number) => (
-                                <div key={i} className="flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border border-slate-700">
-                                  <span className="text-sm font-medium text-slate-200">{p.name || 'Unknown User'}</span>
-                                  {p.department && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{p.department}</span>}
+                      
+                          <div className="space-y-4">
+                            {groups[date].map((trip, index) => (
+                              <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-5 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
+                                <div className="flex justify-between items-start mb-4">
+                                  <div>
+                                    <h4 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                                      {trip.status === 'allocated' ? 'Upcoming Trip' : 'Active Trip'}
+                                      {trip.isJointTrip && (
+                                        <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
+                                          JOINT
+                                        </span>
+                                      )}
+                                      {trip.tripType && (
+                                        <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                                          {trip.tripType}
+                                        </span>
+                                      )}
+                                    </h4>
+                                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2
+                                      ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' : 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse'}`}>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+                                      {trip.status.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-medium text-slate-400">Pickup Time</p>
+                                    <p className="font-semibold">{format(new Date(trip.pickupTime), 'h:mm a')}</p>
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {trip.requestedDate && (
-                          <>
-                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                            <div className="mt-2">
-                              <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
-                              <p className="font-medium text-slate-100">{trip.requestedDate}</p>
-                            </div>
-                          </>
-                        )}
-                        {trip.requestedStartTime && (
-                          <>
-                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                            <div className="mt-2">
-                              <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
-                              <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
-                            </div>
-                          </>
-                        )}
-                        {trip.estimatedDestinationTime && (
-                          <>
-                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                            <div className="mt-2">
-                              <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
-                              <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
-                            </div>
+                                
+                                <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md">
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase">Pickup Location</p>
+                                    <p className="font-medium text-slate-100">{trip.pickupAddress}</p>
+                                  </div>
+                                  <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
+                                  {trip.tripType === 'return' ? (
+                                    <div>
+                                      <p className="text-xs font-semibold text-slate-400 uppercase">Destinations</p>
+                                      <p className="font-medium text-slate-100">{trip.returnLocations}</p>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <p className="text-xs font-semibold text-slate-400 uppercase">Dropoff Location</p>
+                                      <p className="font-medium text-slate-100">{trip.dropoffAddress}</p>
+                                    </div>
+                                  )}
+                                  {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 ? (
+                                    <div className="pt-3 mt-3 border-t border-slate-700/50">
+                                      <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
+                                      <div className="grid gap-1">
+                                        {trip.jointPassengers.map((p: any, i: number) => (
+                                          <div key={i} className={`flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border ${p.name === trip.passengerName ? 'border-blue-900/50' : 'border-slate-700'}`}>
+                                            <span className={`text-sm font-medium ${p.name === trip.passengerName ? 'text-blue-300' : 'text-slate-200'}`}>{p.name || 'Unknown User'} {p.name === trip.passengerName ? '(Primary)' : ''}</span>
+                                            {p.department && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{p.department}</span>}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="pt-3 mt-3 border-t border-slate-700/50">
+                                      <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Requester</p>
+                                      <div className="flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border border-slate-700">
+                                        <span className="text-sm font-medium text-slate-200">{trip.passengerName || 'Unknown User'}</span>
+                                        {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {trip.requestedDate && (
+                                    <>
+                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
+                                      <div className="mt-2">
+                                        <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
+                                        <p className="font-medium text-slate-100">{trip.requestedDate}</p>
+                                      </div>
+                                    </>
+                                  )}
+                                  {trip.requestedStartTime && (
+                                    <>
+                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
+                                      <div className="mt-2">
+                                        <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
+                                        <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
+                                      </div>
+                                    </>
+                                  )}
+                                  {trip.estimatedDestinationTime && (
+                                    <>
+                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
+                                      <div className="mt-2">
+                                        <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
+                                        <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
+                                      </div>
                           </>
                         )}
                         {trip.passengerCount && (
@@ -301,7 +343,12 @@ export default function DriverDashboard() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </CardContent>
