@@ -1,0 +1,6 @@
+{
+  "appId": "com.vtraker.app",
+  "appName": "vTraker",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
