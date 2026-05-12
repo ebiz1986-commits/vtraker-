@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">vTraker</string>
+    <string name="title_activity_main">vTraker</string>
+    <string name="package_name">com.vtraker.app</string>
+    <string name="custom_url_scheme">com.vtraker.app</string>
+</resources>
