@@ -1,6 +1,5 @@
 {
-  "appId": "com.vtraker.app",
+  "appId": "com.ceylonpropertylink.vtraker",
   "appName": "vTraker",
-  "webDir": "dist",
-  "bundledWebRuntime": false
+  "webDir": "dist"
 }

@@ -1,4 +1,4 @@
-package com.vtraker.app;
+package com.ceylonpropertylink.vtraker;
 
 import com.getcapacitor.BridgeActivity;
 
