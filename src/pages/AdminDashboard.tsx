@@ -35,7 +35,7 @@ const AdminPendingTripItem = ({
   }, [allocatingTrip, trip.id]);
 
   return (
-    <div className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'} backdrop-blur-xl rounded-3xl transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden`}>
+    <div className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'} backdrop-blur-[10px] rounded-2xl transition-all duration-300 hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.1)]`}>
       <div 
         className="p-4 sm:p-5 flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => {
@@ -183,7 +183,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) =>
   const driver = drivers.find((d: any) => d.userId === trip.driverId);
 
   return (
-    <div className="border border-white/10 bg-white/5 backdrop-blur-xl rounded-3xl transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
+    <div className="border border-white/10 bg-white/5 backdrop-blur-[10px] rounded-2xl transition-all duration-300 hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
       <div 
         className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
         onClick={() => setExpanded(!expanded)}

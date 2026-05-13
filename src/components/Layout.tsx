@@ -49,7 +49,7 @@ export default function Layout({ children, title }: { children: React.ReactNode,
         </div>
       )}
       <div className="relative z-10 flex flex-col min-h-screen w-full">
-        <header className={`${isDarkTheme ? 'bg-[#050505]/50 backdrop-blur-xl border-white/5' : 'bg-white border-blue-100'} border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50`}>
+        <header className={`${isDarkTheme ? 'bg-white/5 backdrop-blur-[20px] border-white/10' : 'bg-white border-blue-100'} border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.1)]`}>
         <div className="flex items-center gap-4">
           <Menu className={`w-6 h-6 sm:hidden ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`} />
           <div className="flex flex-col text-center w-full absolute left-0 sm:relative sm:text-left pointer-events-none">
