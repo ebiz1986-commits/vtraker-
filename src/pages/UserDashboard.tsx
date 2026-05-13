@@ -22,21 +22,18 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
 
   return (
-    <div style={{ animationDelay: `${index * 100}ms` }} className="relative bg-white/5 border border-white/10 backdrop-blur-[10px] rounded-2xl transition-all duration-300 hover:border-white/20 hover:bg-white/10 overflow-hidden mb-4 animate-in slide-in-from-bottom-4 fade-in fill-mode-both duration-500 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+    <div style={{ animationDelay: `${index * 100}ms` }} className="glass-card mb-4 animate-in slide-in-from-bottom-4 fade-in fill-mode-both duration-500">
       {/* Clickable Area */}
       <div 
-        className="p-5 cursor-pointer relative z-10"
+        className="p-1 cursor-pointer relative z-10"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Header: Status and ID */}
         <div className="flex justify-between items-center mb-5">
-          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-            <span className={`w-2 h-2 rounded-full ${statusBgColor} ${trip.status === 'pending' ? 'animate-pulse' : ''}`} />
-            <span className={`text-xs font-medium capitalize ${statusColor}`}>
-              {formattedStatus}
-            </span>
-          </div>
-          <p className="text-xs font-medium text-slate-400">
+          <span className={`status-badge status-${trip.status}`}>
+            {formattedStatus}
+          </span>
+          <p className="text-xs font-medium text-[#A0A0A0]">
             Trip ID: {displayId}
           </p>
         </div>
@@ -172,7 +169,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                   <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
                   <input 
                     type="number" 
-                    className="w-full p-3 bg-black/40 border border-white/10 text-white rounded-lg text-base focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all font-mono"
+                    className="input-field block font-mono bg-[rgba(0,0,0,0.2)]"
                     placeholder="e.g. 15020"
                     value={userOdometerValues[trip.id] || ''} 
                     onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
@@ -209,7 +206,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                   <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
                   <input 
                     type="number" 
-                    className="w-full p-3 bg-black/40 border border-white/10 text-white rounded-lg text-base focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all font-mono"
+                    className="input-field block font-mono bg-[rgba(0,0,0,0.2)]"
                     placeholder="e.g. 15045"
                     value={userOdometerValues[trip.id] || ''} 
                     onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
@@ -434,15 +431,15 @@ export default function UserDashboard() {
   return (
     <Layout title="My Bookings">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-        <div className="lg:col-span-1 bg-white/5 border border-white/10 backdrop-blur-[10px] rounded-2xl p-6 sm:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.1)] h-fit">
+        <div className="glass-card h-fit">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">Book a Vehicle</h2>
-            <p className="text-sm text-slate-400">Fill in the details below to request your booking</p>
+            <p className="text-sm text-[#A0A0A0]">Fill in the details below to request your booking</p>
           </div>
           
           <form onSubmit={handleCreateTrip} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-slate-300">Trip Type</label>
+              <label className="label">Trip Type</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
                   <Car className="w-5 h-5" />
@@ -450,7 +447,7 @@ export default function UserDashboard() {
                 <select
                   value={tripType}
                   onChange={(e) => setTripType(e.target.value as 'dropoff' | 'return')}
-                  className="w-full pl-11 pr-10 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/30 focus:outline-none text-slate-200 appearance-none transition-colors shadow-inner"
+                  className="input-field pl-11 appearance-none"
                 >
                   <option value="dropoff">Local Trip</option>
                   <option value="return">Return Trip / Tour</option>
@@ -462,7 +459,7 @@ export default function UserDashboard() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-slate-300">Pickup Address</label>
+              <label className="label">Pickup Address</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
                   <MapPin className="w-5 h-5" />
@@ -472,7 +469,7 @@ export default function UserDashboard() {
                   required
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
-                  className="w-full pl-11 pr-10 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/30 focus:outline-none text-slate-200 placeholder-slate-400 transition-colors shadow-inner"
+                  className="input-field pl-11"
                   placeholder="Enter pickup location"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer hover:text-slate-300">
@@ -483,7 +480,7 @@ export default function UserDashboard() {
             
             {tripType === 'dropoff' ? (
               <div>
-                <label className="block text-sm font-medium mb-1.5 text-slate-300">Dropoff Address</label>
+                <label className="label">Dropoff Address</label>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
                     <MapPin className="w-5 h-5" />
@@ -493,7 +490,7 @@ export default function UserDashboard() {
                     required
                     value={dropoffAddress}
                     onChange={(e) => setDropoffAddress(e.target.value)}
-                    className="w-full pl-11 pr-10 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/30 focus:outline-none text-slate-200 placeholder-slate-400 transition-colors shadow-inner"
+                    className="input-field pl-11"
                     placeholder="Enter dropoff location"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer hover:text-slate-300">
@@ -503,7 +500,7 @@ export default function UserDashboard() {
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium mb-1.5 text-slate-300">Destinations</label>
+                <label className="label">Destinations</label>
                 <div className="relative">
                   <div className="absolute left-3 top-3.5 text-slate-500">
                     <MapPin className="w-5 h-5" />
@@ -512,7 +509,7 @@ export default function UserDashboard() {
                     required
                     value={returnLocations}
                     onChange={(e) => setReturnLocations(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/30 focus:outline-none text-slate-200 placeholder-slate-400 transition-colors shadow-inner"
+                    className="input-field pl-11"
                     placeholder="Enter intended route / destinations"
                     rows={2}
                   />
@@ -521,8 +518,8 @@ export default function UserDashboard() {
             )}
             
             <div>
-               <label className="block text-sm font-medium mb-1.5 text-slate-300">Date & Start Time</label>
-               <div className="flex gap-0 border border-white/10 rounded-xl overflow-hidden focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/30 transition-colors bg-white/5 backdrop-blur-sm shadow-inner">
+               <label className="label">Date & Start Time</label>
+               <div className="flex gap-0 border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden focus-within:border-[#FF8C00]/50 transition-colors bg-[rgba(255,255,255,0.03)]">
                  <div className="relative flex-1 border-r border-white/10">
                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
                      <Calendar className="w-5 h-5" />
@@ -554,8 +551,8 @@ export default function UserDashboard() {
             
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1.5 text-slate-300">Passengers</label>
-                <div className="relative flex items-center justify-between px-3 py-2 border border-white/10 rounded-xl bg-white/5 backdrop-blur-sm transition-colors focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/30 shadow-inner">
+                <label className="label">Passengers</label>
+                <div className="relative flex items-center justify-between px-3 py-2 border border-[rgba(255,255,255,0.08)] rounded-xl bg-[rgba(255,255,255,0.03)] transition-colors focus-within:border-[#FF8C00]/50">
                    <div className="flex items-center gap-2 text-slate-200">
                      <Users className="w-5 h-5 text-slate-500" />
                      <span className="text-sm">{passengerCount} {passengerCount === 1 ? 'Passenger' : 'Passengers'}</span>
@@ -574,17 +571,17 @@ export default function UserDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-slate-300">Remarks / Notes (Optional)</label>
+              <label className="label">Remarks / Notes (Optional)</label>
               <textarea 
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/30 focus:outline-none text-slate-200 placeholder-slate-400 transition-colors shadow-inner"
+                className="input-field"
                 placeholder="Any notes..."
                 rows={2}
               />
             </div>
             
-            <Button type="submit" className="w-full mt-6 bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 p-6 rounded-xl shadow-lg shadow-orange-500/20 text-base border border-orange-500/50">
+            <Button type="submit" className="btn-primary mt-6">
               Request Booking
             </Button>
           </form>
@@ -599,12 +596,12 @@ export default function UserDashboard() {
           {loading ? (
             <div className="text-slate-400 text-center py-8">Loading trips...</div>
           ) : trips.length === 0 ? (
-            <div className="text-slate-400 text-center py-8 border border-white/5 rounded-2xl bg-white/5 backdrop-blur-sm">No trips found. Book a vehicle to get started!</div>
+            <div className="glass-card text-center py-8 text-[#A0A0A0]">No trips found. Book a vehicle to get started!</div>
           ) : (
             <div className="space-y-4">
               {(() => {
                 const activeTrips = trips.filter(t => !['completed', 'cancelled'].includes(t.status));
-                if (activeTrips.length === 0) return <div className="text-slate-400 text-center py-8 border border-white/5 rounded-2xl bg-white/5 backdrop-blur-sm">No active trips found.</div>;
+                if (activeTrips.length === 0) return <div className="glass-card text-center py-8 text-[#A0A0A0]">No active trips found.</div>;
                 
                 const sortedTrips = [...activeTrips].sort((a, b) => {
                   const dateA = a.requestedDate || '';

@@ -25,7 +25,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" />
+        <Toaster position="top-right" theme="dark" />
         <InstallPWA />
         <Routes>
           <Route path="/" element={<LandingPage />} />

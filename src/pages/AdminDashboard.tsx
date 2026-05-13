@@ -35,7 +35,7 @@ const AdminPendingTripItem = ({
   }, [allocatingTrip, trip.id]);
 
   return (
-    <div className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'} backdrop-blur-[10px] rounded-2xl transition-all duration-300 hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.1)]`}>
+    <div className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/20 bg-white/10'} backdrop-blur-[16px] rounded-2xl transition-all duration-300 hover:border-white/30 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)]`}>
       <div 
         className="p-4 sm:p-5 flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => {
@@ -183,7 +183,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) =>
   const driver = drivers.find((d: any) => d.userId === trip.driverId);
 
   return (
-    <div className="border border-white/10 bg-white/5 backdrop-blur-[10px] rounded-2xl transition-all duration-300 hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+    <div className="border border-white/20 bg-white/10 backdrop-blur-[16px] rounded-2xl transition-all duration-300 hover:border-white/30 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
       <div 
         className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
         onClick={() => setExpanded(!expanded)}
@@ -909,7 +909,7 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-4">
                   {isCouplingMode && (
-                    <div className="bg-white/5 p-5 border border-white/10 backdrop-blur-md rounded-2xl mb-4 shadow-xl">
+                    <div className="bg-white/10 p-5 border border-white/20 backdrop-blur-[16px] rounded-2xl mb-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                       <h4 className="text-sm font-semibold mb-3 text-white">Allocate Coupled Trips ({coupledTripIds.length} selected)</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                         <div>

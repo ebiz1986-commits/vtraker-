@@ -2,12 +2,12 @@ import * as React from "react"
 import { cn } from "../../lib/utils"
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("rounded-2xl border border-white/10 bg-white/5 backdrop-blur-[10px] text-slate-100 shadow-[0_4px_30px_rgba(0,0,0,0.1)] transition-all hover:border-white/20", className)} {...props} />
+  <div ref={ref} className={cn("glass-card text-[#E0E0E0]", className)} {...props} />
 ))
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6 border-b border-white/10 mb-6 bg-white/5 rounded-t-2xl", className)} {...props} />
+  <div ref={ref} className={cn("flex flex-col space-y-1.5 mb-6", className)} {...props} />
 ))
 CardHeader.displayName = "CardHeader"
 

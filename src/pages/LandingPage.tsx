@@ -86,64 +86,59 @@ export default function LandingPage() {
   if (loading) return <div className="flex justify-center items-center h-screen bg-[#0a0f1c] text-[#ff9900]">Loading...</div>;
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[#0a0f1c] relative overflow-hidden">
-      {/* Subtle background glow */}
-      <div 
-        className="absolute top-[20%] left-[-10%] w-[50%] h-[60%] bg-[#1e293b] rounded-full mix-blend-screen filter blur-[120px] opacity-20 transition-opacity duration-1000"
-      />
-      
+    <div className="flex h-screen items-center justify-center bg-[linear-gradient(135deg,#0F1419_0%,#1A1F26_100%)] text-[#E0E0E0] relative overflow-hidden">
       <div
         className="w-full max-w-md z-10 mx-4 animate-in fade-in zoom-in duration-500"
       >
-        <Card className="border border-[#1e293b] bg-[#111827] shadow-xl relative overflow-hidden text-slate-100">
-          <CardHeader className="space-y-4 text-center pb-6 border-b border-[#1f2937]">
+        <Card className="glass-card">
+          <CardHeader className="space-y-4 text-center pb-6 border-b border-[rgba(255,255,255,0.1)]">
             <div className="flex justify-center mb-6 mt-4 animate-in slide-in-from-bottom-4 fade-in duration-700">
               <div className="flex items-center">
                 <img src="/icon.svg" alt="Sanken Overseas Logo" className="w-20 h-20 mr-2" />
                 <div className="flex flex-col items-start leading-none pt-1">
                   <div style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                    <span className="text-4xl font-serif font-black tracking-wider text-slate-100 italic">Sanken</span>
+                    <span className="text-4xl font-serif font-black tracking-wider text-[#E0E0E0] italic">Sanken</span>
                   </div>
                   <div style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                    <span className="text-4xl font-serif font-black tracking-wider text-slate-100 ml-6 italic">Overseas</span>
+                    <span className="text-4xl font-serif font-black tracking-wider text-[#E0E0E0] ml-6 italic">Overseas</span>
                   </div>
                 </div>
               </div>
             </div>
-            <CardDescription className="text-sm font-medium text-slate-400">
+            <CardDescription className="text-sm font-medium text-[#A0A0A0]">
               VBooking • Vehicle Tracking & Dispatch
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6 mb-4">
             {loginError && (
               <div 
-                className="p-3 text-sm text-red-400 bg-red-950/50 rounded-md border border-red-900/50 text-center animate-in slide-in-from-top-2 fade-in duration-300"
+                className="p-3 text-sm text-red-500 bg-red-900/20 rounded-lg border border-red-900/30 text-center animate-in slide-in-from-top-2 fade-in duration-300"
               >
                 {loginError}
               </div>
             )}
             <form onSubmit={handlePinLogin} className="space-y-4">
               <div>
-                 <label className="text-sm font-medium text-slate-300 block mb-1.5 shadow-sm text-center">Enter your PIN Code</label>
+                 <label className="label text-center">Enter your PIN Code</label>
                  <input 
                    type="password" 
                    inputMode="numeric"
                    value={pin}
                    onChange={(e) => setPin(e.target.value)}
-                   className="w-full p-2.5 bg-[#0a0f1c] border border-[#1f2937] rounded-md focus:ring-1 focus:ring-[#ff9900] focus:border-[#ff9900] focus:outline-none text-slate-100 block text-center placeholder-slate-600 transition-colors tracking-[0.5em] text-lg font-mono font-bold"
+                   className="input-field block text-center tracking-[0.5em] text-lg font-mono font-bold"
                    placeholder="••••••"
                    required
                    minLength={6}
                    disabled={isLoggingIn}
                  />
               </div>
-              <Button type="submit" size="lg" disabled={isLoggingIn} className="w-full rounded-md bg-[#ff9900] text-black hover:bg-[#e68a00] font-bold h-12 text-base mt-2 transition-all hover:scale-[1.02] active:scale-[0.98] border-none shadow-none duration-200">
+              <Button type="submit" size="lg" disabled={isLoggingIn} className="btn-primary mt-4">
                 {isLoggingIn ? 'Verifying...' : 'Sign in'}
               </Button>
             </form>
 
             <div className="text-center pt-4 animate-in fade-in duration-1000 delay-300">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#A0A0A0]">
                 Contact your Admin Department to get your PIN.
               </p>
             </div>
