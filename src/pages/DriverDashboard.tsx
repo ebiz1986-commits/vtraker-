@@ -8,6 +8,183 @@ import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
+import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
+
+const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: number, handleUpdateStatus: (id: string, status: string) => void }) => {
+  const [expanded, setExpanded] = useState(false);
+  const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+  
+  return (
+    <div style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
+      {/* Clickable Header */}
+      <div 
+        className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
+              ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-purple-900/30 text-purple-400 border-purple-900/50'}`}>
+              {trip.status.replace('_', ' ')}
+            </span>
+            {trip.isJointTrip && (
+              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
+                JOINT
+              </span>
+            )}
+            {trip.tripType && (
+              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                {trip.tripType}
+              </span>
+            )}
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-lg">
+              <span className="truncate">{trip.pickupAddress}</span>
+            </div>
+            
+            <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
+            
+            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-lg">
+              <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
+              <span className="truncate">{destination}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-right flex-shrink-0">
+          <div className="hidden sm:block">
+            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
+              <Clock className="w-3 h-3" /> Time
+            </p>
+            <p className="font-semibold text-slate-200">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
+          </div>
+          <div className="sm:hidden">
+            <p className="font-semibold text-slate-200 text-sm">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
+          </div>
+          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+      </div>
+
+      {/* Expandable Content */}
+      <div 
+        className={`transition-all duration-300 ease-in-out origin-top ${expanded ? 'max-h-[1500px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-0'}`}
+      >
+        <div className="p-4 sm:p-5 pt-0 border-t border-slate-800/50">
+          <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md mt-4 shadow-inner">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup Location</p>
+              <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
+            </div>
+            <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
+            {trip.tripType === 'return' ? (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Destinations</p>
+                <p className="font-medium text-slate-100 mt-0.5">{trip.returnLocations}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Dropoff Location</p>
+                <p className="font-medium text-slate-100 mt-0.5">{trip.dropoffAddress}</p>
+              </div>
+            )}
+            {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 ? (
+              <div className="pt-3 mt-3 border-t border-slate-700/50">
+                <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
+                <div className="grid gap-1.5">
+                  {trip.jointPassengers.map((p: any, i: number) => (
+                    <div key={i} className={`flex justify-between bg-slate-800/80 px-2 py-2 rounded items-center border ${p.name === trip.passengerName ? 'border-blue-900/50' : 'border-slate-700'}`}>
+                      <span className={`text-sm font-medium ${p.name === trip.passengerName ? 'text-blue-300' : 'text-slate-200'}`}>
+                        {p.name || 'Unknown User'} {p.name === trip.passengerName ? '(Primary)' : ''}
+                      </span>
+                      {p.department && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{p.department}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="pt-3 mt-3 border-t border-slate-700/50">
+                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Requester</p>
+                <div className="flex justify-between bg-slate-800/80 px-3 py-2 rounded items-center border border-slate-700">
+                  <span className="text-sm font-medium text-slate-200">{trip.passengerName || 'Unknown User'}</span>
+                  {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
+              {trip.requestedDate && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
+                  <p className="font-medium text-slate-100">{trip.requestedDate}</p>
+                </div>
+              )}
+              {trip.requestedStartTime && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
+                  <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
+                </div>
+              )}
+              {trip.estimatedDestinationTime && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
+                  <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
+                </div>
+              )}
+              {trip.passengerCount && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">Passengers</p>
+                  <p className="font-medium text-slate-100">{trip.passengerCount}</p>
+                </div>
+              )}
+            </div>
+            {trip.remarks && (
+              <div className="pt-3 mt-3 border-t border-slate-700/50">
+                <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
+                <p className="italic text-slate-300 mt-1 bg-slate-800/50 p-2 rounded border border-slate-700">"{trip.remarks}"</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              {trip.status === 'allocated' && (
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-lg shadow-lg shadow-blue-900/20" 
+                  onClick={() => handleUpdateStatus(trip.id, trip.status)}
+                >
+                  Start Trip
+                </Button>
+              )}
+              {trip.status === 'driver_started' && (
+                <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  Waiting for passenger to enter Start Odometer...
+                </div>
+              )}
+              {trip.status === 'in_progress' && (
+                <Button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-6 text-lg shadow-lg shadow-emerald-900/20" 
+                  onClick={() => handleUpdateStatus(trip.id, trip.status)}
+                >
+                  End Trip (Drop-off)
+                </Button>
+              )}
+              {trip.status === 'driver_ended' && (
+                <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  Waiting for passenger to enter End Odometer...
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function DriverDashboard() {
   const { profile } = useAuth();
@@ -199,150 +376,7 @@ export default function DriverDashboard() {
                       
                           <div className="space-y-4">
                             {groups[date].map((trip, index) => (
-                              <div key={trip.id} style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg p-5 transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500">
-                                <div className="flex justify-between items-start mb-4">
-                                  <div>
-                                    <h4 className="font-semibold text-lg mb-1 flex items-center gap-2">
-                                      {trip.status === 'allocated' ? 'Upcoming Trip' : 'Active Trip'}
-                                      {trip.isJointTrip && (
-                                        <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
-                                          JOINT
-                                        </span>
-                                      )}
-                                      {trip.tripType && (
-                                        <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                                          {trip.tripType}
-                                        </span>
-                                      )}
-                                    </h4>
-                                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2
-                                      ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 animate-pulse' : 'bg-purple-900/30 text-purple-400 border-purple-900/50 animate-pulse'}`}>
-                                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-                                      {trip.status.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-sm font-medium text-slate-400">Pickup Time</p>
-                                    <p className="font-semibold">{format(new Date(trip.pickupTime), 'h:mm a')}</p>
-                                  </div>
-                                </div>
-                                
-                                <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md">
-                                  <div>
-                                    <p className="text-xs font-semibold text-slate-400 uppercase">Pickup Location</p>
-                                    <p className="font-medium text-slate-100">{trip.pickupAddress}</p>
-                                  </div>
-                                  <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
-                                  {trip.tripType === 'return' ? (
-                                    <div>
-                                      <p className="text-xs font-semibold text-slate-400 uppercase">Destinations</p>
-                                      <p className="font-medium text-slate-100">{trip.returnLocations}</p>
-                                    </div>
-                                  ) : (
-                                    <div>
-                                      <p className="text-xs font-semibold text-slate-400 uppercase">Dropoff Location</p>
-                                      <p className="font-medium text-slate-100">{trip.dropoffAddress}</p>
-                                    </div>
-                                  )}
-                                  {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 ? (
-                                    <div className="pt-3 mt-3 border-t border-slate-700/50">
-                                      <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
-                                      <div className="grid gap-1">
-                                        {trip.jointPassengers.map((p: any, i: number) => (
-                                          <div key={i} className={`flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border ${p.name === trip.passengerName ? 'border-blue-900/50' : 'border-slate-700'}`}>
-                                            <span className={`text-sm font-medium ${p.name === trip.passengerName ? 'text-blue-300' : 'text-slate-200'}`}>{p.name || 'Unknown User'} {p.name === trip.passengerName ? '(Primary)' : ''}</span>
-                                            {p.department && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{p.department}</span>}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="pt-3 mt-3 border-t border-slate-700/50">
-                                      <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Requester</p>
-                                      <div className="flex justify-between bg-slate-800/80 px-2 py-1.5 rounded items-center border border-slate-700">
-                                        <span className="text-sm font-medium text-slate-200">{trip.passengerName || 'Unknown User'}</span>
-                                        {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {trip.requestedDate && (
-                                    <>
-                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                                      <div className="mt-2">
-                                        <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
-                                        <p className="font-medium text-slate-100">{trip.requestedDate}</p>
-                                      </div>
-                                    </>
-                                  )}
-                                  {trip.requestedStartTime && (
-                                    <>
-                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                                      <div className="mt-2">
-                                        <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
-                                        <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
-                                      </div>
-                                    </>
-                                  )}
-                                  {trip.estimatedDestinationTime && (
-                                    <>
-                                      <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                                      <div className="mt-2">
-                                        <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
-                                        <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
-                                      </div>
-                          </>
-                        )}
-                        {trip.passengerCount && (
-                          <>
-                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                            <div className="mt-2">
-                              <p className="text-xs font-semibold text-slate-400 uppercase">Passengers</p>
-                              <p className="font-medium text-slate-100">{trip.passengerCount}</p>
-                            </div>
-                          </>
-                        )}
-                        {trip.remarks && (
-                          <>
-                            <div className="w-px h-4 bg-[#1e293b] ml-2 mt-2"></div>
-                            <div className="mt-2">
-                              <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
-                              <p className="italic text-slate-300">"{trip.remarks}"</p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col gap-3">
-                        <div className="flex gap-3">
-                          {trip.status === 'allocated' && (
-                            <Button 
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-                              onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                            >
-                              Start Trip
-                            </Button>
-                          )}
-                          {trip.status === 'driver_started' && (
-                            <div className="p-3 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded text-sm text-center font-medium">
-                              Waiting for passenger to enter Start Odometer...
-                            </div>
-                          )}
-                          {trip.status === 'in_progress' && (
-                            <Button 
-                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" 
-                              onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                            >
-                              End Trip (Drop-off)
-                            </Button>
-                          )}
-                          {trip.status === 'driver_ended' && (
-                            <div className="p-3 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded text-sm text-center font-medium">
-                              Waiting for passenger to enter End Odometer...
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                              <TripItem key={trip.id} trip={trip} index={index} handleUpdateStatus={handleUpdateStatus} />
                             ))}
                           </div>
                         </div>

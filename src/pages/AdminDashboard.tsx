@@ -9,6 +9,279 @@ import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from 'sonner';
 
+import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
+
+const AdminPendingTripItem = ({ 
+  trip, 
+  allUsers, 
+  isCouplingMode, 
+  coupledTripIds, 
+  setCoupledTripIds,
+  allocatingTrip,
+  setAllocatingTrip,
+  handleAllocate,
+  handleAmendTrip,
+  handleRejectTrip,
+  renderDriverSelect,
+  renderVehicleSelect,
+  selectedDriver,
+  selectedVehicle
+}: any) => {
+  const [expanded, setExpanded] = useState(false);
+  const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+
+  useEffect(() => {
+    if (allocatingTrip === trip.id) setExpanded(true);
+  }, [allocatingTrip, trip.id]);
+
+  return (
+    <div className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'} backdrop-blur-xl rounded-3xl transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden`}>
+      <div 
+        className="p-4 sm:p-5 flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group cursor-pointer"
+        onClick={() => {
+           if (isCouplingMode) {
+             if (coupledTripIds.includes(trip.id)) setCoupledTripIds(coupledTripIds.filter((id: string) => id !== trip.id));
+             else setCoupledTripIds([...coupledTripIds, trip.id]);
+           } else {
+             setExpanded(!expanded);
+           }
+        }}
+      >
+        <div className="flex-1 min-w-0 flex items-start gap-3">
+          {isCouplingMode && (
+            <div className="pt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+              <input 
+                type="checkbox" 
+                className="w-5 h-5 accent-orange-600 cursor-pointer"
+                checked={coupledTripIds.includes(trip.id)}
+                onChange={(e) => {
+                  if (e.target.checked) setCoupledTripIds([...coupledTripIds, trip.id]);
+                  else setCoupledTripIds(coupledTripIds.filter((id: string) => id !== trip.id));
+                }}
+              />
+            </div>
+          )}
+          
+          <div className="flex-1 min-w-0">
+             <div className="flex flex-wrap items-center gap-2 mb-2">
+               <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-yellow-900/30 text-yellow-400 border-yellow-900/50`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+                  {trip.status.replace('_', ' ')}
+               </span>
+               <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                 {trip.tripType || 'dropoff'}
+               </span>
+               <span className="text-[10px] text-slate-400 font-medium ml-1">User: {allUsers.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
+             </div>
+             
+             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
+                <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
+                  <span className="truncate">{trip.pickupAddress}</span>
+                </div>
+                
+                <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
+                
+                <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
+                  <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
+                  <span className="truncate">{destination}</span>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-right flex-shrink-0">
+          <div className="hidden sm:block">
+            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
+              <Clock className="w-3 h-3" /> Req. Time
+            </p>
+            <p className="font-semibold text-slate-200">{trip.requestedStartTime || 'N/A'}</p>
+          </div>
+          <div className="sm:hidden">
+            <p className="font-semibold text-slate-200 text-sm">{trip.requestedStartTime || 'N/A'}</p>
+          </div>
+          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+      </div>
+
+      <div className={`transition-all duration-300 ease-in-out origin-top ${expanded ? 'max-h-[1500px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-0'}`}>
+         <div className="p-4 sm:p-5 pt-0 border-t border-slate-800/50">
+            <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md mt-4 shadow-inner">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup</p>
+                    <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
+                 </div>
+                 {trip.tripType === 'return' ? (
+                   <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Destinations</p>
+                      <p className="font-medium text-slate-100 mt-0.5">{trip.returnLocations}</p>
+                   </div>
+                 ) : (
+                   <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Dropoff</p>
+                      <p className="font-medium text-slate-100 mt-0.5">{trip.dropoffAddress}</p>
+                   </div>
+                 )}
+               </div>
+               
+               <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
+                  {trip.requestedDate && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Date</p><p className="font-medium text-slate-100">{trip.requestedDate}</p></div>
+                  )}
+                  {trip.requestedStartTime && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Start</p><p className="font-medium text-slate-100">{trip.requestedStartTime}</p></div>
+                  )}
+                  {trip.estimatedDestinationTime && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Est. Time</p><p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p></div>
+                  )}
+                  {trip.passengerCount && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Passengers</p><p className="font-medium text-slate-100">{trip.passengerCount}</p></div>
+                  )}
+               </div>
+
+               {trip.remarks && (
+                 <div className="pt-3 mt-3 border-t border-slate-700/50">
+                   <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
+                   <p className="italic text-slate-300 mt-1 bg-slate-800/50 p-2 rounded border border-slate-700">"{trip.remarks}"</p>
+                 </div>
+               )}
+            </div>
+
+            {!isCouplingMode && allocatingTrip === trip.id ? (
+              <div className="bg-blue-900/10 p-4 border border-blue-900/40 rounded-lg mt-2 shadow-lg mb-2">
+                 <h4 className="text-sm font-semibold mb-4 text-blue-300 uppercase tracking-widest flex items-center gap-2">Allocate Trip</h4>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                   <div>{renderDriverSelect()}</div>
+                   <div>{renderVehicleSelect()}</div>
+                 </div>
+                 <div className="flex flex-col sm:flex-row gap-3">
+                   <Button className="flex-1 bg-blue-600 hover:bg-blue-700 py-6 text-white font-semibold text-lg" onClick={() => handleAllocate(trip.id)} disabled={!selectedDriver || !selectedVehicle}>Confirm Dispatch</Button>
+                   <Button variant="outline" className="py-6 sm:w-1/3" onClick={() => setAllocatingTrip(null)}>Cancel</Button>
+                 </div>
+              </div>
+            ) : !isCouplingMode && (
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                 <Button onClick={() => { setAllocatingTrip(trip.id); setExpanded(true); }} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold">Allocate Driver</Button>
+                 <Button onClick={() => {
+                   const nt = prompt("Amend Time (HH:MM) - 24 hour format", trip.requestedStartTime || "08:00");
+                   if (nt) handleAmendTrip(trip.id, nt);
+                 }} variant="outline" className="flex-1">Amend Time</Button>
+                 <Button onClick={() => handleRejectTrip(trip.id)} variant="destructive" className="flex-1">Reject Trip</Button>
+              </div>
+            )}
+         </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) => {
+  const [expanded, setExpanded] = useState(false);
+  const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+  const driver = drivers.find((d: any) => d.userId === trip.driverId);
+
+  return (
+    <div className="border border-white/10 bg-white/5 backdrop-blur-xl rounded-3xl transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:bg-white/10 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
+      <div 
+        className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
+              ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
+                trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-amber-900/30 text-amber-500 border-amber-900/50'}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
+              {trip.status.replace('_', ' ')}
+            </span>
+            {trip.isJointTrip && (
+              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
+                JOINT
+              </span>
+            )}
+            {trip.tripType && (
+              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                {trip.tripType}
+              </span>
+            )}
+            <span className="text-[10px] text-slate-400 font-medium ml-1">Driver: {driver?.name || 'Unknown'}</span>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
+            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
+              <span className="truncate">{trip.pickupAddress}</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
+            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
+              <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
+              <span className="truncate">{destination}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-right flex-shrink-0">
+          <div className="hidden sm:block">
+            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
+              <Clock className="w-3 h-3" /> Date
+            </p>
+            <p className="font-semibold text-slate-200">{trip.requestedDate || 'N/A'}</p>
+          </div>
+          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+      </div>
+
+      <div className={`transition-all duration-300 ease-in-out origin-top ${expanded ? 'max-h-[1500px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-0'}`}>
+         <div className="p-4 sm:p-5 pt-0 border-t border-slate-800/50">
+            <div className="space-y-3 mb-4 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md mt-4 shadow-inner">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup</p>
+                    <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
+                 </div>
+                 {trip.tripType === 'return' ? (
+                   <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Destinations</p>
+                      <p className="font-medium text-slate-100 mt-0.5">{trip.returnLocations}</p>
+                   </div>
+                 ) : (
+                   <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Dropoff</p>
+                      <p className="font-medium text-slate-100 mt-0.5">{trip.dropoffAddress}</p>
+                   </div>
+                 )}
+               </div>
+               
+               <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
+                  {trip.requestedDate && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Date</p><p className="font-medium text-slate-100">{trip.requestedDate}</p></div>
+                  )}
+                  {trip.requestedStartTime && (
+                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Start</p><p className="font-medium text-slate-100">{trip.requestedStartTime}</p></div>
+                  )}
+               </div>
+            </div>
+
+            {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
+              <div className="bg-red-900/10 p-4 border border-red-900/40 rounded-lg flex flex-col gap-3 shadow-lg mt-4">
+                <p className="text-sm font-semibold text-red-400 flex items-center gap-2">
+                  <span className="bg-red-500/20 p-1 rounded-full text-red-300 shrink-0">⚠️</span>
+                  Driver ended this trip &gt;10 mins ago, but passenger has not confirmed End Odometer.
+                </p>
+                <Button size="lg" variant="destructive" className="w-full sm:w-auto self-start" onClick={() => handleForceCompleteTrip(trip.id)}>
+                  Force Complete Trip
+                </Button>
+              </div>
+            )}
+         </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AdminDashboard() {
   const [trips, setTrips] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -33,7 +306,7 @@ export default function AdminDashboard() {
   const [newVehicle, setNewVehicle] = useState({ type: 'car', reg: '' });
   
   // New User state
-  const [newUser, setNewUser] = useState({ name: '', role: 'driver', pin: '', department: '' });
+  const [newUser, setNewUser] = useState({ name: '', role: 'driver', pin: '', department: '', hasSmartphone: true });
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -106,6 +379,7 @@ export default function AdminDashboard() {
         driverId: selectedDriver,
         driverName: driver?.name || 'Unknown Driver',
         driverPhone: driver?.phone || '',
+        driverHasSmartphone: driver?.hasSmartphone !== false, // Default to true if undefined
         vehicleId: selectedVehicle,
         vehicleName: vehicle ? `${vehicle.registrationNumber} (${vehicle.type})` : 'Unknown Vehicle',
         allocatedAt: serverTimestamp(),
@@ -133,6 +407,7 @@ export default function AdminDashboard() {
         driverId: selectedDriver,
         driverName: driver?.name || 'Unknown Driver',
         driverPhone: driver?.phone || '',
+        driverHasSmartphone: driver?.hasSmartphone !== false,
         vehicleId: selectedVehicle,
         vehicleName: vehicle ? `${vehicle.registrationNumber} (${vehicle.type})` : 'Unknown Vehicle',
         isJointTrip: true,
@@ -257,10 +532,11 @@ export default function AdminDashboard() {
         name: newUser.name,
         role: newUser.role,
         department: newUser.department,
+        hasSmartphone: newUser.role === 'driver' ? newUser.hasSmartphone : undefined,
         createdAt: serverTimestamp()
       });
       
-      setNewUser({ name: '', role: 'driver', pin: '', department: '' });
+      setNewUser({ name: '', role: 'driver', pin: '', department: '', hasSmartphone: true });
       setIsCreatingUser(false);
     } catch (error: any) {
       setIsCreatingUser(false);
@@ -551,6 +827,20 @@ export default function AdminDashboard() {
                     />
                   </div>
                 </div>
+                {newUser.role === 'driver' && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <input 
+                      type="checkbox" 
+                      id="hasSmartphone"
+                      checked={newUser.hasSmartphone}
+                      onChange={e => setNewUser({...newUser, hasSmartphone: e.target.checked})}
+                      className="w-4 h-4 rounded border-[#1f2937] bg-[#0a0f1c] text-blue-600 focus:ring-blue-500 focus:ring-offset-[#0f172a]"
+                    />
+                    <label htmlFor="hasSmartphone" className="text-sm font-medium text-slate-300 cursor-pointer">
+                      Driver Has Smartphone
+                    </label>
+                  </div>
+                )}
                 <Button type="submit" size="sm" className="w-full" disabled={isCreatingUser}>
                   {isCreatingUser ? 'Creating...' : 'Create Account'}
                 </Button>
@@ -619,8 +909,8 @@ export default function AdminDashboard() {
               ) : (
                 <div className="space-y-4">
                   {isCouplingMode && (
-                    <div className="bg-[#1e293b]/50 p-4 border border-[#1f2937] rounded-lg mb-4">
-                      <h4 className="text-sm font-semibold mb-3">Allocate Coupled Trips ({coupledTripIds.length} selected)</h4>
+                    <div className="bg-white/5 p-5 border border-white/10 backdrop-blur-md rounded-2xl mb-4 shadow-xl">
+                      <h4 className="text-sm font-semibold mb-3 text-white">Allocate Coupled Trips ({coupledTripIds.length} selected)</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                         <div>
                           {renderDriverSelect()}
@@ -669,84 +959,23 @@ export default function AdminDashboard() {
 
                           <div className="space-y-4">
                             {groups[date].map(trip => (
-                              <div key={trip.id} className={`border ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-[#ff9900] bg-[#ff9900]/10/30' : 'border-[#1f2937]'} rounded-lg p-4`}>
-                                <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
-                                  <div className="flex items-start gap-3">
-                                    {isCouplingMode && (
-                                      <div className="pt-1">
-                                        <input 
-                                          type="checkbox" 
-                                          className="w-5 h-5 accent-orange-600"
-                                          checked={coupledTripIds.includes(trip.id)}
-                                          onChange={(e) => {
-                                            if (e.target.checked) setCoupledTripIds(prev => [...prev, trip.id]);
-                                            else setCoupledTripIds(prev => prev.filter(id => id !== trip.id));
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-                                    <div>
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-sm font-semibold uppercase text-slate-400">
-                                          {trip.tripType || 'dropoff'}
-                                        </span>
-                                      </div>
-                                      <p className="text-sm font-medium">User: <span className="font-normal">{allUsers.find(u => u.userId === trip.userId)?.name || 'Unknown'}</span></p>
-                                      <p className="text-sm font-medium">From: <span className="font-normal">{trip.pickupAddress}</span></p>
-                                      {trip.tripType === 'return' ? (
-                                        <p className="text-sm font-medium">Destinations: <span className="font-normal">{trip.returnLocations}</span></p>
-                                      ) : (
-                                        <p className="text-sm font-medium">To: <span className="font-normal">{trip.dropoffAddress}</span></p>
-                                      )}
-                                      {trip.requestedDate && (
-                                        <p className="text-sm font-medium mt-1">Requested Date: <span className="font-normal">{trip.requestedDate}</span></p>
-                                      )}
-                                      {trip.requestedStartTime && (
-                                        <p className="text-sm font-medium mt-1">Requested Start: <span className="font-normal">{trip.requestedStartTime}</span></p>
-                                      )}
-                                      {trip.estimatedDestinationTime && (
-                                        <p className="text-sm font-medium">Total Est. Time: <span className="font-normal">{trip.estimatedDestinationTime}</span></p>
-                                      )}
-                                      {trip.passengerCount && (
-                                        <p className="text-sm font-medium">Passengers: <span className="font-normal">{trip.passengerCount}</span></p>
-                                      )}
-                                      {trip.remarks && (
-                                        <p className="text-sm font-medium mt-1">Remarks: <span className="italic font-normal text-slate-400">"{trip.remarks}"</span></p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-xs text-slate-400">Time: {new Date(trip.pickupTime).toLocaleString()}</p>
-                        </div>
-                      </div>
-                      
-                      {!isCouplingMode && allocatingTrip === trip.id ? (
-                        <div className="bg-[#1e293b]/50 p-4 border border-[#1f2937] rounded-lg mt-2">
-                          <h4 className="text-sm font-semibold mb-3">Allocate Trip</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                            <div>
-                              {renderDriverSelect()}
-                            </div>
-                            <div>
-                              {renderVehicleSelect()}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleAllocate(trip.id)} disabled={!selectedDriver || !selectedVehicle}>Confirm Dispatch</Button>
-                            <Button size="sm" variant="outline" onClick={() => setAllocatingTrip(null)}>Cancel</Button>
-                          </div>
-                        </div>
-                      ) : !isCouplingMode && (
-                        <div className="flex flex-wrap gap-2">
-                          <Button onClick={() => setAllocatingTrip(trip.id)} size="sm">Allocate Driver</Button>
-                          <Button onClick={() => {
-                            const nt = prompt("Amend Time (HH:MM) - 24 hour format", trip.requestedStartTime || "08:00");
-                            if (nt) handleAmendTrip(trip.id, nt);
-                          }} size="sm" variant="outline">Amend Time</Button>
-                          <Button onClick={() => handleRejectTrip(trip.id)} size="sm" variant="destructive">Reject</Button>
-                        </div>
-                      )}
-                    </div>
+                              <AdminPendingTripItem
+                                key={trip.id}
+                                trip={trip}
+                                allUsers={allUsers}
+                                isCouplingMode={isCouplingMode}
+                                coupledTripIds={coupledTripIds}
+                                setCoupledTripIds={setCoupledTripIds}
+                                allocatingTrip={allocatingTrip}
+                                setAllocatingTrip={setAllocatingTrip}
+                                handleAllocate={handleAllocate}
+                                handleAmendTrip={handleAmendTrip}
+                                handleRejectTrip={handleRejectTrip}
+                                renderDriverSelect={renderDriverSelect}
+                                renderVehicleSelect={renderVehicleSelect}
+                                selectedDriver={selectedDriver}
+                                selectedVehicle={selectedVehicle}
+                              />
                             ))}
                           </div>
                         </div>
@@ -804,43 +1033,14 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="space-y-4">
-                            {groups[date].map(trip => {
-                              const driver = drivers.find(d => d.userId === trip.driverId);
-                              const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-                              return (
-                                <div key={trip.id} className="border border-[#1f2937] rounded-lg p-4 flex flex-col gap-2 text-sm">
-                                  <div className="flex justify-between items-start">
-                                    <div>
-                                      <p><span className="font-semibold text-slate-100">{driver?.name || 'Unknown'}</span> is on trip</p>
-                                      <p className="text-slate-400 mt-1">{trip.pickupAddress} &rarr; {destination}</p>
-                                      {trip.requestedDate && (
-                                        <p className="text-xs text-slate-500 mt-1">Date: <span className="font-medium text-slate-300">{trip.requestedDate}</span></p>
-                                      )}
-                                      <div className="flex gap-2 items-center mt-1">
-                                        {trip.isJointTrip && (
-                                          <span className="text-xs text-[#ff9900] bg-[#ff9900]/20 uppercase tracking-widest px-1.5 py-0.5 rounded">JOINT</span>
-                                        )}
-                                        {trip.tripType && (
-                                          <span className="text-xs text-slate-400 uppercase tracking-widest block">{trip.tripType}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <span className={`px-2 py-0.5 rounded-full font-medium flex items-center gap-2 ${trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 animate-pulse' : 'bg-blue-900/30 text-blue-400 animate-pulse'}`}>
-                                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-                                      {trip.status.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                  {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
-                                    <div className="mt-2 p-2 bg-red-900/30 text-red-400 border border-red-900/50 rounded text-xs font-semibold flex flex-col gap-2">
-                                      <span>⚠️ Driver ended this trip &gt;10 mins ago, but passenger has not confirmed End Odometer.</span>
-                                      <Button size="sm" variant="destructive" className="w-fit" onClick={() => handleForceCompleteTrip(trip.id)}>
-                                        Force Complete Trip
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
+                            {groups[date].map(trip => (
+                              <AdminActiveTripItem 
+                                key={trip.id} 
+                                trip={trip} 
+                                drivers={drivers} 
+                                handleForceCompleteTrip={handleForceCompleteTrip} 
+                              />
+                            ))}
                           </div>
                         </div>
                       );
