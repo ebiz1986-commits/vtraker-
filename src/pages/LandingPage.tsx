@@ -83,10 +83,10 @@ export default function LandingPage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen bg-[#0a0f1c] text-[#ff9900]">Loading...</div>;
+  if (loading) return <div className="flex justify-center items-center h-screen bg-transparent text-[#FF8C00]">Loading...</div>;
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[linear-gradient(135deg,#0F1419_0%,#1A1F26_100%)] text-[#E0E0E0] relative overflow-hidden">
+    <div className="flex h-screen items-center justify-center bg-transparent text-[#E0E0E0] relative overflow-hidden">
       <div
         className="w-full max-w-md z-10 mx-4 animate-in fade-in zoom-in duration-500"
       >

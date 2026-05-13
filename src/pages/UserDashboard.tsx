@@ -45,7 +45,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
             <div className="absolute left-3.5 top-2.5 bottom-2.5 w-px border-l-2 border-dashed border-slate-700/50"></div>
             
             <div className="flex items-start gap-4 mb-4 relative z-10">
-              <div className="w-3 h-3 rounded-full border-2 border-green-500 bg-[#0a0f1c] mt-1 shrink-0" />
+              <div className="w-3 h-3 rounded-full border-2 border-green-500 bg-[#0F1419] mt-1 shrink-0" />
               <p className="text-sm font-medium text-slate-200">
                 {trip.pickupAddress}
               </p>
@@ -169,7 +169,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                   <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
                   <input 
                     type="number" 
-                    className="input-field block font-mono bg-[rgba(0,0,0,0.2)]"
+                    className="input-field font-mono"
                     placeholder="e.g. 15020"
                     value={userOdometerValues[trip.id] || ''} 
                     onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
@@ -206,7 +206,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                   <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
                   <input 
                     type="number" 
-                    className="input-field block font-mono bg-[rgba(0,0,0,0.2)]"
+                    className="input-field font-mono"
                     placeholder="e.g. 15045"
                     value={userOdometerValues[trip.id] || ''} 
                     onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
@@ -447,7 +447,7 @@ export default function UserDashboard() {
                 <select
                   value={tripType}
                   onChange={(e) => setTripType(e.target.value as 'dropoff' | 'return')}
-                  className="input-field pl-11 appearance-none"
+                  className="input-field pl-icon appearance-none"
                 >
                   <option value="dropoff">Local Trip</option>
                   <option value="return">Return Trip / Tour</option>
@@ -469,7 +469,7 @@ export default function UserDashboard() {
                   required
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
-                  className="input-field pl-11"
+                  className="input-field pl-icon"
                   placeholder="Enter pickup location"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer hover:text-slate-300">
@@ -490,7 +490,7 @@ export default function UserDashboard() {
                     required
                     value={dropoffAddress}
                     onChange={(e) => setDropoffAddress(e.target.value)}
-                    className="input-field pl-11"
+                    className="input-field pl-icon"
                     placeholder="Enter dropoff location"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer hover:text-slate-300">
@@ -509,7 +509,7 @@ export default function UserDashboard() {
                     required
                     value={returnLocations}
                     onChange={(e) => setReturnLocations(e.target.value)}
-                    className="input-field pl-11"
+                    className="input-field pl-icon"
                     placeholder="Enter intended route / destinations"
                     rows={2}
                   />
