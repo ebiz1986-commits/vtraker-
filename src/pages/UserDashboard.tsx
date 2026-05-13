@@ -145,14 +145,14 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
           {/* Action buttons based on status */}
           <div className="flex flex-col gap-3 mt-4 shrink-0">
             {trip.status === 'pending' && (
-              <Button variant="outline" size="sm" onClick={() => handleCancelTrip(trip.id)} className="w-full text-red-400 hover:text-red-300 hover:bg-red-950/30 border-red-900/50 py-6 text-sm font-semibold rounded-xl transition-all">
+              <Button variant="outline" size="sm" onClick={() => handleCancelTrip(trip.id)} className="w-full text-red-400 hover:text-red-300 hover:bg-red-950/30 border-red-900/50 py-3 h-auto whitespace-normal text-sm font-semibold rounded-xl transition-all">
                 Cancel Booking
               </Button>
             )}
             
             {trip.status === 'allocated' && trip.driverHasSmartphone === false && (
               <Button 
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-6 text-sm rounded-xl shadow-lg ring-1 ring-orange-500/50 transition-all" 
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-orange-500/50 transition-all" 
                 onClick={() => handleUpdateStatus(trip.id, trip.status)}
               >
                 Driver Arrived - Start Trip
@@ -187,7 +187,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                 </div>
                 {trip.driverHasSmartphone === false && (
                   <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 text-sm rounded-xl shadow-lg ring-1 ring-green-500/50 transition-all mt-2" 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-green-500/50 transition-all mt-2" 
                     onClick={() => handleUpdateStatus(trip.id, trip.status)}
                   >
                     End Trip (Drop-off)

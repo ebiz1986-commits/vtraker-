@@ -74,16 +74,18 @@ const AdminPendingTripItem = ({
                <span className="text-[10px] text-slate-400 font-medium ml-1">User: {allUsers.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
              </div>
              
-             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
-                <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
-                  <span className="truncate">{trip.pickupAddress}</span>
+             <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mt-1.5">
+                <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug">
+                  <span className="break-words">{trip.pickupAddress}</span>
                 </div>
                 
-                <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
+                <div className="hidden sm:block mt-0.5">
+                  <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                </div>
                 
-                <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
-                  <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
-                  <span className="truncate">{destination}</span>
+                <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug flex items-start">
+                  <span className="sm:hidden text-slate-500 font-medium mr-1.5 mt-px text-xs uppercase tracking-wider">To</span>
+                  <span className="break-words">{destination}</span>
                 </div>
              </div>
           </div>
@@ -157,8 +159,8 @@ const AdminPendingTripItem = ({
                    <div>{renderVehicleSelect()}</div>
                  </div>
                  <div className="flex flex-col sm:flex-row gap-3">
-                   <Button className="flex-1 bg-blue-600 hover:bg-blue-700 py-6 text-white font-semibold text-lg" onClick={() => handleAllocate(trip.id)} disabled={!selectedDriver || !selectedVehicle}>Confirm Dispatch</Button>
-                   <Button variant="outline" className="py-6 sm:w-1/3" onClick={() => setAllocatingTrip(null)}>Cancel</Button>
+                   <Button className="flex-1 bg-blue-600 hover:bg-blue-700 h-auto py-3 px-4 text-white font-semibold text-sm w-full whitespace-normal" onClick={() => handleAllocate(trip.id)} disabled={!selectedDriver || !selectedVehicle}>Confirm Dispatch</Button>
+                   <Button variant="outline" className="h-auto py-3 px-4 sm:w-1/3 text-sm whitespace-normal" onClick={() => setAllocatingTrip(null)}>Cancel</Button>
                  </div>
               </div>
             ) : !isCouplingMode && (
@@ -209,14 +211,16 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) =>
             <span className="text-[10px] text-slate-400 font-medium ml-1">Driver: {driver?.name || 'Unknown'}</span>
           </div>
           
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
-            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
-              <span className="truncate">{trip.pickupAddress}</span>
+          <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mt-1.5">
+            <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug">
+              <span className="break-words">{trip.pickupAddress}</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
-            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-md">
-              <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
-              <span className="truncate">{destination}</span>
+            <div className="hidden sm:block mt-0.5">
+              <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug flex items-start">
+              <span className="sm:hidden text-slate-500 font-medium mr-1.5 mt-px text-xs uppercase tracking-wider">To</span>
+              <span className="break-words">{destination}</span>
             </div>
           </div>
         </div>
@@ -644,7 +648,7 @@ export default function AdminDashboard() {
 
   const renderDriverSelect = () => (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <label className="text-xs font-medium text-slate-400">Select Driver</label>
         <div className="flex gap-1 text-[10px]">
           <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'all' ? 'bg-[#ff9900] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('all')}>All</button>
@@ -653,7 +657,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       <select 
-        className="w-full text-sm p-2 border border-[#1f2937] rounded focus:ring-2 focus:ring-[#ff9900] outline-none bg-[#0a0f1c] text-slate-100"
+        className="input-field py-2 px-3 w-full"
         value={selectedDriver}
         onChange={e => setSelectedDriver(e.target.value)}
       >
@@ -669,7 +673,7 @@ export default function AdminDashboard() {
 
   const renderVehicleSelect = () => (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <label className="text-xs font-medium text-slate-400">Select Vehicle</label>
         <div className="flex gap-1 text-[10px]">
           <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'all' ? 'bg-[#ff9900] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('all')}>All</button>
@@ -678,7 +682,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       <select 
-        className="w-full text-sm p-2 border border-[#1f2937] rounded focus:ring-2 focus:ring-[#ff9900] outline-none bg-[#0a0f1c] text-slate-100"
+        className="input-field py-2 px-3 w-full"
         value={selectedVehicle}
         onChange={e => setSelectedVehicle(e.target.value)}
       >
@@ -859,9 +863,9 @@ export default function AdminDashboard() {
                     <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-[#1f2937] transition-all hover:bg-[#1e293b]/50 -mx-2 px-2 rounded-md">
                       <div className="flex flex-col">
                         <span className="font-semibold text-xs text-slate-700">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span className="text-[10px] font-mono text-slate-500 bg-[#0f172a] border border-[#1f2937] px-1 py-0.5 rounded truncate max-w-[130px] sm:max-w-xs">{u.email}</span>
-                          <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-900/20 px-1.5 py-0.5 rounded capitalize">{u.role}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-1">
+                          <span className="text-[10px] font-mono text-slate-500 bg-[#0f172a] border border-[#1f2937] px-1.5 py-0.5 rounded break-all leading-tight">{u.email}</span>
+                          <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-900/20 px-1.5 py-0.5 rounded capitalize w-fit">{u.role}</span>
                         </div>
                       </div>
                       <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0">

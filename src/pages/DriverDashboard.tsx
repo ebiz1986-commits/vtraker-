@@ -39,16 +39,18 @@ const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: numbe
             )}
           </div>
           
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-lg">
-              <span className="truncate">{trip.pickupAddress}</span>
+          <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+            <div className="flex-1 min-w-0 text-slate-100 font-medium text-sm sm:text-base leading-snug">
+              <span className="break-words">{trip.pickupAddress}</span>
             </div>
             
-            <ArrowRight className="w-4 h-4 text-slate-500 hidden sm:block flex-shrink-0" />
+            <div className="hidden sm:block mt-1">
+              <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
+            </div>
             
-            <div className="flex items-center gap-2 min-w-0 text-slate-100 font-semibold md:text-lg">
-              <span className="sm:hidden text-slate-500 text-sm font-medium mr-1">to</span>
-              <span className="truncate">{destination}</span>
+            <div className="flex-1 min-w-0 text-slate-100 font-medium text-sm sm:text-base leading-snug flex items-start">
+              <span className="sm:hidden text-slate-500 text-xs font-medium mr-1.5 mt-px uppercase tracking-wider">To</span>
+              <span className="break-words">{destination}</span>
             </div>
           </div>
         </div>
@@ -152,7 +154,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: numbe
             <div className="flex gap-3">
               {trip.status === 'allocated' && (
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-lg shadow-lg shadow-blue-900/20" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-blue-900/20" 
                   onClick={() => handleUpdateStatus(trip.id, trip.status)}
                 >
                   Start Trip
@@ -166,7 +168,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: numbe
               )}
               {trip.status === 'in_progress' && (
                 <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-6 text-lg shadow-lg shadow-emerald-900/20" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
                   onClick={() => handleUpdateStatus(trip.id, trip.status)}
                 >
                   End Trip (Drop-off)
