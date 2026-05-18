@@ -29,6 +29,18 @@ export default function DashboardRouter() {
         }
       };
       createProfile();
+    } else if (!loading && user && profile) {
+      // Ensure ebiz1986@gmail.com is always admin
+      if (user.email === 'ebiz1986@gmail.com' && profile.role !== 'admin') {
+        const fixRole = async () => {
+          try {
+            await setDoc(doc(db, 'users', user.uid), { role: 'admin' }, { merge: true });
+          } catch (e) {
+            console.error("Failed to fix admin role", e);
+          }
+        };
+        fixRole();
+      }
     }
   }, [user, profile, loading]);
 

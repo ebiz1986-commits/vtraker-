@@ -45,13 +45,18 @@ export default function Layout({ children, title }: { children: React.ReactNode,
     <div className={`min-h-screen flex flex-col font-sans relative bg-transparent text-[#E0E0E0]'}`}>
       <div className="relative z-10 flex flex-col min-h-screen w-full">
         <header className={`bg-[rgba(255,255,255,0.05)] backdrop-blur-[10px] border-[rgba(255,255,255,0.1)] border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 leading-none">
               <span className={`text-[1.35rem] font-medium tracking-[0.25em] uppercase ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>Sanken</span>
             </div>
             <p className="text-[10px] uppercase tracking-[0.3em] font-medium mt-1 text-[#f97316]">Overseas</p>
           </div>
+          {title && (
+            <div className={`hidden sm:flex border-l border-[rgba(255,255,255,0.1)] pl-6 items-center`}>
+              <h1 className={`text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{title}</h1>
+            </div>
+          )}
         </div>
         <div className={`flex items-center gap-2 sm:gap-4 text-[#E0E0E0] relative z-10`}>
           {isInstallable && (

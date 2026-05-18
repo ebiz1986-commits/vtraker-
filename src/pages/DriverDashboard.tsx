@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
 
-const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: number, handleUpdateStatus: (id: string, status: string) => void }) => {
+const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   
@@ -18,56 +18,69 @@ const TripItem = ({ trip, index, handleUpdateStatus }: { trip: any, index: numbe
     <div style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
       {/* Clickable Header */}
       <div 
-        className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
+        className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
-              ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-purple-900/30 text-purple-400 border-purple-900/50'}`}>
-              {trip.status.replace('_', ' ')}
-            </span>
-            {trip.isJointTrip && (
-              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
-                JOINT
+        <div className="flex items-start justify-between w-full gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
+                ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-purple-900/30 text-purple-400 border-purple-900/50'}`}>
+                <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                </span>
+                {trip.status.replace('_', ' ')}
               </span>
-            )}
-            {trip.tripType && (
-              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                {trip.tripType}
-              </span>
-            )}
+              {trip.isJointTrip && (
+                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                  </span>
+                  JOINT
+                </span>
+              )}
+              {trip.tripType && (
+                <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                  {trip.tripType}
+                </span>
+              )}
+            </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
-            <div className="flex-1 min-w-0 text-slate-100 font-medium text-sm sm:text-base leading-snug">
-              <span className="break-words">{trip.pickupAddress}</span>
+
+          <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
+            <div className="flex flex-col items-end justify-center">
+              <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
+                <Clock className="w-3 h-3" /> Time
+              </p>
+              <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
             </div>
-            
-            <div className="hidden sm:block mt-1">
-              <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
-            </div>
-            
-            <div className="flex-1 min-w-0 text-slate-100 font-medium text-sm sm:text-base leading-snug flex items-start">
-              <span className="sm:hidden text-slate-500 text-xs font-medium mr-1.5 mt-px uppercase tracking-wider">To</span>
-              <span className="break-words">{destination}</span>
+            <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+              <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-right flex-shrink-0">
-          <div className="hidden sm:block">
-            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
-              <Clock className="w-3 h-3" /> Time
-            </p>
-            <p className="font-semibold text-slate-200">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
-          </div>
-          <div className="sm:hidden">
-            <p className="font-semibold text-slate-200 text-sm">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
-          </div>
-          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
-            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
-          </div>
+        <div className="flex flex-col gap-2">
+           <div>
+             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+               USER: <span className="text-blue-300 font-bold ml-1">{trip.passengerName || 'Unknown'}</span>
+             </span>
+           </div>
+           
+           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+             <span className="text-slate-100 font-medium text-sm sm:text-base leading-snug break-words">
+               {trip.pickupAddress}
+             </span>
+             <div className="hidden sm:flex text-slate-500 items-center justify-center">
+               <ArrowRight className="w-4 h-4 flex-shrink-0" />
+             </div>
+             <div className="flex items-start sm:items-center text-slate-100 font-medium text-sm sm:text-base leading-snug break-words">
+               <span className="sm:hidden text-slate-500 text-[10px] font-bold mr-1.5 mt-0.5 uppercase tracking-wider">TO</span>
+               <span>{destination}</span>
+             </div>
+           </div>
         </div>
       </div>
 

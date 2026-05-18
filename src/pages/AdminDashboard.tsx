@@ -37,7 +37,7 @@ const AdminPendingTripItem = ({
   return (
     <div className={`glass-card ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/50 bg-orange-500/20 shadow-[0_0_15px_rgba(255,140,0,0.3)]' : ''} mb-4 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden`}>
       <div 
-        className="p-4 sm:p-5 flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group cursor-pointer"
+        className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => {
            if (isCouplingMode) {
              if (coupledTripIds.includes(trip.id)) setCoupledTripIds(coupledTripIds.filter((id: string) => id !== trip.id));
@@ -47,63 +47,79 @@ const AdminPendingTripItem = ({
            }
         }}
       >
-        <div className="flex-1 min-w-0 flex items-start gap-3">
-          {isCouplingMode && (
-            <div className="pt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-              <input 
-                type="checkbox" 
-                className="w-5 h-5 accent-orange-600 cursor-pointer"
-                checked={coupledTripIds.includes(trip.id)}
-                onChange={(e) => {
-                  if (e.target.checked) setCoupledTripIds([...coupledTripIds, trip.id]);
-                  else setCoupledTripIds(coupledTripIds.filter((id: string) => id !== trip.id));
-                }}
-              />
+        <div className="flex items-start justify-between w-full gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            {isCouplingMode && (
+              <div className="pt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                <input 
+                  type="checkbox" 
+                  className="w-5 h-5 accent-orange-600 cursor-pointer"
+                  checked={coupledTripIds.includes(trip.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) setCoupledTripIds([...coupledTripIds, trip.id]);
+                    else setCoupledTripIds(coupledTripIds.filter((id: string) => id !== trip.id));
+                  }}
+                />
+              </div>
+            )}
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-yellow-900/30 text-yellow-500 border-yellow-900/50`}>
+                 <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                 </span>
+                 {trip.status.replace('_', ' ')}
+              </span>
+              {trip.isJointTrip && (
+                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                  </span>
+                  JOINT
+                </span>
+              )}
+              <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                {trip.tripType || 'dropoff'}
+              </span>
             </div>
-          )}
-          
-          <div className="flex-1 min-w-0">
-             <div className="flex flex-wrap items-center gap-2 mb-2">
-               <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-yellow-900/30 text-yellow-400 border-yellow-900/50`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-                  {trip.status.replace('_', ' ')}
-               </span>
-               <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                 {trip.tripType || 'dropoff'}
-               </span>
-               <span className="text-[10px] text-slate-400 font-medium ml-1">User: {allUsers.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
-             </div>
-             
-             <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mt-1.5">
-                <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug">
-                  <span className="break-words">{trip.pickupAddress}</span>
-                </div>
-                
-                <div className="hidden sm:block mt-0.5">
-                  <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                </div>
-                
-                <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug flex items-start">
-                  <span className="sm:hidden text-slate-500 font-medium mr-1.5 mt-px text-xs uppercase tracking-wider">To</span>
-                  <span className="break-words">{destination}</span>
-                </div>
-             </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
+            <div className="flex flex-col items-end justify-center">
+              <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
+                <Clock className="w-3 h-3" /> Req. Time
+              </p>
+              <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
+            </div>
+            <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+              <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-right flex-shrink-0">
-          <div className="hidden sm:block">
-            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
-              <Clock className="w-3 h-3" /> Req. Time
-            </p>
-            <p className="font-semibold text-slate-200">{trip.requestedStartTime || 'N/A'}</p>
-          </div>
-          <div className="sm:hidden">
-            <p className="font-semibold text-slate-200 text-sm">{trip.requestedStartTime || 'N/A'}</p>
-          </div>
-          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
-            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
-          </div>
+        <div className="flex flex-col gap-2 pl-0 sm:pl-8">
+           <div>
+             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+               USER: <span className="text-blue-300 font-bold ml-1">{allUsers.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
+             </span>
+           </div>
+           
+           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <span className="text-slate-200 font-medium text-sm leading-snug break-words">
+                {trip.pickupAddress}
+              </span>
+              
+              <div className="hidden sm:flex text-slate-500 items-center justify-center">
+                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
+              </div>
+              
+              <div className="flex items-start sm:items-center text-slate-200 font-medium text-sm leading-snug break-words">
+                <span className="sm:hidden text-slate-500 text-[10px] font-bold mr-1.5 mt-0.5 uppercase tracking-wider">TO</span>
+                <span>{destination}</span>
+              </div>
+           </div>
         </div>
       </div>
 
@@ -179,7 +195,7 @@ const AdminPendingTripItem = ({
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => d.userId === trip.driverId);
@@ -187,54 +203,73 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip }: any) =>
   return (
     <div className="glass-card mb-4 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
       <div 
-        className="p-4 sm:p-5 cursor-pointer flex justify-between items-center gap-4 transition-colors hover:bg-slate-800/30 group"
+        className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
-              ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
-                trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-amber-900/30 text-amber-500 border-amber-900/50'}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
-              {trip.status.replace('_', ' ')}
-            </span>
-            {trip.isJointTrip && (
-              <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20">
-                JOINT
+        <div className="flex items-start justify-between w-full gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
+                ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
+                  trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-amber-900/30 text-amber-500 border-amber-900/50'}`}>
+                 <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                 </span>
+                 {trip.status.replace('_', ' ')}
               </span>
-            )}
-            {trip.tripType && (
-              <span className="text-xs font-medium text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                {trip.tripType}
+              {trip.isJointTrip && (
+                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                  </span>
+                  JOINT
+                </span>
+              )}
+              <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
+                {trip.tripType || 'dropoff'}
               </span>
-            )}
-            <span className="text-[10px] text-slate-400 font-medium ml-1">Driver: {driver?.name || 'Unknown'}</span>
+            </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 mt-1.5">
-            <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug">
-              <span className="break-words">{trip.pickupAddress}</span>
+
+          <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
+            <div className="flex flex-col items-end justify-center">
+              <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
+                <Clock className="w-3 h-3" /> Req. Time
+              </p>
+              <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
             </div>
-            <div className="hidden sm:block mt-0.5">
-              <ArrowRight className="w-4 h-4 text-slate-500 flex-shrink-0" />
-            </div>
-            <div className="flex-1 min-w-0 text-slate-200 font-medium text-sm leading-snug flex items-start">
-              <span className="sm:hidden text-slate-500 font-medium mr-1.5 mt-px text-xs uppercase tracking-wider">To</span>
-              <span className="break-words">{destination}</span>
+            <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
+              <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-right flex-shrink-0">
-          <div className="hidden sm:block">
-            <p className="text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-end gap-1 uppercase tracking-wider">
-              <Clock className="w-3 h-3" /> Date
-            </p>
-            <p className="font-semibold text-slate-200">{trip.requestedDate || 'N/A'}</p>
-          </div>
-          <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
-            <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
-          </div>
+        <div className="flex flex-col gap-2">
+           <div className="flex flex-col sm:flex-row gap-y-1 gap-x-4">
+             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+               USER: <span className="text-blue-300 font-bold ml-1">{allUsers?.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
+             </span>
+             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+               DRIVER: <span className="text-emerald-300 font-bold ml-1">{driver?.name || 'Unknown'}</span>
+             </span>
+           </div>
+           
+           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <span className="text-slate-200 font-medium text-sm leading-snug break-words">
+                {trip.pickupAddress}
+              </span>
+              
+              <div className="hidden sm:flex text-slate-500 items-center justify-center">
+                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
+              </div>
+              
+              <div className="flex items-start sm:items-center text-slate-200 font-medium text-sm leading-snug break-words">
+                <span className="sm:hidden text-slate-500 text-[10px] font-bold mr-1.5 mt-0.5 uppercase tracking-wider">TO</span>
+                <span>{destination}</span>
+              </div>
+           </div>
         </div>
       </div>
 
@@ -697,16 +732,33 @@ export default function AdminDashboard() {
   );
 
   const handleClearData = async () => {
-    if (!window.confirm("Are you sure you want to clear ALL trips and timesheets? This action cannot be undone.")) return;
+    const confirmMessage = "Are you sure you want to WIPE ALL TRIPS and TIMESHEETS?\nThis action cannot be undone, and is usually done to reset the system to go live.";
+    const userInput = prompt(`Type "CONFIRM" to confirm clearing all operations data (trips, timesheets)`);
+    if (userInput?.toUpperCase() !== 'CONFIRM') return;
     try {
       const tripsPromise = trips.map(t => deleteDoc(doc(db, 'trips', t.id)).catch(e => console.error("Error deleting trip", e)));
       const timesheetsSnap = await getDocs(collection(db, 'timesheets')).catch(e => { console.log(e); return {docs: []}; });
       const timesheetsPromise = timesheetsSnap.docs.map(d => deleteDoc(doc(db, 'timesheets', d.id)).catch(e => console.error(e)));
       await Promise.all([...tripsPromise, ...timesheetsPromise]);
-      toast.success("Testing data cleared successfully.");
+      toast.success("Testing data cleared successfully. System ready.");
     } catch (error) {
       console.error(error);
       toast.error("Failed to clear some data. Check console.");
+    }
+  };
+
+  const handleFullWipe = async () => {
+    if (prompt(`DANGER: Type "WIPE EVERYTHING" to delete trips, timesheets, vehicles, and reset all drivers.`) !== "WIPE EVERYTHING") return;
+    try {
+      const tripsPromise = trips.map(t => deleteDoc(doc(db, 'trips', t.id)));
+      const timesheetsSnap = await getDocs(collection(db, 'timesheets'));
+      const timesheetsPromise = timesheetsSnap.docs.map(d => deleteDoc(doc(db, 'timesheets', d.id)));
+      const vehiclesPromise = vehicles.map(v => deleteDoc(doc(db, 'vehicles', v.id)));
+      await Promise.all([...tripsPromise, ...timesheetsPromise, ...vehiclesPromise]);
+      toast.success("All data wiped. Ready to bring LIVE.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error during full wipe.");
     }
   };
 
@@ -723,8 +775,11 @@ export default function AdminDashboard() {
               <Button onClick={handleExportCSV} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
                 Export 7-Day Travel Record
               </Button>
-              <Button onClick={handleClearData} className="w-full bg-red-600 hover:bg-red-700 text-white" variant="destructive">
-                Clear Testing Data
+              <Button onClick={handleClearData} className="w-full bg-orange-600 hover:bg-orange-700 text-white" variant="destructive">
+                Reset Operations Data
+              </Button>
+              <Button onClick={handleFullWipe} className="w-full bg-red-600 hover:bg-red-700 text-white" variant="destructive">
+                WIPE EVERYTHING (Go Live)
               </Button>
             </CardContent>
           </Card>
@@ -767,9 +822,27 @@ export default function AdminDashboard() {
                 <h4 className="text-sm font-semibold mb-2">Total Vehicles ({vehicles.length})</h4>
                 <ul className="text-sm divide-y divide-zinc-100">
                   {vehicles.map(v => (
-                    <li key={v.id} className="py-2 flex justify-between">
+                    <li key={v.id} className="py-2 flex justify-between items-center group">
                       <span className="capitalize">{v.type} ({v.registrationNumber})</span>
-                      <span className="text-slate-400 capitalize">{v.status}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 capitalize">{v.status}</span>
+                        <button 
+                          type="button"
+                          onClick={async () => {
+                            if(window.confirm(`Are you sure you want to delete ${v.registrationNumber}?`)) {
+                              try {
+                                await deleteDoc(doc(db, 'vehicles', v.id));
+                                toast.success("Vehicle deleted");
+                              } catch(error) {
+                                handleFirestoreError(error, OperationType.DELETE, `vehicles/${v.id}`);
+                              }
+                            }
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-400 px-2 py-1 rounded bg-red-500/10 transition-opacity"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -1043,6 +1116,7 @@ export default function AdminDashboard() {
                                 trip={trip} 
                                 drivers={drivers} 
                                 handleForceCompleteTrip={handleForceCompleteTrip} 
+                                allUsers={allUsers}
                               />
                             ))}
                           </div>

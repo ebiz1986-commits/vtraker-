@@ -30,9 +30,26 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
       >
         {/* Header: Status and ID */}
         <div className="flex justify-between items-center mb-5">
-          <span className={`status-badge status-${trip.status}`}>
-            {formattedStatus}
-          </span>
+          <div className="flex gap-2 items-center">
+            <span className={`status-badge status-${trip.status}`}>
+              {['pending', 'allocated', 'driver_started', 'in_progress'].includes(trip.status) && (
+                <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                </span>
+              )}
+              {formattedStatus}
+            </span>
+            {trip.isJointTrip && (
+              <span className="text-[10px] font-bold text-[#ff9900] bg-[#ff9900]/10 px-2 py-1 rounded-md uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                </span>
+                JOINT
+              </span>
+            )}
+          </div>
           <p className="text-xs font-medium text-[#A0A0A0]">
             Trip ID: {displayId}
           </p>
