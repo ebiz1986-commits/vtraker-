@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation } from 'lucide-react';
 import { TripItemSkeleton } from '../components/ui/Skeleton';
+import { TripMap } from '../components/TripMap';
 
 const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdometerValues, handleCancelTrip, handleConfirmOdometer, handleUpdateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
@@ -245,6 +246,10 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
               </div>
             )}
           </div>
+          
+          {['allocated', 'driver_started', 'in_progress'].includes(trip.status) && (
+            <TripMap trip={trip} isDriver={false} />
+          )}
         </div>
       </div>
     </motion.div>
@@ -440,8 +445,8 @@ export default function UserDashboard() {
                   onChange={(e) => setTripType(e.target.value as 'dropoff' | 'return')}
                   className="input-field pl-icon appearance-none bg-[#0c1222] text-white cursor-pointer"
                 >
-                  <option value="dropoff" className="bg-[#0c1222] text-white font-medium">Local Trip</option>
-                  <option value="return" className="bg-[#0c1222] text-white font-medium">Return Trip / Tour</option>
+                  <option value="dropoff" className="bg-[#0c1222] text-white font-medium">Drop down trip</option>
+                  <option value="return" className="bg-[#0c1222] text-white font-medium">Round trip</option>
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                   <ChevronDown className="w-5 h-5" />
@@ -508,24 +513,7 @@ export default function UserDashboard() {
               </div>
             )}
             
-            <div>
-              <label className="label">Expected Distance (KM)</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                  <Navigation className="w-5 h-5" />
-                </div>
-                <input 
-                  type="number" 
-                  min="1"
-                  required
-                  value={expectedDistance}
-                  onChange={(e) => setExpectedDistance(e.target.value)}
-                  className="input-field pl-icon"
-                  placeholder="Enter expected distance in KM (e.g., 15)"
-                />
-              </div>
-            </div>
-            
+
             <div>
                <label className="label">Date & Start Time</label>
                <div className="flex gap-0 border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden focus-within:border-[#FF8C00]/50 transition-colors bg-[rgba(255,255,255,0.03)]">

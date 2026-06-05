@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { sendPushNotification, playNotificationSound } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info } from 'lucide-react';
 import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
+import { TripMap } from '../components/TripMap';
 
 const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
@@ -96,7 +97,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
               )}
               {trip.tripType && (
                 <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                  {trip.tripType}
+                  {trip.tripType === 'dropoff' ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
                 </span>
               )}
             </div>
@@ -309,6 +310,10 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
               )}
             </div>
           </div>
+          
+          {['allocated', 'driver_started', 'in_progress', 'driver_ended'].includes(trip.status) && (
+            <TripMap trip={trip} isDriver={true} />
+          )}
         </div>
       </div>
     </motion.div>

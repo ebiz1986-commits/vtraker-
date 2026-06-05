@@ -97,7 +97,7 @@ const AdminPendingTripItem = ({
                 </span>
               )}
               <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                {trip.tripType || 'dropoff'}
+                {(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
               </span>
             </div>
           </div>
@@ -349,7 +349,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
                 </span>
               )}
               <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                {trip.tripType || 'dropoff'}
+                {(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
               </span>
             </div>
           </div>
@@ -600,7 +600,7 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
               {displayId}
             </span>
             <span className="text-[10px] font-semibold text-slate-400 bg-slate-800/40 px-1.5 py-0.5 rounded capitalize">
-              {trip.tripType || 'dropoff'}
+              {(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
             </span>
           </div>
 
@@ -979,7 +979,7 @@ export default function AdminDashboard() {
         trip.status,
         tripDate,
         `"${trip.requestedDate || ''}"`,
-        `"${trip.tripType || 'dropoff'}"`,
+        `"${(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}"`,
         `"${user.name || ''}"`,
         `"${user.email || ''}"`,
         `"${driver.name || ''}"`,
@@ -1357,12 +1357,12 @@ export default function AdminDashboard() {
 
         {/* Right Column: Dispatch */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-amber-500/30 bg-amber-950/5">
-            <CardHeader className="bg-amber-500/10 rounded-t-lg border-b border-amber-500/20 flex flex-col gap-3">
-              <CardTitle className="text-amber-300 flex justify-between items-center font-bold tracking-wide">
+          <Card className="border-sky-500/20 bg-sky-950/5">
+            <CardHeader className="bg-sky-500/10 rounded-t-lg border-b border-sky-500/20 flex flex-col gap-3">
+              <CardTitle className="text-sky-300 flex justify-between items-center font-bold tracking-wide">
                 Pending Bookings
                 <div className="flex gap-2 items-center">
-                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/35 text-xs px-2.5 py-1 rounded-full font-bold">{pendingTrips.length}</span>
+                  <span className="bg-sky-500/20 text-sky-300 border border-sky-500/35 text-xs px-2.5 py-1 rounded-full font-bold">{pendingTrips.length}</span>
                 </div>
               </CardTitle>
               <div className="flex justify-end">
@@ -1428,7 +1428,7 @@ export default function AdminDashboard() {
                         <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                           <div className="flex items-center gap-3 mb-4">
                             <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                              ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
+                              ${isToday ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -1512,7 +1512,7 @@ export default function AdminDashboard() {
                         <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                           <div className="flex items-center gap-3 mb-4">
                             <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                              ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
+                              ${isToday ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -1642,7 +1642,7 @@ export default function AdminDashboard() {
                             <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                               <div className="flex items-center gap-3 mb-4">
                                 <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                                  ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
+                                  ${isToday ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 animate-pulse' : 
                                     isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                     'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                                   {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
