@@ -213,7 +213,7 @@ const AdminPendingTripItem = ({
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers, index = 0 }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers, index = 0, vehicles = [] }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
@@ -419,9 +419,16 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
                 </h4>
                 <div className="space-y-1.5 text-xs text-slate-300 font-sans">
                   <p><span className="text-slate-500 font-medium">Driver:</span> <span className="text-slate-100 font-semibold">{driver?.name || trip.driverName || 'N/A'}</span></p>
-                  <p><span className="text-slate-500 font-medium font-sans font-sans font-sans font-sans font-sans">Driver Phone:</span> <span className="text-emerald-300 font-mono select-all font-semibold font-sans">{driver?.phone || trip.driverPhone || 'N/A'}</span></p>
-                  <p><span className="text-slate-500 font-medium font-sans font-sans">Vehicle info:</span> <span className="text-amber-300 font-semibold">{trip.vehicleName || 'N/A'}</span></p>
-                  {trip.vehicleId && <p><span className="text-slate-500 font-medium font-sans font-sans">Vehicle ID:</span> <span className="text-slate-400 font-mono">{trip.vehicleId}</span></p>}
+                  <p><span className="text-slate-500 font-medium font-sans">Driver Phone:</span> <span className="text-emerald-300 font-mono select-all font-semibold font-sans">{driver?.phone || trip.driverPhone || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans">Vehicle info:</span> <span className="text-amber-300 font-semibold">{trip.vehicleName || 'N/A'}</span></p>
+                  {trip.vehicleId && (
+                    <p>
+                      <span className="text-slate-500 font-medium font-sans">Vehicle plate number:</span>{' '}
+                      <span className="text-slate-400 font-mono font-semibold">
+                        {vehicles.find(v => v.id === trip.vehicleId)?.registrationNumber || trip.vehicleId}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -542,7 +549,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
   );
 };
 
-const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0 }: any) => {
+const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles = [] }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => d.userId === trip.driverId);
@@ -630,7 +637,8 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0 }: any) => 
             <div>
               <p className="text-[10px] font-bold text-slate-500 uppercase">Driver & Vehicle</p>
               <p className="font-medium text-slate-300 mt-0.5">
-                {driver?.name || 'Unknown'} {trip.vehicleId ? `[V_ID: ${trip.vehicleId}]` : ''}
+                {driver?.name || 'Unknown'}{' '}
+                {trip.vehicleId ? `[Vehicle: ${vehicles.find(v => v.id === trip.vehicleId)?.registrationNumber || trip.vehicleId}]` : ''}
               </p>
             </div>
           </div>
@@ -1349,12 +1357,12 @@ export default function AdminDashboard() {
 
         {/* Right Column: Dispatch */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-[#ff9900]/40">
-            <CardHeader className="bg-[#ff9900]/10 rounded-t-lg border-b border-[#ff9900]/30 flex flex-col gap-3">
-              <CardTitle className="text-[#ff9900] flex justify-between items-center">
+          <Card className="border-amber-500/30 bg-amber-950/5">
+            <CardHeader className="bg-amber-500/10 rounded-t-lg border-b border-amber-500/20 flex flex-col gap-3">
+              <CardTitle className="text-amber-300 flex justify-between items-center font-bold tracking-wide">
                 Pending Bookings
                 <div className="flex gap-2 items-center">
-                  <span className="bg-[#ff9900]/30 text-[#ff9900] text-xs px-2 py-1 rounded-full">{pendingTrips.length}</span>
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/35 text-xs px-2.5 py-1 rounded-full font-bold">{pendingTrips.length}</span>
                 </div>
               </CardTitle>
               <div className="flex justify-end">
@@ -1420,7 +1428,7 @@ export default function AdminDashboard() {
                         <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                           <div className="flex items-center gap-3 mb-4">
                             <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                              ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -1504,7 +1512,7 @@ export default function AdminDashboard() {
                         <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                           <div className="flex items-center gap-3 mb-4">
                             <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                              ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -1523,6 +1531,7 @@ export default function AdminDashboard() {
                                 handleForceCompleteTrip={handleForceCompleteTrip} 
                                 allUsers={allUsers}
                                 index={idx}
+                                vehicles={vehicles}
                               />
                             ))}
                           </div>
@@ -1633,7 +1642,7 @@ export default function AdminDashboard() {
                             <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
                               <div className="flex items-center gap-3 mb-4">
                                 <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
-                                  ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                  ${isToday ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse' : 
                                     isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                     'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                                   {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -1651,6 +1660,7 @@ export default function AdminDashboard() {
                                     drivers={drivers} 
                                     allUsers={allUsers}
                                     index={idx}
+                                    vehicles={vehicles}
                                   />
                                 ))}
                               </div>
