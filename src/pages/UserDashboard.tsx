@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -8,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation } from 'lucide-react';
+import { TripItemSkeleton } from '../components/ui/Skeleton';
 
 const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdometerValues, handleCancelTrip, handleConfirmOdometer, handleUpdateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
@@ -22,7 +24,17 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
 
   return (
-    <div style={{ animationDelay: `${index * 100}ms` }} className="glass-card mb-4 animate-in slide-in-from-bottom-4 fade-in fill-mode-both duration-500">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: Math.min(index * 0.05, 0.3)
+      }}
+      className="glass-card mb-4 overflow-hidden"
+    >
       {/* Clickable Area */}
       <div 
         className="p-1 cursor-pointer relative z-10"
@@ -235,7 +247,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -245,12 +257,14 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   
   const initialLoadRef = useRef(true);
+  const prevTripStatusRef = useRef<Record<string, string>>({});
 
   // Form State
   const [pickupAddress, setPickupAddress] = useState('');
   const [tripType, setTripType] = useState<'dropoff' | 'return'>('dropoff');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [returnLocations, setReturnLocations] = useState('');
+  const [expectedDistance, setExpectedDistance] = useState('15');
   const [requestedDate, setRequestedDate] = useState('');
   const [requestedStartTime, setRequestedStartTime] = useState('');
   const [estimatedDestinationTime, setEstimatedDestinationTime] = useState('');
@@ -275,6 +289,9 @@ export default function UserDashboard() {
       if (type === 'start') {
         updates.status = 'in_progress';
         updates.startOdometer = odometer;
+        updates.currentOdometer = odometer;
+        const expDistance = Number(trip.expectedDistance) || 15;
+        updates.expectedEndOdometer = odometer + expDistance;
       } else {
         updates.status = 'completed';
         updates.dropoffTime = Date.now();
@@ -320,64 +337,10 @@ export default function UserDashboard() {
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!initialLoadRef.current) {
-        snapshot.docChanges().forEach(change => {
-          if (change.type === 'modified') {
-            const trip = change.doc.data();
-            const jointText = trip.isJointTrip ? ' (JOINT TRIP)' : '';
-            if (trip.status === 'allocated') {
-              toast.success(`Driver Allocated!${jointText}`, {
-                description: `Your trip to ${trip.tripType === 'dropoff' ? trip.dropoffAddress : 'multiple destinations'} has been assigned a driver.`,
-                duration: 5000,
-              });
-              sendPushNotification(`Driver Allocated!${jointText}`, {
-                body: `Your trip to ${trip.tripType === 'dropoff' ? trip.dropoffAddress : 'multiple destinations'} has been assigned a driver.`
-              });
-            } else if (trip.status === 'driver_started') {
-              toast.info('Driver Arrived!', {
-                description: 'Your driver has arrived. Please confirm the Start Odometer reading.',
-                duration: 8000,
-              });
-              sendPushNotification('Driver Arrived!', {
-                body: 'Your driver has arrived. Please confirm the Start Odometer reading.'
-              });
-            } else if (trip.status === 'in_progress') {
-              toast.info('Trip Started', {
-                description: 'Your driver has started the trip.',
-              });
-              sendPushNotification('Trip Started', {
-                body: 'Your driver has started the trip.'
-              });
-            } else if (trip.status === 'driver_ended') {
-              toast.info('Driver Reached Destination!', {
-                description: 'Your driver has ended the trip. Please confirm the End Odometer reading.',
-                duration: 8000,
-              });
-              sendPushNotification('Driver Reached Destination!', {
-                body: 'Your driver has ended the trip. Please confirm the End Odometer reading.'
-              });
-            } else if (trip.status === 'completed') {
-              if (trip.forceCompleted) {
-                toast.info('Trip Force-Closed by Admin', {
-                  description: 'The admin has finalized your trip because the end odometer was not provided.',
-                });
-                sendPushNotification('Trip Force-Closed by Admin', {
-                  body: 'The admin has finalized your trip because the end odometer was not provided.'
-                });
-              } else {
-                toast.success('Trip Completed', {
-                  description: 'You have reached your destination.',
-                });
-                sendPushNotification('Trip Completed', {
-                  body: 'You have reached your destination.'
-                });
-              }
-            }
-          }
-        });
-      }
-
-      const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+      const tripsData = snapshot.docs.map(doc => {
+        prevTripStatusRef.current[doc.id] = doc.data().status;
+        return { id: doc.id, ...(doc.data() as any) }
+      });
       // Sort in memory since we don't have an index yet
       tripsData.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
       setTrips(tripsData);
@@ -406,6 +369,7 @@ export default function UserDashboard() {
         tripType,
         dropoffAddress: tripType === 'dropoff' ? dropoffAddress : null,
         returnLocations: tripType === 'return' ? returnLocations : null,
+        expectedDistance: Number(expectedDistance) || 15,
         requestedDate,
         requestedStartTime,
         estimatedDestinationTime: estimatedDestinationTime ? estimatedDestinationTime : null,
@@ -423,6 +387,7 @@ export default function UserDashboard() {
       setTripType('dropoff');
       setDropoffAddress('');
       setReturnLocations('');
+      setExpectedDistance('15');
       setRequestedDate('');
       setRequestedStartTime('');
       setEstimatedDestinationTime('');
@@ -448,10 +413,19 @@ export default function UserDashboard() {
   return (
     <Layout title="My Bookings">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-        <div className="glass-card h-fit">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Book a Vehicle</h2>
-            <p className="text-sm text-[#A0A0A0]">Fill in the details below to request your booking</p>
+        <div className="glass-card booking-card-attractive h-fit">
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Book a Vehicle</h2>
+              <p className="text-sm text-[#A0A0A0]">Fill in the details below to request your booking</p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#ff8c00]/10 border border-[#ff8c00]/20 rounded-full shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff8c00] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff8c00]"></span>
+              </span>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#ff8c00]">Instant Allocator</span>
+            </div>
           </div>
           
           <form onSubmit={handleCreateTrip} className="space-y-6">
@@ -464,10 +438,10 @@ export default function UserDashboard() {
                 <select
                   value={tripType}
                   onChange={(e) => setTripType(e.target.value as 'dropoff' | 'return')}
-                  className="input-field pl-icon appearance-none"
+                  className="input-field pl-icon appearance-none bg-[#0c1222] text-white cursor-pointer"
                 >
-                  <option value="dropoff">Local Trip</option>
-                  <option value="return">Return Trip / Tour</option>
+                  <option value="dropoff" className="bg-[#0c1222] text-white font-medium">Local Trip</option>
+                  <option value="return" className="bg-[#0c1222] text-white font-medium">Return Trip / Tour</option>
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                   <ChevronDown className="w-5 h-5" />
@@ -533,6 +507,24 @@ export default function UserDashboard() {
                 </div>
               </div>
             )}
+            
+            <div>
+              <label className="label">Expected Distance (KM)</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <Navigation className="w-5 h-5" />
+                </div>
+                <input 
+                  type="number" 
+                  min="1"
+                  required
+                  value={expectedDistance}
+                  onChange={(e) => setExpectedDistance(e.target.value)}
+                  className="input-field pl-icon"
+                  placeholder="Enter expected distance in KM (e.g., 15)"
+                />
+              </div>
+            </div>
             
             <div>
                <label className="label">Date & Start Time</label>
@@ -611,7 +603,11 @@ export default function UserDashboard() {
           </div>
           
           {loading ? (
-            <div className="text-slate-400 text-center py-8">Loading trips...</div>
+            <div className="space-y-4">
+              <TripItemSkeleton />
+              <TripItemSkeleton />
+              <TripItemSkeleton />
+            </div>
           ) : trips.length === 0 ? (
             <div className="glass-card text-center py-8 text-[#A0A0A0]">No trips found. Book a vehicle to get started!</div>
           ) : (
@@ -648,13 +644,20 @@ export default function UserDashboard() {
              <div className="mt-12">
                <h3 className="text-lg font-bold text-white mb-4">Past Trips</h3>
                <div className="space-y-3">
-                 {trips.filter(t => ['completed', 'cancelled'].includes(t.status)).map((trip) => (
-                    <div key={trip.id} className="border border-white/10 bg-white/5 backdrop-blur-[10px] rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4 opacity-70 hover:opacity-100 transition-all hover:bg-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+                 {trips.filter(t => ['completed', 'cancelled'].includes(t.status)).map((trip, idx) => (
+                    <motion.div 
+                      key={trip.id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 0.7, y: 0 }}
+                      whileHover={{ opacity: 1, scale: 1.01 }}
+                      transition={{ duration: 0.3, delay: Math.min(idx * 0.04, 0.2) }}
+                      className="border border-white/10 bg-white/5 backdrop-blur-[10px] rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4 hover:opacity-100 transition-all hover:bg-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)] shrink-0"
+                    >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'cancelled' ? 'bg-red-500' : 'bg-slate-500'}`} />
-                          <span className={`text-xs font-semibold capitalize ${trip.status === 'cancelled' ? 'text-red-400' : 'text-slate-400'}`}>
-                            {trip.status}
+                          <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'cancelled' ? 'bg-red-500' : trip.forceCompleted ? 'bg-amber-500 animate-pulse' : 'bg-slate-500'}`} />
+                          <span className={`text-xs font-semibold capitalize ${trip.status === 'cancelled' ? 'text-red-400' : trip.forceCompleted ? 'text-amber-500' : 'text-slate-400'}`}>
+                            {trip.forceCompleted ? 'Force Completed (Bypassed)' : trip.status.replace('_', ' ')}
                           </span>
                         </div>
                         <p className="text-sm font-medium text-slate-300">
@@ -664,7 +667,7 @@ export default function UserDashboard() {
                       <div className="text-right text-xs text-slate-500">
                         <p>{trip.requestedDate}</p>
                       </div>
-                    </div>
+                    </motion.div>
                  ))}
                </div>
              </div>

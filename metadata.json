@@ -1,8 +1,10 @@
 {
-  "name": "SANKENOVERSEAS VBooking",
+  "name": "SKO VBooking",
   "description": "Premium vehicle booking, dispatch, and tracking system.",
   "requestFramePermissions": [
     "geolocation"
   ],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

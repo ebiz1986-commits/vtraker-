@@ -6,8 +6,11 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Determine if we are running in development mode (e.g. via dev script or typescript server directly)
+  const isDev = process.env.NODE_ENV !== "production" || process.argv.some(arg => arg.includes("server.ts"));
+
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (isDev) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

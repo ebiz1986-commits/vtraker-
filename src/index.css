@@ -123,4 +123,223 @@ body {
     margin-bottom: 8px;
     display: block;
   }
+
+  /* Attractive glowing animated card */
+  @keyframes border-glow {
+    0%, 100% {
+      border-color: rgba(255, 140, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 140, 0, 0.05);
+    }
+    50% {
+      border-color: rgba(255, 140, 0, 0.6);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 25px rgba(255, 140, 0, 0.25);
+    }
+  }
+
+  .booking-card-attractive {
+    background: linear-gradient(135deg, rgba(20, 24, 33, 0.8) 0%, rgba(10, 15, 24, 0.95) 100%) !important;
+    border: 1.5px solid rgba(255, 140, 0, 0.3) !important;
+    animation: border-glow 4s infinite ease-in-out;
+  }
+
+  select option {
+    background-color: #0c1222 !important;
+    color: #ffffff !important;
+  }
+}
+
+/* HIGH-CONTRAST LIGHT THEME FOR DIRECT SUNLIGHT READABILITY */
+body.light-theme {
+  background: #f8fafc !important; /* Premium off-white/light-slate canvas */
+  background-image: none !important;
+  color: #0c1222 !important;
+}
+
+/* Header Adjustments */
+body.light-theme header {
+  background: #ffffff !important;
+  border-bottom: 2px solid #0c1222 !important;
+  box-shadow: 0 4px 20px rgba(12, 18, 34, 0.08) !important;
+}
+
+/* Title & General Typography Color Upgrades */
+body.light-theme .text-white,
+body.light-theme .text-slate-100,
+body.light-theme .text-slate-200,
+body.light-theme .text-slate-300,
+body.light-theme .text-[#E0E0E0],
+body.light-theme h1,
+body.light-theme h2,
+body.light-theme h3,
+body.light-theme h4 {
+  color: #0c1222 !important;
+}
+
+/* Secondary labels/gray text to high contrast dark slate */
+body.light-theme .text-slate-400,
+body.light-theme .text-slate-500,
+body.light-theme .text-[#A0A0A0],
+body.light-theme .text-slate-350,
+body.light-theme .text-slate-300 {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+body.light-theme .label {
+  color: #0c1222 !important;
+  font-weight: 850 !important; /* Super thick layout labels */
+}
+
+/* Cards Overrides */
+body.light-theme .glass-card {
+  background: #ffffff !important;
+  border: 2px solid #0c1222 !important;
+  box-shadow: 5px 5px 0px #0c1222 !important;
+  color: #0c1222 !important;
+}
+
+body.light-theme .glass-card:hover {
+  background: #ffffff !important;
+  border-color: #ff8c00 !important;
+  box-shadow: 7px 7px 0px #ff8c00 !important;
+}
+
+body.light-theme .booking-card-attractive {
+  background: #ffffff !important;
+  border: 2.5px solid #ff8c00 !important;
+  box-shadow: 6px 6px 0px #ff8c00 !important;
+  animation: none !important; /* Disable glow animation for static legibility under high glare */
+}
+
+/* Forms / Input Fields */
+body.light-theme .input-field,
+body.light-theme select {
+  background: #ffffff !important;
+  border: 2px solid #0c1222 !important;
+  color: #0c1222 !important;
+  font-weight: 700 !important;
+}
+
+body.light-theme .input-field:focus,
+body.light-theme select:focus {
+  background: #ffffff !important;
+  border-color: #ea580c !important;
+  outline: 2px solid #ea580c !important;
+  box-shadow: none !important;
+}
+
+body.light-theme select option {
+  background-color: #ffffff !important;
+  color: #0c1222 !important;
+  font-weight: 700 !important;
+}
+
+/* Primary Button Styling Override for Sunlight readability */
+body.light-theme .btn-primary {
+  background: #ea580c !important; /* Dark orange high-contrast contrast background */
+  color: #ffffff !important;
+  border: 2px solid #0c1222 !important;
+  box-shadow: 4px 4px 0px #0c1222 !important;
+  font-weight: 800 !important;
+}
+
+body.light-theme .btn-primary:hover:not(:disabled) {
+  background: #c2410c !important;
+  box-shadow: 6px 6px 0px #0c1222 !important;
+}
+
+/* Nested elements, details, driver panel lists and list rows */
+body.light-theme .bg-slate-900\/40,
+body.light-theme .bg-slate-800\/50,
+body.light-theme .bg-[rgba(255,255,255,0.03)],
+body.light-theme .bg-[rgba(255,255,255,0.05)],
+body.light-theme .bg-slate-950\/60,
+body.light-theme .bg-slate-950\/80,
+body.light-theme .bg-slate-900\/60 {
+  background: #f1f5f9 !important;
+  color: #0c1222 !important;
+}
+
+/* Line separators and borders mapping */
+body.light-theme .border-white\/5,
+body.light-theme .border-white\/10,
+body.light-theme .border-\[rgba\(255\,255\,255\,0\.1\)\],
+body.light-theme .border-[rgba(255,255,255,0.08)],
+body.light-theme .border-[#1e293b],
+body.light-theme .border-slate-800,
+body.light-theme .border-slate-700\/50,
+body.light-theme .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
+
+/* Horizontal spacing rules */
+body.light-theme .bg-white\/5 {
+  background-color: #cbd5e1 !important;
+}
+
+/* Orange badges contrast corrections */
+body.light-theme .bg-orange-600\/5,
+body.light-theme .bg-\[\#ff8c00\]\/10 {
+  background-color: #ffedd5 !important;
+  border-color: #f7a072 !important;
+}
+
+body.light-theme .text-orange-400,
+body.light-theme .text-[#ff8c00] {
+  color: #b45309 !important; /* Pure high-contrast solid brown/orange */
+}
+
+/* Notification Panel overlay */
+body.light-theme .bg-\[\#0f172a\] {
+  background-color: #ffffff !important;
+  border: 2px solid #0c1222 !important;
+}
+
+body.light-theme .divide-white\/5 > * {
+  border-color: #cbd5e1 !important;
+}
+
+body.light-theme .hover\:bg-white\/5:hover {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-theme .bg-blue-500\/5 {
+  background-color: #eff6ff !important;
+}
+
+/* Dynamic badges and status fields */
+body.light-theme .status-badge {
+  border: 2px solid currentColor !important;
+  font-weight: 800 !important;
+}
+
+body.light-theme .status-allocated, 
+body.light-theme .status-accepted, 
+body.light-theme .status-completed {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+body.light-theme .status-pending {
+  background: #fef9c3 !important;
+  color: #854d0e !important;
+}
+
+body.light-theme .status-cancelled, 
+body.light-theme .status-rejected {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+/* Admin and Driver odometer bypass control panels */
+body.light-theme .bg-\[\#0c1222\],
+body.light-theme .bg-slate-850 {
+  background-color: #e2e8f0 !important;
+  color: #0c1222 !important;
+  border: 1.5px solid #0c1222 !important;
+}
+
+/* General interactive button text visibility alignment */
+body.light-theme .bg-orange-600\/10 {
+  background-color: #ffedd5 !important;
 }

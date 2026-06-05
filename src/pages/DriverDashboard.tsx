@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -7,15 +8,67 @@ import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp }
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { sendPushNotification } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
+import { sendPushNotification, playNotificationSound } from '../lib/utils';
+import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info } from 'lucide-react';
+import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+
+  const handleIncrementCurrentOdo = async (tripItem: any, amount: number) => {
+    const startOdo = Number(tripItem.startOdometer) || 0;
+    const currentOdo = Number(tripItem.currentOdometer) || startOdo;
+    const nextOdo = currentOdo + amount;
+
+    if (nextOdo < startOdo) {
+      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'trips', tripItem.id), {
+        currentOdometer: nextOdo,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Current Odometer updated to ${nextOdo} KM`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update current odometer.');
+    }
+  };
+
+  const handleDirectUpdateCurrentOdo = async (tripItem: any, value: number) => {
+    const startOdo = Number(tripItem.startOdometer) || 0;
+    if (value < startOdo) {
+      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'trips', tripItem.id), {
+        currentOdometer: value,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Current Odometer updated to ${value} KM`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update current odometer.');
+    }
+  };
   
   return (
-    <div style={{ animationDelay: `${index * 100}ms` }} className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: Math.min(index * 0.05, 0.3)
+      }}
+      className="border border-[#1f2937] bg-[#0a0f1c]/50 rounded-lg transition-all duration-300 hover:shadow-2xl hover:border-slate-600 hover:bg-[#0f172a] overflow-hidden"
+    >
       {/* Clickable Header */}
       <div 
         className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
@@ -158,10 +211,71 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
             {trip.remarks && (
               <div className="pt-3 mt-3 border-t border-slate-700/50">
                 <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
-                <p className="italic text-slate-300 mt-1 bg-slate-800/50 p-2 rounded border border-slate-700">"{trip.remarks}"</p>
+                <p className="italic text-[#E0E0E0] mt-1 bg-slate-800/50 p-2 rounded border border-slate-700">"{trip.remarks}"</p>
               </div>
             )}
           </div>
+          
+          {/* Interactive Current Odometer Updates Controls */}
+          {trip.status === 'in_progress' && (
+            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3 shadow-md mb-4 text-center">
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 justify-center">
+                <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
+                Update Current Odometer (KM)
+              </p>
+              
+              <div className="flex items-center gap-2.5 justify-center">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  onClick={() => handleIncrementCurrentOdo(trip, -1)}
+                >
+                  -1 KM
+                </button>
+                <div className="flex items-center gap-1 font-mono text-white text-xs font-bold bg-[#0c1222] px-3 py-1.5 border border-slate-800 rounded-lg shadow-inner">
+                  <span>{trip.currentOdometer || trip.startOdometer || 0} km</span>
+                </div>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  onClick={() => handleIncrementCurrentOdo(trip, 1)}
+                >
+                  +1 KM
+                </button>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  onClick={() => handleIncrementCurrentOdo(trip, 5)}
+                >
+                  +5 KM
+                </button>
+              </div>
+              
+              <div className="flex gap-2 max-w-[200px] mx-auto items-center">
+                <span className="text-[10px] text-slate-500 shrink-0 font-medium">Direct:</span>
+                <input
+                  type="number"
+                  placeholder="Set reading"
+                  className="input-field text-center font-mono py-1 text-xs bg-slate-950/60"
+                  defaultValue={trip.currentOdometer || trip.startOdometer || 0}
+                  onBlur={(e) => {
+                    const val = Number(e.target.value);
+                    if (val) {
+                      handleDirectUpdateCurrentOdo(trip, val);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = Number((e.target as HTMLInputElement).value);
+                      if (val) {
+                        handleDirectUpdateCurrentOdo(trip, val);
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
           
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
@@ -197,7 +311,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -208,8 +322,50 @@ export default function DriverDashboard() {
   const [completedHours, setCompletedHours] = useState('0.0');
   const [totalKmLogged, setTotalKmLogged] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [notiPermission, setNotiPermission] = useState<NotificationPermission>('default');
   
   const initialLoadRef = useRef(true);
+  const prevTripStatusRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotiPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestPermission = async () => {
+    if (!('Notification' in window)) {
+      toast.error('Push notifications are not supported in this browser.');
+      return;
+    }
+    
+    try {
+      const permission = await Notification.requestPermission();
+      setNotiPermission(permission);
+      if (permission === 'granted') {
+        toast.success('Notifications Enabled!', {
+          description: 'You will receive instant chimes and notices for incoming trips.'
+        });
+        sendPushNotification('Driver Alerts Active! 🚀', {
+          body: 'You are now ready to receive immediate push alerts for incoming trips.'
+        });
+        playNotificationSound();
+      } else if (permission === 'denied') {
+        toast.warning('Notifications Blocked', {
+          description: 'Please enable notifications in your browser settings to receive live bookings.'
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleTestSound = () => {
+    playNotificationSound();
+    toast.info('Test chime played!', {
+      description: 'If you did not hear anything, please check your device volume.'
+    });
+  };
 
   useEffect(() => {
     if (!profile?.userId) return;
@@ -225,35 +381,10 @@ export default function DriverDashboard() {
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Handle notifications
-      if (!initialLoadRef.current) {
-        snapshot.docChanges().forEach(change => {
-          if (change.type === 'added' || change.type === 'modified') {
-            const trip = change.doc.data();
-            const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-            const jointText = trip.isJointTrip ? ' (JOINT TRIP)' : '';
-            if (trip.status === 'allocated' && change.type === 'added') {
-              // Usually added when assigned for the first time
-              toast.success(`New Trip Assigned!${jointText}`, {
-                description: `${trip.pickupAddress} to ${destination}`,
-                duration: 5000,
-              });
-              sendPushNotification(`New Trip Assigned!${jointText}`, {
-                body: `${trip.pickupAddress} to ${destination}`
-              });
-            } else if (trip.status === 'cancelled') {
-              toast.error('A trip was cancelled by the user.', {
-                 description: `${trip.pickupAddress} to ${destination}`
-              });
-              sendPushNotification('Trip Cancelled', {
-                body: `A trip from ${trip.pickupAddress} to ${destination} was cancelled.`
-              });
-            }
-          }
-        });
-      }
-
-      const tripsData = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+      const tripsData = snapshot.docs.map(doc => {
+        prevTripStatusRef.current[doc.id] = doc.data().status;
+        return { id: doc.id, ...(doc.data() as any) }
+      });
       
       const active = tripsData.filter(t => t.status === 'allocated' || t.status === 'driver_started' || t.status === 'in_progress' || t.status === 'driver_ended');
       active.sort((a, b) => (a.pickupTime || 0) - (b.pickupTime || 0)); // earliest first
@@ -315,6 +446,72 @@ export default function DriverDashboard() {
 
   return (
     <Layout title="Driver Console">
+      {/* Alert Notification Setup Manager */}
+      <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300
+          ${notiPermission === 'granted' 
+            ? 'bg-emerald-950/15 border-emerald-500/20 text-[#E0E0E0]' 
+            : notiPermission === 'denied'
+            ? 'bg-red-950/15 border-red-500/20 text-[#E0E0E0]'
+            : 'bg-amber-950/15 border-amber-500/20 text-[#E0E0E0]'}`}>
+          <div className="flex items-start gap-3.5">
+            <div className={`p-2.5 rounded-lg shrink-0 flex items-center justify-center mt-0.5
+              ${notiPermission === 'granted' 
+                ? 'bg-emerald-500/10 text-emerald-400' 
+                : notiPermission === 'denied'
+                ? 'bg-red-500/10 text-red-500'
+                : 'bg-amber-500/10 text-amber-500 animate-pulse'}`}>
+              {notiPermission === 'granted' ? (
+                <Bell className="w-5 h-5" />
+              ) : notiPermission === 'denied' ? (
+                <BellOff className="w-5 h-5" />
+              ) : (
+                <Bell className="w-5 h-5" />
+              )}
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                Driver Instant Travel Alert System
+                <span className={`px-2 py-0.5 text-[9px] font-mono tracking-widest font-semibold uppercase rounded-full border
+                  ${notiPermission === 'granted' 
+                    ? 'bg-emerald-950/35 text-emerald-400 border-emerald-500/30' 
+                    : notiPermission === 'denied'
+                    ? 'bg-red-950/35 text-red-400 border-red-500/30'
+                    : 'bg-amber-950/35 text-[#ff9900]/70 border-amber-500/30 animate-pulse'}`}>
+                  {notiPermission === 'granted' ? 'Fully Active' : notiPermission === 'denied' ? 'Blocked' : 'Action Required'}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                {notiPermission === 'granted' ? (
+                  "Your device is successfully configured to receive instant audio-visual chimes. You will receive alert popups immediately when admin allocates new trips."
+                ) : notiPermission === 'denied' ? (
+                  "Browser alerts are blocked. To receive live assignments, you must unblock notification permissions in your browser's address bar settings."
+                ) : (
+                  "Enable background notifications and auditory ringing so you can instantly respond to assigned bookings even when this tab is closed or minimized."
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2.5 w-full md:w-auto shrink-0 mt-2 md:mt-0">
+            {notiPermission !== 'granted' && (
+              <Button 
+                onClick={requestPermission} 
+                className="w-full md:w-auto bg-[#ff9900] hover:bg-[#e08800] text-black font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-[#ff9900]/5 hover:shadow-[#ff9900]/15"
+              >
+                <Bell className="w-3.5 h-3.5" /> Request Permissions
+              </Button>
+            )}
+            <Button 
+              onClick={handleTestSound} 
+              variant="outline"
+              className="w-full md:w-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Volume2 className="w-3.5 h-3.5" /> Test Sound Chime
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
@@ -329,15 +526,27 @@ export default function DriverDashboard() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Trips Completed Today</p>
-                  <p className="text-4xl font-bold">{completedTripsCount}</p>
+                  {loading ? (
+                    <Skeleton className="h-9 w-16 bg-slate-400/10 mt-1" />
+                  ) : (
+                    <p className="text-4xl font-bold">{completedTripsCount}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">KM Traveled</p>
-                  <p className="text-3xl font-semibold">{totalKmLogged} km</p>
+                  {loading ? (
+                    <Skeleton className="h-8 w-24 bg-slate-400/10 mt-1" />
+                  ) : (
+                    <p className="text-3xl font-semibold">{totalKmLogged} km</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Hours Logged</p>
-                  <p className="text-3xl font-semibold">{completedHours}h</p>
+                  {loading ? (
+                    <Skeleton className="h-8 w-20 bg-slate-400/10 mt-1" />
+                  ) : (
+                    <p className="text-3xl font-semibold">{completedHours}h</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -351,7 +560,10 @@ export default function DriverDashboard() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-slate-400">Loading trips...</div>
+                <div className="space-y-4">
+                  <TripItemSkeleton />
+                  <TripItemSkeleton />
+                </div>
               ) : activeTrips.length === 0 ? (
                 <div className="text-slate-400 text-center py-8">No assigned trips right now. You will be notified when Admin assigns you a trip.</div>
               ) : (

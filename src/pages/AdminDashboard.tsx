@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,6 +11,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from 'sonner';
 
 import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
+import { TripItemSkeleton, LiveDriverItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 const AdminPendingTripItem = ({ 
   trip, 
@@ -25,7 +27,11 @@ const AdminPendingTripItem = ({
   renderDriverSelect,
   renderVehicleSelect,
   selectedDriver,
-  selectedVehicle
+  selectedVehicle,
+  setWipeModal,
+  setAmendTripId,
+  setAmendTimeVal,
+  index = 0
 }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
@@ -35,7 +41,17 @@ const AdminPendingTripItem = ({
   }, [allocatingTrip, trip.id]);
 
   return (
-    <div className={`glass-card ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/50 bg-orange-500/20 shadow-[0_0_15px_rgba(255,140,0,0.3)]' : ''} mb-4 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: Math.min(index * 0.05, 0.3)
+      }}
+      className={`glass-card ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/50 bg-orange-500/20 shadow-[0_0_15px_rgba(255,140,0,0.3)]' : ''} mb-4 overflow-hidden`}
+    >
       <div 
         className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => {
@@ -183,25 +199,130 @@ const AdminPendingTripItem = ({
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                  <Button onClick={() => { setAllocatingTrip(trip.id); setExpanded(true); }} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold">Allocate Driver</Button>
                  <Button onClick={() => {
-                   const nt = prompt("Amend Time (HH:MM) - 24 hour format", trip.requestedStartTime || "08:00");
-                   if (nt) handleAmendTrip(trip.id, nt);
+                    setAmendTripId(trip.id);
+                    setAmendTimeVal(trip.requestedStartTime || "08:00");
+                    setWipeModal('amend');
+
                  }} variant="outline" className="flex-1">Amend Time</Button>
                  <Button onClick={() => handleRejectTrip(trip.id)} variant="destructive" className="flex-1">Reject Trip</Button>
               </div>
             )}
          </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers, index = 0 }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-  const driver = drivers.find((d: any) => d.userId === trip.driverId);
+  const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
+  const passengerUser = allUsers?.find((u: any) => u.userId === trip.userId);
+
+  // States for hot-swapping and odometer bypass inside the card
+  const [midDriverId, setMidDriverId] = useState(trip.driverId || '');
+  const [midStartOdo, setMidStartOdo] = useState(trip.startOdometer !== undefined ? String(trip.startOdometer) : '');
+  const [midEndOdo, setMidEndOdo] = useState(trip.endOdometer !== undefined ? String(trip.endOdometer) : '');
+
+  // Keep internal inputs in sync if the database updates externally
+  useEffect(() => {
+    if (trip.driverId) setMidDriverId(trip.driverId);
+    if (trip.startOdometer !== undefined) setMidStartOdo(String(trip.startOdometer));
+    if (trip.endOdometer !== undefined) setMidEndOdo(String(trip.endOdometer));
+  }, [trip.driverId, trip.startOdometer, trip.endOdometer]);
+
+  const handleDriverMidSwap = async () => {
+    if (!midDriverId) {
+      toast.error("Please pick a driver to swap to.");
+      return;
+    }
+    try {
+      const newD = drivers.find((d: any) => (d.userId || d.id) === midDriverId);
+      if (!newD) {
+        toast.error("Selected driver not registered.");
+        return;
+      }
+
+      await updateDoc(doc(db, 'trips', trip.id), {
+        driverId: midDriverId,
+        driverName: newD.name || 'Unknown Driver',
+        driverPhone: newD.phone || '',
+        driverHasSmartphone: newD.hasSmartphone !== false,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Successfully reassigned driver to ${newD.name} inside active journey!`);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `trips/${trip.id}`);
+    }
+  };
+
+  const handleBypassOdometer = async () => {
+    try {
+      const payload: any = {
+        updatedAt: serverTimestamp(),
+        status: 'completed',
+        dropoffTime: Date.now(),
+        forceCompleted: true
+      };
+
+      const startNum = midStartOdo !== '' ? Number(midStartOdo) : undefined;
+      const endNum = midEndOdo !== '' ? Number(midEndOdo) : undefined;
+
+      if (startNum !== undefined && isNaN(startNum)) {
+        toast.error("Please insert a numeric start odometer.");
+        return;
+      }
+      if (endNum !== undefined && isNaN(endNum)) {
+        toast.error("Please insert a numeric end odometer.");
+        return;
+      }
+
+      // Determine final start odometer
+      let finalStart = 0;
+      if (startNum !== undefined) {
+        finalStart = startNum;
+      } else if (trip.startOdometer !== undefined) {
+        finalStart = Number(trip.startOdometer);
+      } else if (trip.currentOdometer !== undefined) {
+        finalStart = Number(trip.currentOdometer);
+      }
+
+      payload.startOdometer = finalStart;
+      payload.currentOdometer = finalStart;
+
+      // Determine final end odometer
+      let finalEnd = 0;
+      if (endNum !== undefined) {
+        finalEnd = endNum;
+      } else if (trip.endOdometer !== undefined) {
+        finalEnd = Number(trip.endOdometer);
+      } else {
+        const expDistance = Number(trip.expectedDistance) || 15;
+        finalEnd = finalStart + expDistance;
+      }
+
+      payload.endOdometer = finalEnd;
+      payload.expectedEndOdometer = finalEnd;
+
+      await updateDoc(doc(db, 'trips', trip.id), payload);
+      toast.success("Odometer bypass applied! Trip forced to completion and removed from Active Trips.");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `trips/${trip.id}`);
+    }
+  };
 
   return (
-    <div className="glass-card mb-4 animate-in slide-in-from-bottom-6 fade-in fill-mode-both duration-500 overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: Math.min(index * 0.05, 0.3)
+      }}
+      className="glass-card mb-4 overflow-hidden border border-white/5 bg-[#0d1425]/60 hover:bg-[#111a31]/75 transition-all duration-300"
+    >
       <div 
         className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -275,33 +396,133 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers 
 
       <div className={`transition-all duration-300 ease-in-out origin-top ${expanded ? 'max-h-[1500px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-0'}`}>
          <div className="p-4 sm:p-5 pt-0 border-t border-slate-800/50">
-            <div className="space-y-3 mb-4 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md mt-4 shadow-inner">
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup</p>
-                    <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
-                 </div>
-                 {trip.tripType === 'return' ? (
-                   <div>
-                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Destinations</p>
-                      <p className="font-medium text-slate-100 mt-0.5">{trip.returnLocations}</p>
-                   </div>
-                 ) : (
-                   <div>
-                      <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Dropoff</p>
-                      <p className="font-medium text-slate-100 mt-0.5">{trip.dropoffAddress}</p>
-                   </div>
-                 )}
-               </div>
-               
-               <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
-                  {trip.requestedDate && (
-                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Date</p><p className="font-medium text-slate-100">{trip.requestedDate}</p></div>
-                  )}
-                  {trip.requestedStartTime && (
-                    <div><p className="text-xs font-semibold text-slate-400 uppercase">Req. Start</p><p className="font-medium text-slate-100">{trip.requestedStartTime}</p></div>
-                  )}
-               </div>
+            {/* Detailed Allocations Bento Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-4 mb-4">
+              
+              {/* Box 1: Trip & Passenger Details */}
+              <div className="bg-[#0f172a] border border-[#1e293b] p-3.5 rounded-lg shadow-inner">
+                <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1 font-sans">
+                  👤 Passenger Details
+                </h4>
+                <div className="space-y-1.5 text-xs text-slate-300 font-sans">
+                  <p><span className="text-slate-500 font-medium">Name:</span> <span className="text-slate-100 font-semibold">{trip.passengerName || passengerUser?.name || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium">Department:</span> <span className="text-slate-100">{trip.passengerDepartment || passengerUser?.department || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans">Contact:</span> <span className="text-blue-300 font-mono select-all font-semibold">{passengerUser?.phone || 'N/A'}</span></p>
+                  {trip.passengerCount && <p><span className="text-slate-500 font-medium font-sans font-sans">Group Size:</span> <span className="text-slate-100">{trip.passengerCount} pax</span></p>}
+                </div>
+              </div>
+
+              {/* Box 2: Driver & Vehicle Allocation */}
+              <div className="bg-[#0f172a] border border-[#1e293b] p-3.5 rounded-lg shadow-inner font-sans">
+                <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1 font-sans">
+                  🚗 Driver & Vehicle Detail
+                </h4>
+                <div className="space-y-1.5 text-xs text-slate-300 font-sans">
+                  <p><span className="text-slate-500 font-medium">Driver:</span> <span className="text-slate-100 font-semibold">{driver?.name || trip.driverName || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans font-sans font-sans font-sans font-sans">Driver Phone:</span> <span className="text-emerald-300 font-mono select-all font-semibold font-sans">{driver?.phone || trip.driverPhone || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans font-sans">Vehicle info:</span> <span className="text-amber-300 font-semibold">{trip.vehicleName || 'N/A'}</span></p>
+                  {trip.vehicleId && <p><span className="text-slate-500 font-medium font-sans font-sans">Vehicle ID:</span> <span className="text-slate-400 font-mono">{trip.vehicleId}</span></p>}
+                </div>
+              </div>
+
+              {/* Box 3: Journey & Routing */}
+              <div className="bg-[#0f172a] border border-[#1e293b] p-3.5 rounded-lg shadow-inner font-sans font-sans">
+                <h4 className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-1 font-sans font-sans">
+                  📍 Journey Route
+                </h4>
+                <div className="space-y-1.5 text-xs text-slate-300 font-sans">
+                  <p className="line-clamp-2"><span className="text-slate-500 font-medium">From:</span> <span className="text-slate-200">{trip.pickupAddress}</span></p>
+                  <p className="line-clamp-2"><span className="text-slate-500 font-medium">To:</span> <span className="text-slate-200">{destination}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans font-sans">Requested:</span> <span className="text-slate-200">{trip.requestedDate} @ {trip.requestedStartTime}</span></p>
+                  <p className="flex items-center gap-1">
+                    <span className="text-slate-500 font-medium font-sans font-sans font-sans">Odometer:</span>
+                    <span className="text-slate-200 font-mono font-semibold">
+                      {trip.startOdometer !== undefined ? `${trip.startOdometer} km` : 'N/A'} &rarr; {trip.endOdometer !== undefined ? `${trip.endOdometer} km` : 'N/A'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+
+            {/* Admin Override & hot-swap control strip */}
+            <div className="border border-[#1e293b] bg-[#0c1424] p-4 rounded-lg mt-2 mb-4 space-y-4 shadow-md font-sans">
+              <h4 className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5 font-sans">
+                <span className="p-1 rounded bg-[#ff9900]/10 text-[#ff9900]">🔧</span>
+                Admin Authority Panel
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Hot driver selection swap */}
+                <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    Change Driver (Mid-Journey / On the go)
+                  </span>
+                  <div className="flex gap-2">
+                    <select
+                      value={midDriverId}
+                      onChange={(e) => setMidDriverId(e.target.value)}
+                      className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 font-medium"
+                    >
+                      <option value="">Select driver ...</option>
+                      {drivers.map((d: any) => (
+                        <option key={d.userId || d.id} value={d.userId || d.id} className="font-sans">
+                          {d.name} {d.phone ? `(${d.phone})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={handleDriverMidSwap}
+                      disabled={!midDriverId || midDriverId === trip.driverId}
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
+                    >
+                      Swap
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Bypass odometer input fields */}
+                <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
+                  <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider block">
+                    Bypass Passenger Odometer Input & Force Halt
+                  </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 font-sans font-medium text-slate-200 font-sans">
+                      <div className="flex-1">
+                        <span className="text-[8px] text-slate-500 font-bold block mb-1">START METER (KM)</span>
+                        <input
+                          type="number"
+                          value={midStartOdo}
+                          onChange={(e) => setMidStartOdo(e.target.value)}
+                          className="w-full bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 py-1 text-xs font-mono"
+                          placeholder="Wait-on-User"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-[8px] text-slate-500 font-bold block mb-1 font-sans font-sans">END METER (KM)</span>
+                        <input
+                          type="number"
+                          value={midEndOdo}
+                          onChange={(e) => setMidEndOdo(e.target.value)}
+                          className="w-full bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 py-1 text-xs font-mono"
+                          placeholder="Wait-on-User"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleBypassOdometer}
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 h-auto rounded transition-colors font-sans"
+                    >
+                      Bypass User & Save Details
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
             {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
@@ -317,7 +538,124 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers 
             )}
          </div>
       </div>
-    </div>
+    </motion.div>
+  );
+};
+
+const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0 }: any) => {
+  const [expanded, setExpanded] = useState(false);
+  const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+  const driver = drivers.find((d: any) => d.userId === trip.driverId);
+  const passenger = allUsers?.find((u: any) => u.userId === trip.userId);
+
+  // A visually appealing trip ID based on original document ID
+  const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
+
+  const formatTime = (timeMs: any) => {
+    if (!timeMs) return 'N/A';
+    try {
+      return new Date(timeMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return 'N/A';
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 0.9, y: 0 }}
+      whileHover={{ opacity: 1, scale: 1.005 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: Math.min(index * 0.04, 0.2)
+      }}
+      className="border border-white/5 bg-[#0f172a]/40 rounded-xl overflow-hidden transition-all duration-300 hover:border-slate-800/85 mb-3 shadow-[0_4px_35px_rgba(0,0,0,0.15)]"
+    >
+      <div 
+        className="p-4 flex flex-col gap-3 transition-colors hover:bg-slate-800/10 cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-start justify-between w-full gap-4">
+          <div className="flex items-start gap-2 flex-wrap">
+            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium uppercase tracking-wider border flex items-center gap-1.5
+              ${trip.status === 'completed' ? 'bg-emerald-950/20 text-emerald-400 border-emerald-950/45' : 'bg-red-950/20 text-red-400 border-red-900/30'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'completed' ? 'bg-emerald-400' : 'bg-red-400'}`} />
+              {trip.status}
+            </span>
+            {trip.forceCompleted && (
+              <span className="bg-amber-900/20 text-[#ff9900]/80 text-[10px] px-2 py-0.5 rounded border border-amber-900/30 font-medium uppercase tracking-wider">
+                Force Finished
+              </span>
+            )}
+            <span className="text-[10px] font-mono text-slate-500 bg-[#1e293b]/50 px-1.5 py-0.5 rounded uppercase">
+              {displayId}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400 bg-slate-800/40 px-1.5 py-0.5 rounded capitalize">
+              {trip.tripType || 'dropoff'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 text-right">
+            <div className="flex flex-col items-end">
+              <p className="font-bold text-slate-300 text-xs">{trip.requestedStartTime || 'N/A'}</p>
+            </div>
+            <div className="p-1 rounded bg-[#1e293b]/20 text-slate-500 hover:text-slate-200">
+              <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-slate-300 text-xs font-semibold">
+            <span>UP: <span className="text-blue-300">{passenger?.name || 'Unknown'}</span></span>
+            <span className="hidden sm:inline text-slate-600">|</span>
+            <span>DR: <span className="text-emerald-300">{driver?.name || 'Unknown'}</span></span>
+          </div>
+          
+          <p className="text-xs text-slate-400 truncate max-w-xl">
+            {trip.pickupAddress} &rarr; {destination}
+          </p>
+        </div>
+      </div>
+
+      <div className={`transition-all duration-300 ease-in-out ${expanded ? 'max-h-[800px] opacity-100 scale-y-100 border-t border-slate-800/30' : 'max-h-0 opacity-0 scale-y-0'}`}>
+        <div className="p-4 bg-[#0a0f1c]/30 text-xs space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Passenger Details</p>
+              <p className="font-medium text-slate-300 mt-0.5">{passenger?.name || 'Unknown'} ({passenger?.department || 'N/A'})</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Driver & Vehicle</p>
+              <p className="font-medium text-slate-300 mt-0.5">
+                {driver?.name || 'Unknown'} {trip.vehicleId ? `[V_ID: ${trip.vehicleId}]` : ''}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-2.5 border-t border-slate-800/50">
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Distance Odometer</p>
+              <p className="font-semibold text-slate-300 mt-0.5">
+                Start: <span className="font-mono text-emerald-400">{trip.startOdometer !== undefined ? `${trip.startOdometer} km` : 'N/A'}</span>
+              </p>
+              <p className="font-semibold text-slate-300">
+                End: <span className="font-mono text-emerald-400">{trip.endOdometer !== undefined ? `${trip.endOdometer} km` : 'N/A'}</span>
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Timestamps</p>
+              <p className="text-slate-400 mt-0.5">Requested Date: <span className="text-slate-200">{trip.requestedDate || 'TBD'}</span></p>
+              {trip.dropoffTime && (
+                <p className="text-slate-400">Completed At: <span className="text-slate-200">{formatTime(trip.dropoffTime)}</span></p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -336,10 +674,16 @@ export default function AdminDashboard() {
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [isCouplingMode, setIsCouplingMode] = useState(false);
   const [coupledTripIds, setCoupledTripIds] = useState<string[]>([]);
+
+  // Interactive UI Modal State (IFrame-proof alerts & prompts)
+  const [wipeModal, setWipeModal] = useState<'none' | 'operations' | 'everything' | 'amend'>('none');
+  const [amendTripId, setAmendTripId] = useState<string | null>(null);
+  const [amendTimeVal, setAmendTimeVal] = useState('');
   
   // Filtering and sorting state for allocation
   const [driverFilter, setDriverFilter] = useState('all'); // all, available, busy
   const [vehicleFilter, setVehicleFilter] = useState('all'); // all, available, busy
+  const [completedTripsRange, setCompletedTripsRange] = useState<'today' | '7days' | '30days' | 'all'>('30days');
   
   // New Vehicle state
   const [newVehicle, setNewVehicle] = useState({ type: 'car', reg: '' });
@@ -424,6 +768,7 @@ export default function AdminDashboard() {
         allocatedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      toast.success('Trip assigned to driver');
       setAllocatingTrip(null);
       setSelectedDriver('');
       setSelectedVehicle('');
@@ -565,15 +910,19 @@ export default function AdminDashboard() {
       
       await signOut(secondaryAuth);
       
-      await setDoc(doc(db, 'users', newUid), {
+      const userData: any = {
         userId: newUid,
         email: generatedEmail,
         name: newUser.name,
         role: newUser.role,
         department: newUser.department,
-        hasSmartphone: newUser.role === 'driver' ? newUser.hasSmartphone : undefined,
         createdAt: serverTimestamp()
-      });
+      };
+      if (newUser.role === 'driver') {
+        userData.hasSmartphone = newUser.hasSmartphone;
+      }
+      
+      await setDoc(doc(db, 'users', newUid), userData);
       
       setNewUser({ name: '', role: 'driver', pin: '', department: '', hasSmartphone: true });
       setIsCreatingUser(false);
@@ -587,12 +936,15 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleExportCSV = () => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const recentTrips = trips.filter(t => t.createdAt && (t.createdAt?.toMillis?.() || 0) > sevenDaysAgo);
+  const handleExportCSV = (days: number = 30) => {
+    const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
+    const recentTrips = trips.filter(t => {
+      const tripTime = t.createdAt?.toMillis?.() || (t.requestedDate ? new Date(t.requestedDate).getTime() : Date.now());
+      return (Date.now() - tripTime) <= days * 24 * 60 * 60 * 1000;
+    });
     
     if (recentTrips.length === 0) {
-      alert("No trips found in the last 7 days.");
+      alert(`No trips found in the last ${days} days.`);
       return;
     }
 
@@ -641,7 +993,7 @@ export default function AdminDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Trips_7_Days_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Trips_${days}_Days_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -671,6 +1023,25 @@ export default function AdminDashboard() {
 
   const pendingTrips = trips.filter(t => t.status === 'pending');
   const activeTrips = trips.filter(t => t.status === 'allocated' || t.status === 'driver_started' || t.status === 'in_progress' || t.status === 'driver_ended');
+  const completedTrips = trips.filter(t => {
+    if (t.status !== 'completed' && t.status !== 'cancelled') return false;
+    if (completedTripsRange === 'all') return true;
+
+    const tripTime = t.createdAt?.toMillis?.() || (t.requestedDate ? new Date(t.requestedDate).getTime() : Date.now());
+    const now = Date.now();
+
+    if (completedTripsRange === 'today') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      return t.requestedDate === todayStr;
+    }
+    if (completedTripsRange === '7days') {
+      return (now - tripTime) <= 7 * 24 * 60 * 60 * 1000;
+    }
+    if (completedTripsRange === '30days') {
+      return (now - tripTime) <= 30 * 24 * 60 * 60 * 1000;
+    }
+    return true;
+  });
 
   const filteredDrivers = computedDrivers.filter(d => driverFilter === 'all' || d.computedStatus === driverFilter).sort((a, b) => {
     if (a.computedStatus !== b.computedStatus) return a.computedStatus === 'available' ? -1 : 1;
@@ -731,31 +1102,39 @@ export default function AdminDashboard() {
     </div>
   );
 
-  const handleClearData = async () => {
-    const confirmMessage = "Are you sure you want to WIPE ALL TRIPS and TIMESHEETS?\nThis action cannot be undone, and is usually done to reset the system to go live.";
-    const userInput = prompt(`Type "CONFIRM" to confirm clearing all operations data (trips, timesheets)`);
-    if (userInput?.toUpperCase() !== 'CONFIRM') return;
+  const handleClearData = () => {
+    setWipeModal('operations');
+  };
+
+  const handleFullWipe = () => {
+    setWipeModal('everything');
+  };
+
+  const executeClearData = async () => {
     try {
+      toast.info("Clearing operations data...");
       const tripsPromise = trips.map(t => deleteDoc(doc(db, 'trips', t.id)).catch(e => console.error("Error deleting trip", e)));
       const timesheetsSnap = await getDocs(collection(db, 'timesheets')).catch(e => { console.log(e); return {docs: []}; });
       const timesheetsPromise = timesheetsSnap.docs.map(d => deleteDoc(doc(db, 'timesheets', d.id)).catch(e => console.error(e)));
       await Promise.all([...tripsPromise, ...timesheetsPromise]);
-      toast.success("Testing data cleared successfully. System ready.");
+      setWipeModal('none');
+      toast.success("Operations test data cleared successfully. System ready!");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to clear some data. Check console.");
+      toast.error("Failed to clear operations data.");
     }
   };
 
-  const handleFullWipe = async () => {
-    if (prompt(`DANGER: Type "WIPE EVERYTHING" to delete trips, timesheets, vehicles, and reset all drivers.`) !== "WIPE EVERYTHING") return;
+  const executeFullWipe = async () => {
     try {
+      toast.info("Performing total wipe...");
       const tripsPromise = trips.map(t => deleteDoc(doc(db, 'trips', t.id)));
       const timesheetsSnap = await getDocs(collection(db, 'timesheets'));
       const timesheetsPromise = timesheetsSnap.docs.map(d => deleteDoc(doc(db, 'timesheets', d.id)));
       const vehiclesPromise = vehicles.map(v => deleteDoc(doc(db, 'vehicles', v.id)));
       await Promise.all([...tripsPromise, ...timesheetsPromise, ...vehiclesPromise]);
-      toast.success("All data wiped. Ready to bring LIVE.");
+      setWipeModal('none');
+      toast.success("Total system wipe complete. All test data successfully cleaned!");
     } catch (error) {
       console.error(error);
       toast.error("Error during full wipe.");
@@ -772,8 +1151,11 @@ export default function AdminDashboard() {
               <CardTitle>Reports & Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={handleExportCSV} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                Export 7-Day Travel Record
+              <Button onClick={() => handleExportCSV(7)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                Export 7-Day Travel Record (CSV)
+              </Button>
+              <Button onClick={() => handleExportCSV(30)} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                Export 30-Day Travel Record (CSV)
               </Button>
               <Button onClick={handleClearData} className="w-full bg-orange-600 hover:bg-orange-700 text-white" variant="destructive">
                 Reset Operations Data
@@ -931,26 +1313,35 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
                 <ul className="text-sm divide-y divide-zinc-100 max-h-64 overflow-y-auto pr-2">
-                  {allUsers.length === 0 && <li className="py-2 text-slate-400 text-xs">No users found.</li>}
-                  {allUsers.filter(u => u.role !== 'admin').map(u => (
-                    <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-[#1f2937] transition-all hover:bg-[#1e293b]/50 -mx-2 px-2 rounded-md">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-xs text-slate-700">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-1">
-                          <span className="text-[10px] font-mono text-slate-500 bg-[#0f172a] border border-[#1f2937] px-1.5 py-0.5 rounded break-all leading-tight">{u.email}</span>
-                          <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-900/20 px-1.5 py-0.5 rounded capitalize w-fit">{u.role}</span>
+                  {loading ? (
+                    <div className="space-y-2 py-1">
+                      <LiveDriverItemSkeleton />
+                      <LiveDriverItemSkeleton />
+                      <LiveDriverItemSkeleton />
+                    </div>
+                  ) : allUsers.length === 0 ? (
+                    <li className="py-2 text-slate-400 text-xs">No users found.</li>
+                  ) : (
+                    allUsers.filter(u => u.role !== 'admin').map(u => (
+                      <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-[#1f2937] transition-all hover:bg-[#1e293b]/50 -mx-2 px-2 rounded-md">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-xs text-slate-700">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-1">
+                            <span className="text-[10px] font-mono text-slate-500 bg-[#0f172a] border border-[#1f2937] px-1.5 py-0.5 rounded break-all leading-tight">{u.email}</span>
+                            <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-900/20 px-1.5 py-0.5 rounded capitalize w-fit">{u.role}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0">
-                        {u.role === 'user' ? (
-                          <button className="text-[10px] bg-[#0a0f1c] border border-[#1f2937] text-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-[#1e293b] hover:text-slate-100 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</button>
-                        ) : (
-                          <button className="text-[10px] bg-[#0a0f1c] border border-[#1f2937] text-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-[#1e293b] hover:text-slate-100 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'user')}>Make User</button>
-                        )}
-                        <button className="text-[10px] bg-red-900/20 border border-red-900/50 text-red-600 px-2.5 py-1 rounded shadow-sm hover:bg-red-900/40 transition-colors font-medium cursor-pointer" onClick={() => handleDeleteUser(u.userId)}>Remove</button>
-                      </div>
-                    </li>
-                  ))}
+                        <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0">
+                          {u.role === 'user' ? (
+                            <button className="text-[10px] bg-[#0a0f1c] border border-[#1f2937] text-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-[#1e293b] hover:text-slate-100 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</button>
+                          ) : (
+                            <button className="text-[10px] bg-[#0a0f1c] border border-[#1f2937] text-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-[#1e293b] hover:text-slate-100 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'user')}>Make User</button>
+                          )}
+                          <button className="text-[10px] bg-red-900/20 border border-red-900/50 text-red-600 px-2.5 py-1 rounded shadow-sm hover:bg-red-900/40 transition-colors font-medium cursor-pointer" onClick={() => handleDeleteUser(u.userId)}>Remove</button>
+                        </div>
+                      </li>
+                    ))
+                  )}
                 </ul>
             </CardContent>
           </Card>
@@ -981,7 +1372,12 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              {pendingTrips.length === 0 ? (
+              {loading ? (
+                <div className="space-y-4">
+                  <TripItemSkeleton />
+                  <TripItemSkeleton />
+                </div>
+              ) : pendingTrips.length === 0 ? (
                 <div className="text-slate-400 text-center">No pending trips.</div>
               ) : (
                 <div className="space-y-4">
@@ -1035,7 +1431,7 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="space-y-4">
-                            {groups[date].map(trip => (
+                            {groups[date].map((trip, idx) => (
                               <AdminPendingTripItem
                                 key={trip.id}
                                 trip={trip}
@@ -1052,6 +1448,10 @@ export default function AdminDashboard() {
                                 renderVehicleSelect={renderVehicleSelect}
                                 selectedDriver={selectedDriver}
                                 selectedVehicle={selectedVehicle}
+                                setWipeModal={setWipeModal}
+                                setAmendTripId={setAmendTripId}
+                                setAmendTimeVal={setAmendTimeVal}
+                                index={idx}
                               />
                             ))}
                           </div>
@@ -1072,7 +1472,12 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {activeTrips.length === 0 ? (
+              {loading ? (
+                <div className="space-y-4">
+                  <TripItemSkeleton />
+                  <TripItemSkeleton />
+                </div>
+              ) : activeTrips.length === 0 ? (
                 <div className="text-slate-400 text-center">No active trips.</div>
               ) : (
                 <div className="space-y-4">
@@ -1110,13 +1515,14 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="space-y-4">
-                            {groups[date].map(trip => (
+                            {groups[date].map((trip, idx) => (
                               <AdminActiveTripItem 
                                 key={trip.id} 
                                 trip={trip} 
                                 drivers={drivers} 
                                 handleForceCompleteTrip={handleForceCompleteTrip} 
                                 allUsers={allUsers}
+                                index={idx}
                               />
                             ))}
                           </div>
@@ -1128,8 +1534,244 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
+
+          <Card className="border-emerald-500/20 bg-emerald-950/5">
+            <CardHeader className="bg-emerald-950/10 rounded-t-lg border-b border-emerald-500/20">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
+                <CardTitle className="text-emerald-400 flex items-center gap-2">
+                  Completed & Cancelled Trips (History)
+                  <span className="bg-emerald-950/45 text-emerald-400 text-xs px-2 py-1 rounded-full font-mono">{completedTrips.length}</span>
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-medium font-mono">Filter Range:</span>
+                  <select 
+                    value={completedTripsRange || '30days'} 
+                    onChange={(e: any) => setCompletedTripsRange(e.target.value)}
+                    className="bg-slate-950 border border-emerald-500/30 text-emerald-300 text-xs rounded px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer font-medium font-sans"
+                  >
+                    <option value="today">Today Only</option>
+                    <option value="7days">Last 7 Days</option>
+                    <option value="30days">Last 30 Days (Default)</option>
+                    <option value="all">All History</option>
+                  </select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 p-3 sm:p-4 rounded-xl border border-emerald-500/10 bg-emerald-950/20">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3.5 w-16 bg-slate-500/15" />
+                      <Skeleton className="h-6 w-10 bg-slate-400/20" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3.5 w-16 bg-slate-500/15" />
+                      <Skeleton className="h-6 w-10 bg-slate-400/20" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3.5 w-20 bg-slate-500/15" />
+                      <Skeleton className="h-6 w-16 bg-slate-400/20" />
+                    </div>
+                  </div>
+                  <TripItemSkeleton />
+                  <TripItemSkeleton />
+                </div>
+              ) : (
+                <>
+                  {completedTrips.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 p-3 sm:p-4 rounded-xl border border-emerald-500/10 bg-emerald-950/20 text-xs text-slate-300">
+                      <div className="space-y-1">
+                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Bookings</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-200 font-mono">{completedTrips.length}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">Completed</p>
+                        <p className="text-sm sm:text-lg font-bold text-emerald-400 font-mono">
+                          {completedTrips.filter(t => t.status === 'completed').length}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">KM Traveled</p>
+                        <p className="text-sm sm:text-lg font-bold text-blue-400 font-mono">
+                          {completedTrips.reduce((acc, t) => {
+                            if (t.status === 'completed' && t.startOdometer !== undefined && t.endOdometer !== undefined) {
+                              const diff = Number(t.endOdometer) - Number(t.startOdometer);
+                              if (!isNaN(diff) && diff > 0) return acc + diff;
+                            }
+                            return acc;
+                          }, 0).toLocaleString()} km
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {completedTrips.length === 0 ? (
+                    <div className="text-slate-400 text-center py-6">No completed/cancelled trips in the selected range ({completedTripsRange}).</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(() => {
+                        const groups: { [key: string]: typeof completedTrips } = {};
+                        completedTrips.forEach(trip => {
+                          const date = trip.requestedDate || 'Unspecified Date';
+                          if (!groups[date]) groups[date] = [];
+                          groups[date].push(trip);
+                        });
+                        
+                        const sortedDates = Object.keys(groups).sort((a, b) => {
+                          if (a === 'Unspecified Date') return 1;
+                          if (b === 'Unspecified Date') return -1;
+                          return b.localeCompare(a); // Today / most recent first!
+                        });
+                        
+                        return sortedDates.map(date => {
+                          const isToday = date === new Date().toISOString().split('T')[0];
+                          const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                          const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
+                          
+                          return (
+                            <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                                  ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                                    isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
+                                    'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                                  {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
+                                  {dateLabel}
+                                </div>
+                                <div className="h-px bg-slate-800/50 flex-1"></div>
+                                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Bookings</span>
+                              </div>
+
+                              <div className="space-y-3">
+                                {groups[date].map((trip, idx) => (
+                                  <AdminCompletedTripItem 
+                                    key={trip.id} 
+                                    trip={trip} 
+                                    drivers={drivers} 
+                                    allUsers={allUsers}
+                                    index={idx}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Wipe & Clean Data Modal Overlays (Sandboxed Live App Compatible) */}
+      {wipeModal !== 'none' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#111827] border border-[#1e293b] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            
+            {wipeModal === 'amend' && (
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-slate-100">Amend Request Start Time</h3>
+                  <p className="text-xs text-slate-400">Change the scheduled pickup hour. Format is 24h (HH:MM).</p>
+                </div>
+                <div className="pt-2">
+                  <input
+                    type="text"
+                    className="w-full bg-[#0a0f1c] border border-blue-500/30 text-slate-100 font-mono rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-600"
+                    placeholder="e.g. 14:30"
+                    value={amendTimeVal}
+                    onChange={(e) => setAmendTimeVal(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2.5 pt-4">
+                  <Button 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                    onClick={async () => {
+                      if (!amendTimeVal || !amendTripId) return;
+                      await handleAmendTrip(amendTripId, amendTimeVal);
+                      setWipeModal('none');
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setWipeModal('none')}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {wipeModal === 'operations' && (
+              <div className="p-6 space-y-4">
+                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/25 flex items-start gap-2.5">
+                  <span className="text-xl">⚠️</span>
+                  <div>
+                    <h4 className="text-sm font-bold">Clear Operations Data (Start Fresh)</h4>
+                    <p className="text-xs text-amber-400/80 mt-1">This will permanently delete all logged trips, bookings, and timesheets from the system, preparing it for clean test runs or going live.</p>
+                  </div>
+                </div>
+                <div className="text-sm text-slate-300 leading-relaxed pt-2">
+                  Are you absolutely sure you want to proceed? This will revert your system statistics back to zero.
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2.5 pt-4">
+                  <Button 
+                    className="w-full sm:flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                    onClick={executeClearData}
+                  >
+                    Yes, Clear All Logs
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full sm:flex-1"
+                    onClick={() => setWipeModal('none')}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {wipeModal === 'everything' && (
+              <div className="p-6 space-y-4">
+                <div className="p-3 bg-red-500/10 text-red-400 rounded-lg border border-red-500/25 flex items-start gap-2.5">
+                  <span className="text-xl">🛑</span>
+                  <div>
+                    <h4 className="text-sm font-bold">DANGER: System Core Reset</h4>
+                    <p className="text-xs text-red-400/80 mt-1 font-sans">Wipes everything: All bookings, timesheets, and vehicle logs. Users & logins will be kept intact.</p>
+                  </div>
+                </div>
+                <div className="text-sm text-slate-300 pt-2 font-sans">
+                  This action is permanent. All active operations, vehicles, history records, and trip allocation logs will be wiped out completely.
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2.5 pt-4">
+                  <Button 
+                    className="w-full sm:flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                    onClick={executeFullWipe}
+                  >
+                    Yes, WIPE SYSTEM
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full sm:flex-1"
+                    onClick={() => setWipeModal('none')}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

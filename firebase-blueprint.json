@@ -10,6 +10,8 @@
         "name": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "driver", "user"] },
         "phone": { "type": "string" },
+        "department": { "type": "string" },
+        "hasSmartphone": { "type": "boolean" },
         "createdAt": { "type": "integer" }
       },
       "required": ["userId", "email", "role", "createdAt"]
@@ -44,7 +46,11 @@
       "properties": {
         "userId": { "type": "string" },
         "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "driverPhone": { "type": "string" },
+        "driverHasSmartphone": { "type": "boolean" },
         "vehicleId": { "type": "string" },
+        "vehicleName": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "allocated", "in_progress", "completed", "cancelled"] },
         "tripType": { "type": "string", "enum": ["dropoff", "return"] },
         "pickupAddress": { "type": "string" },

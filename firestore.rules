@@ -8,16 +8,20 @@ service cloud.firestore {
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     
-    // We check admin from users col
+    // We check admin from users col with safe token-based verification fallbacks
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true && request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app']) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
     
-    // We check driver
+    // We check driver with safe token-based verification fallbacks
     function isDriver() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true && request.auth.token.email == '222222@sanken.app') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver')
+      );
     }
 
     match /users/{userId} {
@@ -27,6 +31,8 @@ service cloud.firestore {
           && (!('name' in data) || (data.name is string && data.name.size() <= 100))
           && data.role in ['admin', 'driver', 'user']
           && (!('phone' in data) || (data.phone is string && data.phone.size() <= 20))
+          && (!('department' in data) || (data.department is string && data.department.size() <= 100))
+          && (!('hasSmartphone' in data) || (data.hasSmartphone is bool))
           && data.createdAt is timestamp;
       }
 
@@ -34,7 +40,7 @@ service cloud.firestore {
       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
       
       allow create: if isSignedIn() && isValidId(userId) && isValidUser(incoming())
-        && incoming().keys().hasAll(['userId', 'email', 'role', 'createdAt']) && incoming().keys().size() <= 6
+        && incoming().keys().hasAll(['userId', 'email', 'role', 'createdAt']) && incoming().keys().size() <= 8
         && incoming().createdAt == request.time
         && (
           (request.auth.uid == userId && (
@@ -46,12 +52,12 @@ service cloud.firestore {
         );
         
       allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && (
-        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone']) && incoming().role == existing().role) ||
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'department', 'hasSmartphone']) && incoming().role == existing().role) ||
         (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['role']) && (
             (incoming().role == 'admin' && (request.auth.token.email == 'ebiz1986@gmail.com' || request.auth.token.email == '445566@sanken.app')) ||
             (incoming().role == 'driver' && request.auth.token.email == '222222@sanken.app')
         )) ||
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'role']))
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'role', 'department', 'hasSmartphone']))
       );
       
       allow delete: if isAdmin();
@@ -96,18 +102,28 @@ service cloud.firestore {
           && data.pickupTime is number
           && (!('requestedStartTime' in data) || (data.requestedStartTime is string && data.requestedStartTime.size() <= 50))
           && (!('passengerCount' in data) || (data.passengerCount is number))
+          && (!('passengerName' in data) || (data.passengerName is string && data.passengerName.size() <= 100))
+          && (!('passengerDepartment' in data) || (data.passengerDepartment is string && data.passengerDepartment.size() <= 100))
+          && (!('jointPassengers' in data) || (data.jointPassengers is list && data.jointPassengers.size() <= 20))
           && (!('vehicleId' in data) || (data.vehicleId is string && data.vehicleId.size() <= 128))
           && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
           && (!('driverName' in data) || (data.driverName is string && data.driverName.size() <= 100))
           && (!('driverPhone' in data) || (data.driverPhone is string && data.driverPhone.size() <= 50))
+          && (!('driverHasSmartphone' in data) || (data.driverHasSmartphone is bool))
           && (!('vehicleName' in data) || (data.vehicleName is string && data.vehicleName.size() <= 150))
           && (!('allocatedAt' in data) || (data.allocatedAt is timestamp))
           && (!('dropoffTime' in data) || (data.dropoffTime is number))
+          && (!('driverStartedTime' in data) || (data.driverStartedTime is number))
           && (!('driverEndedTime' in data) || (data.driverEndedTime is number))
           && (!('startOdometer' in data) || (data.startOdometer is number))
           && (!('endOdometer' in data) || (data.endOdometer is number))
+          && (!('currentOdometer' in data) || (data.currentOdometer is number))
+          && (!('expectedEndOdometer' in data) || (data.expectedEndOdometer is number))
           && (!('forceCompleted' in data) || (data.forceCompleted is bool))
           && (!('isJointTrip' in data) || (data.isJointTrip is bool))
+          && (!('expectedDistance' in data) || (data.expectedDistance is number))
+          && (!('requestedDate' in data) || (data.requestedDate is string && data.requestedDate.size() <= 50))
+          && (!('estimatedDestinationTime' in data) || data.estimatedDestinationTime == null || (data.estimatedDestinationTime is string && data.estimatedDestinationTime.size() <= 50))
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
@@ -126,17 +142,19 @@ service cloud.firestore {
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
         && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt']) 
-        && incoming().keys().size() <= 24
+        && incoming().keys().size() <= 30
         && incoming().userId == request.auth.uid
         && incoming().status == 'pending'
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
         
-      allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip'])) ||
-        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverEndedTime'])) ||
+       allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime'])) ||
+        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverEndedTime', 'currentOdometer'])) ||
         (existing().userId == request.auth.uid && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
-        (existing().userId == request.auth.uid && existing().status == 'driver_started' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'startOdometer']) && incoming().status == 'in_progress') ||
+        (existing().userId == request.auth.uid && existing().status == 'allocated' && existing().driverHasSmartphone == false && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime']) && incoming().status == 'driver_started') ||
+        (existing().userId == request.auth.uid && existing().status == 'driver_started' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'startOdometer', 'currentOdometer', 'expectedEndOdometer']) && incoming().status == 'in_progress') ||
+        (existing().userId == request.auth.uid && existing().status == 'in_progress' && existing().driverHasSmartphone == false && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverEndedTime']) && incoming().status == 'driver_ended') ||
         (existing().userId == request.auth.uid && existing().status == 'driver_ended' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'dropoffTime', 'endOdometer']) && incoming().status == 'completed')
       );
       
