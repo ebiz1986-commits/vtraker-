@@ -7,48 +7,23 @@ import { signOut } from 'firebase/auth';
 import { Button } from './ui/Button';
 import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass } from 'lucide-react';
 import { toast } from 'sonner';
+import { InstallPWA } from './InstallPWA';
 
 export default function Layout({ children, title }: { children: React.ReactNode, title: string }) {
   const { profile } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+  const [isInstallOpen, setIsInstallOpen] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
       setIsStandalone(standalone);
     };
     checkStandalone();
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstallable(false);
-      }
-      setDeferredPrompt(null);
-    } else {
-      setShowInstallInstructions(true);
-    }
-  };
   
   const handleSignOut = () => {
     signOut(auth);
@@ -91,8 +66,14 @@ export default function Layout({ children, title }: { children: React.ReactNode,
           )}
         </div>
         <div className={`flex items-center gap-2 sm:gap-4 text-[#E0E0E0] relative z-10`}>
+
           {!isStandalone && (
-            <Button variant="outline" size="sm" onClick={handleInstallClick} className={`gap-1.5 items-center flex border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 font-sans font-bold px-3 py-1.5 h-auto text-xs rounded-xl shadow-lg shadow-emerald-500/5`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsInstallOpen(true)} 
+              className="gap-1.5 items-center flex border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 font-sans font-bold px-3 py-1.5 h-auto text-xs rounded-xl shadow-lg shadow-orange-500/5 focus:outline-none cursor-pointer animate-install-flash"
+            >
               <Download className="w-3.5 h-3.5" /> <span>Install</span>
             </Button>
           )}
@@ -215,45 +196,9 @@ export default function Layout({ children, title }: { children: React.ReactNode,
       >
         {children}
       </main>
-      {showInstallInstructions && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-left">
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <Download className="w-5 h-5 text-emerald-400" />
-              Install to Home Screen
-            </h3>
-            <p className="text-xs text-slate-300 mb-4 leading-relaxed font-sans">
-              Access SKO VBooking instantly as a mobile app from your home screen with rapid response times and beautiful mobile optimizations.
-            </p>
-            
-            <div className="space-y-4 text-xs font-sans">
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="font-bold text-amber-400 block mb-1">For iOS (Apple Safari)</span>
-                <p className="text-slate-300 leading-relaxed">
-                  1. Tap the <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded font-mono">Share 📤</strong> button at the bottom of Safari.<br className="mb-0.5" />
-                  2. Scroll down and tap <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded font-mono">Add to Home Screen ➕</strong>.<br className="mb-0.5" />
-                  3. Tap <strong className="text-white bg-orange-500 px-1.5 py-0.5 rounded font-mono">Add</strong> in the top right corner.
-                </p>
-              </div>
-              
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                <span className="font-bold text-sky-400 block mb-1">For Android / Chrome</span>
-                <p className="text-slate-300 leading-relaxed">
-                  1. Tap the <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded font-mono">Menu ⁝</strong> (three dots) in the browser header.<br className="mb-0.5" />
-                  2. Tap <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded font-mono">Install app</strong> or <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded font-mono">Add to Home screen</strong>.
-                </p>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={() => setShowInstallInstructions(false)} 
-              className="w-full mt-5 bg-[#ff9900] hover:bg-[#e68a00] text-black font-extrabold py-2.5 rounded-xl transition-all"
-            >
-              Understand & Close
-            </Button>
-          </div>
-        </div>
-      )}
+
+      <InstallPWA isOpen={isInstallOpen} onClose={() => setIsInstallOpen(false)} />
+
       </div>
     </div>
   );

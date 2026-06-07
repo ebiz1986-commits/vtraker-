@@ -340,6 +340,53 @@ body.light-theme .bg-slate-850 {
 }
 
 /* General interactive button text visibility alignment */
-body.light-theme .bg-orange-600\/10 {
+body.light-theme .bg-orange-600/10 {
   background-color: #ffedd5 !important;
 }
+
+/* Custom modern loading skeleton animations & themes readability */
+.animate-pulse {
+  animation: pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Adjust skeleton backgrounds for high-glare light environments */
+body.light-theme .animate-pulse {
+  background-color: rgba(12, 18, 34, 0.12) !important;
+}
+
+body.light-theme .glass-card .animate-pulse {
+  background-color: rgba(12, 18, 34, 0.14) !important;
+}
+
+/* Ensure TripItemSkeleton container behaves with premium slate borders under light mode */
+body.light-theme .glass-card.border-white\/\[0\.05\] {
+  border: 2px solid #0c1222 !important;
+  background: #ffffff !important;
+  box-shadow: 5px 5px 0px #0c1222 !important;
+}
+
+body.light-theme .glass-card[class*="border-white/"] {
+  border: 2px solid #0c1222 !important;
+  background: #ffffff !important;
+  box-shadow: 5px 5px 0px #0c1222 !important;
+}
+
+@keyframes install-flash {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 16px 6px rgba(234, 88, 12, 0.85);
+    filter: brightness(1.2);
+  }
+}
+
+.animate-install-flash {
+  animation: install-flash 2.2s infinite ease-in-out !important;
+}
+
+
+

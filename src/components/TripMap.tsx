@@ -39,7 +39,7 @@ export function TripMap({ trip, isDriver = false }: TripMapProps) {
   const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
-  // Generate realistic coordinates centered near the user's city if not initialized
+  // Generate realistic coordinates centered near Colombo if not initialized (no device GPS queries)
   useEffect(() => {
     const initializeCoordinates = async () => {
       // If trip already has stored coordinates, let's use them directly
@@ -54,54 +54,22 @@ export function TripMap({ trip, isDriver = false }: TripMapProps) {
         return;
       }
 
-      // Fallback generator: Attempt to request user's actual city coords to make it look hyper-realistic!
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const pickup = { lat, lng };
-          
-          // Destination is offset by ~2km
-          const dropoff = {
-            lat: lat + 0.012,
-            lng: lng + 0.015,
-          };
-
-          setPickupPos(pickup);
-          setDropoffPos(dropoff);
-          setVehiclePos(pickup);
-
-          // Update trip object in Firestore with these initial coords if we are driver or creator
-          try {
-            await updateDoc(doc(db, 'trips', trip.id), {
-              pickupCoords: pickup,
-              dropoffCoords: dropoff,
-              currentLocation: pickup,
-            });
-          } catch (e) {
-            console.error("Error setting coordinates:", e);
-          }
-        },
-        async () => {
-          // Defaults to Colombo
-          const pickup = { lat: 6.9271, lng: 79.8612 };
-          const dropoff = { lat: 6.9412, lng: 79.8732 };
-          setPickupPos(pickup);
-          setDropoffPos(dropoff);
-          setVehiclePos(pickup);
-          
-          try {
-            await updateDoc(doc(db, 'trips', trip.id), {
-              pickupCoords: pickup,
-              dropoffCoords: dropoff,
-              currentLocation: pickup,
-            });
-          } catch (e) {
-            console.error("Error setting default coordinates:", e);
-          }
-        },
-        { timeout: 5000 }
-      );
+      // Automatically initialize with Colombo defaults to ensure zero device GPS access
+      const pickup = { lat: 6.9271, lng: 79.8612 };
+      const dropoff = { lat: 6.9412, lng: 79.8732 };
+      setPickupPos(pickup);
+      setDropoffPos(dropoff);
+      setVehiclePos(pickup);
+      
+      try {
+        await updateDoc(doc(db, 'trips', trip.id), {
+          pickupCoords: pickup,
+          dropoffCoords: dropoff,
+          currentLocation: pickup,
+        });
+      } catch (e) {
+        console.error("Error setting default coordinates:", e);
+      }
     };
 
     initializeCoordinates();
@@ -117,46 +85,11 @@ export function TripMap({ trip, isDriver = false }: TripMapProps) {
     }
   }, [trip.currentLocation]);
 
-  // Handle live device geolocation recording if isDriver is active
+  // Note: we do not access navigator.geolocation to protect device GPS privacy.
+  // Instead, the driver can utilize the "Simulate Drive" option.
   useEffect(() => {
-    const isActive = trip.status === 'driver_started' || trip.status === 'in_progress';
-    if (isDriver && isActive && !isSimulating) {
-      if ('geolocation' in navigator) {
-        // Watch driver position in real-time
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          async (position) => {
-            const heading = position.coords.heading || 0;
-            const liveLoc = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              heading: heading,
-              updatedAt: Date.now(),
-            };
-
-            setVehiclePos({ lat: liveLoc.lat, lng: liveLoc.lng });
-            
-            // Save to Firestore so user sees the vehicle moving in real-time!
-            try {
-              await updateDoc(doc(db, 'trips', trip.id), {
-                currentLocation: liveLoc,
-              });
-            } catch (err) {
-              console.error("Error writing active driver position:", err);
-            }
-          },
-          (err) => {
-            console.warn("GPS tracking active but restricted:", err.message);
-          },
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-        );
-      }
-    }
-
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
-    };
+    // No-op to respect strict zero-GPS guidelines
+    return () => {};
   }, [isDriver, trip.status, isSimulating, trip.id]);
 
   // Simulator Engine to animate the vehicle along the vector line

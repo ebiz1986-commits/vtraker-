@@ -24,6 +24,17 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   // A visually appealing trip ID based on original document ID
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
 
+  // Journey metrics for real-time progress indicator
+  const odometerStart = Number(trip.startOdometer) || 0;
+  const odometerCurrent = Number(trip.currentOdometer) || odometerStart;
+  const expectedEnd = Number(trip.expectedEndOdometer) || (odometerStart + (Number(trip.expectedDistance) || 15));
+  const distanceCovered = odometerCurrent - odometerStart;
+  const totalEstimatedDist = expectedEnd - odometerStart;
+  const progressPercent = totalEstimatedDist > 0 
+    ? Math.min(100, Math.max(0, (distanceCovered / totalEstimatedDist) * 100))
+    : 0;
+  const showJourneyProgress = odometerStart > 0 && ['in_progress', 'driver_ended', 'completed'].includes(trip.status);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 15 }}
@@ -118,6 +129,27 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
         <div className="p-5 pt-0">
           <div className="bg-black/30 border border-white/5 p-4 rounded-xl mt-2">
             <div className="grid grid-cols-2 gap-4">
+              {showJourneyProgress && (
+                <div className="col-span-2 p-3 bg-orange-500/5 border border-orange-500/20 rounded-xl space-y-2">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5 text-orange-400">
+                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                      Journey Progress
+                    </span>
+                    <span className="text-slate-300 font-bold">{distanceCovered.toFixed(0)} KM covered / {totalEstimatedDist.toFixed(0)} KM expected</span>
+                  </div>
+                  <div className="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(234,88,12,0.4)]"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-[9px] font-mono text-slate-500">
+                    <span>Odometer Start: {odometerStart} KM</span>
+                    <span>Expected End: {expectedEnd} KM</span>
+                  </div>
+                </div>
+              )}
               {trip.estimatedDestinationTime && (
                 <div>
                   <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Est. Time</p>
@@ -276,7 +308,27 @@ export default function UserDashboard() {
   const [passengerCount, setPassengerCount] = useState(1);
   const [remarks, setRemarks] = useState('');
   const [userOdometerValues, setUserOdometerValues] = useState<{[key: string]: string}>({});
+  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
   // Simulating coordinates for now
+
+  const setQuickDateTime = (type: 'now' | 'today' | 'tomorrow') => {
+    const d = new Date();
+    if (type === 'now') {
+      setRequestedDate(d.toISOString().split('T')[0]);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const mins = d.getMinutes().toString().padStart(2, '0');
+      setRequestedStartTime(`${hours}:${mins}`);
+      toast.success("Set departure time to Immediate (Now)", { position: 'bottom-right' });
+    } else if (type === 'today') {
+      setRequestedDate(d.toISOString().split('T')[0]);
+      toast.success("Set departure date to Today", { position: 'bottom-right' });
+    } else if (type === 'tomorrow') {
+      const tomorrow = new Date(Date.now() + 86400000);
+      setRequestedDate(tomorrow.toISOString().split('T')[0]);
+      setRequestedStartTime("08:00");
+      toast.success("Set departure to Tomorrow at 8:00 AM", { position: 'bottom-right' });
+    }
+  };
   
   const handleConfirmOdometer = async (trip: any, type: 'start' | 'end') => {
     const odoStr = userOdometerValues[trip.id];
@@ -515,7 +567,32 @@ export default function UserDashboard() {
             
 
             <div>
-               <label className="label">Date & Start Time</label>
+               <div className="flex items-center justify-between mb-1.5">
+                 <label className="label mb-0">Date & Start Time</label>
+                 <div className="flex gap-1.5">
+                   <button
+                     type="button"
+                     onClick={() => setQuickDateTime('now')}
+                     className="text-[10px] font-bold text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-0.5 rounded-lg border border-orange-500/20 transition-colors cursor-pointer"
+                   >
+                     Now
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => setQuickDateTime('today')}
+                     className="text-[10px] font-bold text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-2.5 py-0.5 rounded-lg border border-sky-500/20 transition-colors cursor-pointer"
+                   >
+                     Today
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => setQuickDateTime('tomorrow')}
+                     className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-0.5 rounded-lg border border-emerald-500/20 transition-colors cursor-pointer"
+                   >
+                     Tomorrow
+                   </button>
+                 </div>
+               </div>
                <div className="flex gap-0 border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden focus-within:border-[#FF8C00]/50 transition-colors bg-[rgba(255,255,255,0.03)]">
                  <div className="relative flex-1 border-r border-white/10">
                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
@@ -585,9 +662,36 @@ export default function UserDashboard() {
         </div>
         
         <div className="lg:col-span-1 space-y-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">My Active Trips</h2>
-            <p className="text-sm text-slate-400">Overview of your upcoming and ongoing trips</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-white/5 pb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-0.5">My Bookings</h2>
+              <p className="text-xs text-slate-400 font-sans">Track and manage your requested rides</p>
+            </div>
+            
+            <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl shadow-inner max-w-fit">
+              <button
+                type="button"
+                onClick={() => setActiveTab('active')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'active' 
+                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Active ({trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('past')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'past' 
+                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Past ({trips.filter(t => ['completed', 'cancelled'].includes(t.status)).length})
+              </button>
+            </div>
           </div>
           
           {loading ? (
@@ -596,69 +700,80 @@ export default function UserDashboard() {
               <TripItemSkeleton />
               <TripItemSkeleton />
             </div>
-          ) : trips.length === 0 ? (
-            <div className="glass-card text-center py-8 text-[#A0A0A0]">No trips found. Book a vehicle to get started!</div>
+          ) : activeTab === 'active' ? (
+            trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length === 0 ? (
+              <div className="glass-card text-center py-10 text-[#A0A0A0] flex flex-col items-center justify-center gap-3">
+                <Car className="w-8 h-8 text-slate-600 animate-pulse" />
+                <p className="text-xs font-semibold text-slate-300">No active bookings right now.</p>
+                <p className="text-[11px] text-slate-500 max-w-[220px] leading-relaxed">Book a vehicle using the form to start your journey!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(() => {
+                  const activeTrips = trips.filter(t => !['completed', 'cancelled'].includes(t.status));
+                  const sortedTrips = [...activeTrips].sort((a, b) => {
+                    const dateA = a.requestedDate || '';
+                    const dateB = b.requestedDate || '';
+                    return dateA.localeCompare(dateB);
+                  });
+                  
+                  return sortedTrips.map((trip, index) => (
+                    <UserTripItem 
+                      key={trip.id} 
+                      trip={trip} 
+                      index={index} 
+                      profile={profile}
+                      userOdometerValues={userOdometerValues}
+                      setUserOdometerValues={setUserOdometerValues}
+                      handleCancelTrip={handleCancelTrip}
+                      handleConfirmOdometer={handleConfirmOdometer}
+                      handleUpdateStatus={handleUpdateStatus}
+                    />
+                  ));
+                })()}
+              </div>
+            )
           ) : (
-            <div className="space-y-4">
-              {(() => {
-                const activeTrips = trips.filter(t => !['completed', 'cancelled'].includes(t.status));
-                if (activeTrips.length === 0) return <div className="glass-card text-center py-8 text-[#A0A0A0]">No active trips found.</div>;
-                
-                const sortedTrips = [...activeTrips].sort((a, b) => {
-                  const dateA = a.requestedDate || '';
-                  const dateB = b.requestedDate || '';
-                  return dateA.localeCompare(dateB);
-                });
-                
-                return sortedTrips.map((trip, index) => (
-                  <UserTripItem 
-                    key={trip.id} 
-                    trip={trip} 
-                    index={index} 
-                    profile={profile}
-                    userOdometerValues={userOdometerValues}
-                    setUserOdometerValues={setUserOdometerValues}
-                    handleCancelTrip={handleCancelTrip}
-                    handleConfirmOdometer={handleConfirmOdometer}
-                    handleUpdateStatus={handleUpdateStatus}
-                  />
-                ));
-              })()}
-            </div>
-          )}
-
-          {/* History Section (Simplified) */}
-          {trips.filter(t => ['completed', 'cancelled'].includes(t.status)).length > 0 && (
-             <div className="mt-12">
-               <h3 className="text-lg font-bold text-white mb-4">Past Trips</h3>
+            trips.filter(t => ['completed', 'cancelled'].includes(t.status)).length === 0 ? (
+              <div className="glass-card text-center py-10 text-[#A0A0A0] flex flex-col items-center justify-center gap-3">
+                <Clock className="w-8 h-8 text-slate-600 animate-pulse" />
+                <p className="text-xs font-semibold text-slate-300">No historical records found.</p>
+                <p className="text-[11px] text-slate-500">Your completed and cancelled rides will show up here.</p>
+              </div>
+            ) : (
                <div className="space-y-3">
                  {trips.filter(t => ['completed', 'cancelled'].includes(t.status)).map((trip, idx) => (
                     <motion.div 
                       key={trip.id} 
                       initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 0.7, y: 0 }}
+                      animate={{ opacity: 0.9, y: 0 }}
                       whileHover={{ opacity: 1, scale: 1.01 }}
                       transition={{ duration: 0.3, delay: Math.min(idx * 0.04, 0.2) }}
-                      className="border border-white/10 bg-white/5 backdrop-blur-[10px] rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4 hover:opacity-100 transition-all hover:bg-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)] shrink-0"
+                      className="border border-white/10 bg-[#0f172a]/30 backdrop-blur-[10px] rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4 hover:opacity-100 transition-all hover:bg-slate-800/25 shadow-md shrink-0"
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'cancelled' ? 'bg-red-500' : trip.forceCompleted ? 'bg-amber-500 animate-pulse' : 'bg-slate-500'}`} />
-                          <span className={`text-xs font-semibold capitalize ${trip.status === 'cancelled' ? 'text-red-400' : trip.forceCompleted ? 'text-amber-500' : 'text-slate-400'}`}>
-                            {trip.forceCompleted ? 'Force Completed (Bypassed)' : trip.status.replace('_', ' ')}
+                          <span className={`text-[10px] uppercase tracking-wider font-extrabold ${trip.status === 'cancelled' ? 'text-red-400' : trip.forceCompleted ? 'text-amber-400' : 'text-slate-400'}`}>
+                            {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
                           </span>
+                          <span className="text-[9px] font-mono text-slate-500 font-bold ml-1">SO-{new Date().getFullYear()}-{trip.id.substring(0, 4).toUpperCase()}</span>
                         </div>
-                        <p className="text-sm font-medium text-slate-300">
+                        <p className="text-sm font-medium text-slate-200">
                           {trip.pickupAddress} &rarr; {trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress}
                         </p>
+                        {trip.endOdometer !== undefined && trip.startOdometer !== undefined && (
+                          <p className="text-[10px] text-orange-400/80 font-mono font-semibold mt-1">Mileage: {(Number(trip.endOdometer) - Number(trip.startOdometer))} KM ({trip.startOdometer} &rarr; {trip.endOdometer} KM)</p>
+                        )}
                       </div>
-                      <div className="text-right text-xs text-slate-500">
-                        <p>{trip.requestedDate}</p>
+                      <div className="text-right text-xs text-slate-400 self-start sm:self-center">
+                        <p className="font-semibold">{trip.requestedDate}</p>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{trip.requestedStartTime}</p>
                       </div>
                     </motion.div>
                  ))}
                </div>
-             </div>
+            )
           )}
         </div>
       </div>

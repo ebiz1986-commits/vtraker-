@@ -1,9 +1,7 @@
 {
   "name": "SKO VBooking",
   "description": "Premium vehicle booking, dispatch, and tracking system.",
-  "requestFramePermissions": [
-    "geolocation"
-  ],
+  "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

@@ -5,7 +5,6 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LandingPage from './pages/LandingPage';
 import DashboardRouter from './pages/DashboardRouter';
-import { InstallPWA } from './components/InstallPWA';
 import './index.css';
 import { Toaster } from 'sonner';
 
@@ -30,7 +29,6 @@ export default function App() {
         <NotificationProvider>
           <Router>
             <Toaster position="top-right" theme="dark" />
-            <InstallPWA />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/dashboard/*" element={
