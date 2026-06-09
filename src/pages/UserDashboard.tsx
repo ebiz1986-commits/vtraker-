@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, updateDoc, or } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
@@ -20,6 +20,9 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   const statusColor = trip.status === 'pending' ? 'text-yellow-500' : 'text-green-500';
   const statusBgColor = trip.status === 'pending' ? 'bg-yellow-500' : 'bg-green-500';
   const formattedStatus = trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ');
+
+  // Nominated check
+  const isNominated = trip.nominatedEmail === profile?.email;
 
   // A visually appealing trip ID based on original document ID
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
@@ -67,10 +70,16 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
             {trip.isJointTrip && (
               <span className="text-[10px] font-bold text-[#ff9900] bg-[#ff9900]/10 px-2 py-1 rounded-md uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff9900] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff9900]"></span>
                 </span>
                 JOINT
+              </span>
+            )}
+            {isNominated && (
+              <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-500/20 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-amber-500" />
+                Nominated Traveler
               </span>
             )}
           </div>
@@ -122,6 +131,12 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
           </div>
           <ChevronDown className={`w-5 h-5 text-slate-500 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
         </div>
+        {isNominated && trip.passengerName && (
+          <div className="mt-3 text-[11px] text-slate-400 bg-amber-500/5 px-3 py-1.5 rounded-lg border border-amber-500/10 flex items-center gap-2 max-w-fit">
+            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+            <span>Booked for you by: <span className="text-slate-300 font-bold">{trip.passengerName}</span></span>
+          </div>
+        )}
       </div>
 
       {/* Expandable Content (Actions & Details) */}
@@ -309,6 +324,9 @@ export default function UserDashboard() {
   const [remarks, setRemarks] = useState('');
   const [userOdometerValues, setUserOdometerValues] = useState<{[key: string]: string}>({});
   const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
+  const [nominatePerson, setNominatePerson] = useState(false);
+  const [nominatedName, setNominatedName] = useState('');
+  const [nominatedEmail, setNominatedEmail] = useState('');
   // Simulating coordinates for now
 
   const setQuickDateTime = (type: 'now' | 'today' | 'tomorrow') => {
@@ -390,7 +408,10 @@ export default function UserDashboard() {
     
     const q = query(
       collection(db, 'trips'),
-      where('userId', '==', profile.userId)
+      or(
+        where('userId', '==', profile.userId),
+        where('nominatedEmail', '==', profile.email)
+      )
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -437,6 +458,10 @@ export default function UserDashboard() {
         dropoffLat: 0,
         dropoffLng: 0,
         pickupTime: Date.now(),
+        ...(nominatePerson ? {
+          nominatedName: nominatedName.trim(),
+          nominatedEmail: nominatedEmail.toLowerCase().trim()
+        } : {}),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -450,6 +475,9 @@ export default function UserDashboard() {
       setEstimatedDestinationTime('');
       setPassengerCount(1);
       setRemarks('');
+      setNominatePerson(false);
+      setNominatedName('');
+      setNominatedEmail('');
       toast.success('Trip requested successfully!');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'trips');
@@ -642,6 +670,49 @@ export default function UserDashboard() {
                    </div>
                 </div>
               </div>
+            </div>
+
+            {/* Nominate Traveler Section */}
+            <div className="p-4 bg-white/5 border border-white/5 rounded-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-200">Nominate Another Passenger</span>
+                  <span className="text-xs text-slate-400 font-sans">Enable if someone else will be traveling</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={nominatePerson}
+                  onChange={(e) => setNominatePerson(e.target.checked)}
+                  className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-orange-500 focus:ring-offset-slate-900 cursor-pointer"
+                />
+              </div>
+
+              {nominatePerson && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 animate-fadeIn">
+                  <div>
+                    <label className="label">Nominee Name</label>
+                    <input
+                      type="text"
+                      required={nominatePerson}
+                      value={nominatedName}
+                      onChange={(e) => setNominatedName(e.target.value)}
+                      className="input-field"
+                      placeholder="e.g. John Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Nominee Email</label>
+                    <input
+                      type="email"
+                      required={nominatePerson}
+                      value={nominatedEmail}
+                      onChange={(e) => setNominatedEmail(e.target.value)}
+                      className="input-field"
+                      placeholder="e.g. john@sanken.app"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
