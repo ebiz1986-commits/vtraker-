@@ -388,5 +388,24 @@ body.light-theme .glass-card[class*="border-white/"] {
   animation: install-flash 2.2s infinite ease-in-out !important;
 }
 
+@keyframes warning-flash {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.2));
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.98);
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+  }
+}
+
+.animate-warning-flash {
+  animation: warning-flash 1.6s infinite ease-in-out;
+  display: inline-block;
+}
+
+
 
 

@@ -19,7 +19,7 @@ export default function DashboardRouter() {
            await setDoc(doc(db, 'users', user.uid), {
              userId: user.uid,
              email: user.email,
-             name: user.displayName || '',
+             name: user.displayName || (user.email ? user.email.split('@')[0] : '') || 'Unknown User',
              role,
              createdAt: serverTimestamp()
            });
@@ -30,16 +30,27 @@ export default function DashboardRouter() {
       };
       createProfile();
     } else if (!loading && user && profile) {
-      // Ensure ebiz1986@gmail.com is always admin
-      if (user.email === 'ebiz1986@gmail.com' && profile.role !== 'admin') {
-        const fixRole = async () => {
+      // Ensure ebiz1986@gmail.com is always admin and repair empty or unconfigured profile name
+      const needsAdminFix = user.email === 'ebiz1986@gmail.com' && profile.role !== 'admin';
+      const needsNameFix = !profile.name || profile.name.trim() === '' || profile.name === 'Unknown' || profile.name === 'Unknown User';
+      
+      if (needsAdminFix || needsNameFix) {
+        const repairProfile = async () => {
           try {
-            await setDoc(doc(db, 'users', user.uid), { role: 'admin' }, { merge: true });
+            const updates: any = {};
+            if (needsAdminFix) {
+              updates.role = 'admin';
+            }
+            if (needsNameFix) {
+              const emailLocalPart = user.email ? user.email.split('@')[0] : '';
+              updates.name = user.displayName || emailLocalPart || 'Unknown User';
+            }
+            await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
           } catch (e) {
-            console.error("Failed to fix admin role", e);
+            console.error("Failed to repair profile in DashboardRouter", e);
           }
         };
-        fixRole();
+        repairProfile();
       }
     }
   }, [user, profile, loading]);

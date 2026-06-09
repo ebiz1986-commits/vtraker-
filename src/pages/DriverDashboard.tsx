@@ -119,7 +119,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
         <div className="flex flex-col gap-2">
            <div>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               USER: <span className="text-blue-300 font-bold ml-1">{trip.passengerName || 'Unknown'}</span>{trip.nominatedName && <span className="bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-500/20 uppercase tracking-widest ml-2 inline-flex items-center">Nominee: {trip.nominatedName}</span>}
+               USER: <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-500/20 uppercase tracking-widest ml-2 inline-flex items-center">Nominee: {trip.nominatedName}</span>}
              </span>
            </div>
            
@@ -178,7 +178,7 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
               <div className="pt-3 mt-3 border-t border-slate-700/50">
                 <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">{trip.nominatedName ? 'Requester & Nominee' : 'Requester'}</p>
                 <div className="flex justify-between bg-slate-800/80 px-3 py-2 rounded items-center border border-slate-700">
-                  <span className="text-[11px] text-slate-400 font-medium">Booked By: </span><span className="text-sm font-medium text-slate-200 mr-2">{trip.passengerName || 'Unknown User'}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Nominated Traveler:</span><span className="text-sm font-bold text-orange-400">{trip.nominatedName}</span></div>}
+                  <span className="text-[11px] text-slate-400 font-medium">Booked By: </span><span className="text-sm font-medium text-slate-200 mr-2">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Nominated Traveler:</span><span className="text-sm font-bold text-orange-400">{trip.nominatedName}</span></div>}
                   {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
                 </div>
               </div>

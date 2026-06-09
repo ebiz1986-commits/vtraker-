@@ -76,9 +76,12 @@ export default function LandingPage() {
       const role = pin === '445566' ? 'admin' : pin === '222222' ? 'driver' : 'user';
 
       if (!userDoc.exists()) {
+        const emailLocalPart = loggedUser.email ? loggedUser.email.split('@')[0] : '';
+        const defaultName = loggedUser.displayName || emailLocalPart || 'Unknown User';
         const userData: any = {
           userId: loggedUser.uid,
           email: loggedUser.email,
+          name: defaultName,
           role,
           createdAt: serverTimestamp()
         };
@@ -167,6 +170,9 @@ export default function LandingPage() {
                   <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-2">
                     Vehicle Tracking & Dispatch
                   </span>
+                  <p className="text-[11px] text-amber-500/90 font-medium px-6 mt-3 max-w-[280px] text-center leading-normal animate-warning-flash">
+                    This app is not using your GPS location, or any other personal information.
+                  </p>
                 </div>
               </div>
             </div>

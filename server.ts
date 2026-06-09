@@ -1,10 +1,12 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import http from "http";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  const httpServer = http.createServer(app);
 
   // Determine if we are running in development mode (e.g. via dev script or typescript server directly)
   const isDev = process.env.NODE_ENV !== "production" || process.argv.some(arg => arg.includes("server.ts"));
@@ -12,7 +14,12 @@ async function startServer() {
   // Vite middleware for development
   if (isDev) {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: {
+          server: httpServer,
+        }
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -39,7 +46,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

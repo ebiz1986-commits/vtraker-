@@ -131,19 +131,21 @@ service cloud.firestore {
       }
 
       function isParticipant(trip) {
-        return trip.userId == request.auth.uid || ('nominatedName' in trip && trip.nominatedName == request.auth.token.name);
+        return trip.userId == request.auth.uid || ('nominatedName' in trip && 'name' in request.auth.token && trip.nominatedName == request.auth.token.name);
       }
 
       allow get: if isSignedIn() && (
         isAdmin() ||
-        isParticipant(resource.data) ||
-        ('driverId' in resource.data && resource.data.driverId == request.auth.uid)
+        resource.data.userId == request.auth.uid ||
+        ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
+        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
       );
       
       allow list: if isSignedIn() && (
         isAdmin() ||
-        isParticipant(resource.data) ||
-        ('driverId' in resource.data && resource.data.driverId == request.auth.uid)
+        resource.data.userId == request.auth.uid ||
+        ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
+        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
       );
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())

@@ -10,7 +10,7 @@ import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from 'sonner';
 
-import { ChevronDown, ArrowRight, MapPin, Clock } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Users } from 'lucide-react';
 import { TripItemSkeleton, LiveDriverItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 const AdminPendingTripItem = ({ 
@@ -94,6 +94,12 @@ const AdminPendingTripItem = ({
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
                   </span>
                   JOINT
+                </span>
+              )}
+              {trip.nominatedName && (
+                <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-400/20 flex items-center gap-1.5 animate-pulse">
+                  <Users className="w-3.5 h-3.5 text-amber-500" />
+                  Nominee trip: {trip.nominatedName}
                 </span>
               )}
               <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
@@ -346,6 +352,12 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
                   </span>
                   JOINT
+                </span>
+              )}
+              {trip.nominatedName && (
+                <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-400/20 flex items-center gap-1.5 animate-pulse">
+                  <Users className="w-3.5 h-3.5 text-amber-500" />
+                  Nominee trip: {trip.nominatedName}
                 </span>
               )}
               <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
@@ -602,6 +614,12 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
             <span className="text-[10px] font-semibold text-slate-400 bg-slate-800/40 px-1.5 py-0.5 rounded capitalize">
               {(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
             </span>
+            {trip.nominatedName && (
+              <span className="bg-amber-950/20 text-amber-400 text-[10px] px-2 py-0.5 rounded border border-amber-900/30 font-medium uppercase tracking-wider flex items-center gap-1">
+                <Users className="w-3 h-3 text-amber-500" />
+                Nominee trip: {trip.nominatedName}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 text-right">

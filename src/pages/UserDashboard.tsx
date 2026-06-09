@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, updateDoc, or } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -76,10 +76,10 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
                 JOINT
               </span>
             )}
-            {isNominated && (
+            {trip.nominatedName && (
               <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-500/20 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-amber-500" />
-                Nominated Traveler
+                Nominee trip
               </span>
             )}
           </div>
@@ -405,13 +405,23 @@ export default function UserDashboard() {
       Notification.requestPermission();
     }
     
-    const q = query(
-      collection(db, 'trips'),
-      or(
-        where('userId', '==', profile.userId),
-        where('nominatedName', '==', profile.name || '')
-      )
-    );
+    const nameToQuery = profile.name?.trim() || '';
+    // Security check: Only run the OR query containing nominatedName if the token's displayName has synchronized.
+    // If not, we fall back to a safe query for the user's owned trips to prevent "Missing or insufficient permissions" error.
+    const isTokenSynced = auth.currentUser?.displayName === nameToQuery;
+
+    const q = (nameToQuery && isTokenSynced)
+      ? query(
+          collection(db, 'trips'),
+          or(
+            where('userId', '==', profile.userId),
+            where('nominatedName', '==', nameToQuery)
+          )
+        )
+      : query(
+          collection(db, 'trips'),
+          where('userId', '==', profile.userId)
+        );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const tripsData = snapshot.docs.map(doc => {
@@ -424,11 +434,28 @@ export default function UserDashboard() {
       setLoading(false);
       initialLoadRef.current = false;
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'trips');
+      console.warn("Firestore onSnapshot warning/error (possible token sync latency):", error);
+      // Fallback: If we fail because of token sync latency, let's retry with the safe query
+      if (isTokenSynced) {
+        const safeQ = query(
+          collection(db, 'trips'),
+          where('userId', '==', profile.userId)
+        );
+        onSnapshot(safeQ, (fallbackSnapshot) => {
+          const tripsData = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+          tripsData.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+          setTrips(tripsData);
+          setLoading(false);
+        }, (fallbackError) => {
+          handleFirestoreError(fallbackError, OperationType.GET, 'trips');
+        });
+      } else {
+        handleFirestoreError(error, OperationType.GET, 'trips');
+      }
     });
     
     return unsubscribe;
-  }, [profile]);
+  }, [profile, auth.currentUser?.displayName]);
   
   const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,7 +466,7 @@ export default function UserDashboard() {
     try {
       await addDoc(collection(db, 'trips'), {
         userId: profile!.userId,
-        passengerName: profile?.name || 'Unknown',
+        passengerName: profile?.name?.trim() || profile?.email?.split('@')[0] || 'Unknown User',
         passengerDepartment: profile?.department || '',
         status: 'pending',
         pickupAddress,
