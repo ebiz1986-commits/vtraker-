@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader } from '../components/ui/Card';
 import { Download, Sun, Moon, Compass } from 'lucide-react';
 import { InstallPWA } from '../components/InstallPWA';
+import { SankenLogo } from '../components/SankenLogo';
 
 export default function LandingPage() {
   const { user, profile, loading } = useAuth();
@@ -139,10 +140,10 @@ export default function LandingPage() {
         <div className="absolute top-4 right-4 z-50">
           <Button 
             onClick={() => setIsInstallOpen(true)} 
-            className="bg-orange-600 hover:bg-orange-700 text-white rounded-full flex items-center gap-2 shadow-lg border border-orange-500/20 active:scale-95 transition-all text-xs font-semibold px-4 py-2.5 backdrop-blur font-sans cursor-pointer animate-install-flash"
+            className="bg-blue-600/95 hover:bg-blue-600 text-white rounded-full flex items-center gap-1.5 shadow-md border border-blue-500/35 active:scale-95 transition-all text-[10px] font-semibold px-3 py-1.5 backdrop-blur font-sans cursor-pointer h-7"
           >
-            <Download size={14} />
-            <span>Install App</span>
+            <Download size={11} />
+            <span>Install</span>
           </Button>
         </div>
       )}
@@ -153,27 +154,12 @@ export default function LandingPage() {
       >
         <Card className="glass-card">
           <CardHeader className="space-y-4 text-center pb-6 border-b border-[rgba(255,255,255,0.1)]">
-            <div className="flex justify-center mb-6 mt-4 animate-in slide-in-from-bottom-4 fade-in duration-700">
-              <div className="flex flex-col items-center gap-3">
-                <div className="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-orange-600 shadow-xl shadow-orange-500/20 ring-1 ring-white/20">
-                  <Compass className="w-11 h-11 text-white animate-spin-slow" style={{ animationDuration: '16s' }} />
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-sky-500"></span>
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <h2 className="text-3xl font-black tracking-widest leading-none font-sans uppercase">
-                    <span className="text-white">SKO </span>
-                    <span className="text-[#ff9900]">VBooking</span>
-                  </h2>
-                  <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-2">
-                    Vehicle Tracking & Dispatch
-                  </span>
-                  <p className="text-[11px] text-amber-500/90 font-medium px-6 mt-3 max-w-[280px] text-center leading-normal animate-warning-flash">
-                    This app is not using your GPS location, or any other personal information.
-                  </p>
-                </div>
+            <div className="flex justify-center mb-4 mt-6 animate-in slide-in-from-bottom-4 fade-in duration-700">
+              <div className="flex flex-col items-center gap-2">
+                <SankenLogo iconSize="xl" className="flex-col text-center" />
+                <p className="text-[11px] text-amber-500/90 font-medium px-6 mt-3 max-w-[280px] text-center leading-normal animate-warning-flash">
+                  This app is not using your GPS location, or any other personal information.
+                </p>
               </div>
             </div>
           </CardHeader>

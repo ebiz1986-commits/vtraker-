@@ -8,6 +8,7 @@ import { Button } from './ui/Button';
 import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass } from 'lucide-react';
 import { toast } from 'sonner';
 import { InstallPWA } from './InstallPWA';
+import { SankenLogo } from './SankenLogo';
 
 export default function Layout({ children, title }: { children: React.ReactNode, title: string }) {
   const { profile } = useAuth();
@@ -29,7 +30,7 @@ export default function Layout({ children, title }: { children: React.ReactNode,
     signOut(auth);
   };
   
-  const { isLight, toggleTheme } = useTheme();
+  const { isLight, theme, setTheme, toggleTheme } = useTheme();
   const isDarkTheme = !isLight;
   
   return (
@@ -38,26 +39,7 @@ export default function Layout({ children, title }: { children: React.ReactNode,
         <header className={`bg-[rgba(255,255,255,0.05)] backdrop-blur-[10px] border-[rgba(255,255,255,0.1)] border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`}>
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 shadow-lg shadow-orange-500/20 ring-1 ring-white/20">
-              <Compass className="w-5.5 h-5.5 text-white animate-spin-slow" style={{ animationDuration: '12s' }} />
-              <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1 leading-none mt-0.5">
-                <span className="text-lg font-black tracking-wider text-white uppercase font-sans">
-                  SKO
-                </span>
-                <span className="text-lg font-black tracking-wider text-[#ff9900] uppercase font-sans">
-                  VBooking
-                </span>
-              </div>
-              <span className="text-[8px] font-bold text-slate-400/80 tracking-widest uppercase mt-0.5">
-                Dispatch System
-              </span>
-            </div>
+            <SankenLogo iconSize="md" />
           </div>
           {title && (
             <div className={`hidden sm:flex border-l border-[rgba(255,255,255,0.1)] pl-6 items-center`}>
@@ -72,9 +54,10 @@ export default function Layout({ children, title }: { children: React.ReactNode,
               variant="outline" 
               size="sm" 
               onClick={() => setIsInstallOpen(true)} 
-              className="gap-1.5 items-center flex border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 font-sans font-bold px-3 py-1.5 h-auto text-xs rounded-xl shadow-lg shadow-orange-500/5 focus:outline-none cursor-pointer animate-install-flash"
+              className="gap-1 items-center flex border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 font-sans font-semibold px-2.5 py-1 h-7 text-[10px] rounded-lg shadow focus:outline-none cursor-pointer"
+              title="Install Shortcut"
             >
-              <Download className="w-3.5 h-3.5" /> <span>Install</span>
+              <Download className="w-3 h-3" /> <span>Install</span>
             </Button>
           )}
 
@@ -87,9 +70,9 @@ export default function Layout({ children, title }: { children: React.ReactNode,
             title={isLight ? "Switch to Dark Mode" : "Switch to High-Contrast Sunlight Mode"}
           >
             {isLight ? (
-              <Moon className="w-5 h-5 text-amber-600 fill-amber-600" />
+              <Moon className="w-5 h-5 text-indigo-600 fill-indigo-600" />
             ) : (
-              <Sun className="w-5 h-5 text-orange-400 fill-orange-400" />
+              <Sun className="w-5 h-5 text-indigo-400 fill-indigo-400 animate-pulse" />
             )}
           </Button>
 
@@ -100,7 +83,9 @@ export default function Layout({ children, title }: { children: React.ReactNode,
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setShowNotifications(!showNotifications)} 
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+              }} 
               className={`transition-colors rounded-full hover:bg-[rgba(255,255,255,0.08)] relative`}
             >
               <Bell className="w-5 h-5 text-[#A0A0A0]" />

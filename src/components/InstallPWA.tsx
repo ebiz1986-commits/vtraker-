@@ -62,7 +62,7 @@ export function InstallPWA({ isOpen, onClose }: InstallPWAProps) {
         </button>
         
         <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
-          <Smartphone className="w-5 h-5 text-orange-400 animate-bounce" style={{ animationDuration: '3s' }} />
+          <Smartphone className="w-5 h-5 text-blue-400 animate-bounce" style={{ animationDuration: '3s' }} />
           Add VBooking Shortcut
         </h3>
         
@@ -74,7 +74,7 @@ export function InstallPWA({ isOpen, onClose }: InstallPWAProps) {
           {supportsPWA && (
             <button 
               onClick={handleInstallClick}
-              className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer focus:outline-none text-xs"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer focus:outline-none text-xs"
             >
               <Download className="w-4 h-4" />
               Add Shortcut to Home Screen
@@ -85,7 +85,7 @@ export function InstallPWA({ isOpen, onClose }: InstallPWAProps) {
             onClick={handleCopyLink}
             className="w-full py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white font-medium rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-xs focus:outline-none"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-orange-400" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-blue-400" />}
             {copied ? 'Link Copied!' : 'Copy Quick Access Link'}
           </button>
         </div>
