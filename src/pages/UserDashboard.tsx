@@ -22,7 +22,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   const formattedStatus = trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ');
 
   // Nominated check
-  const isNominated = trip.nominatedEmail === profile?.email;
+  const isNominated = trip.nominatedName && profile?.name && trip.nominatedName.toLowerCase().trim() === profile?.name.toLowerCase().trim();
 
   // A visually appealing trip ID based on original document ID
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
@@ -326,7 +326,6 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
   const [nominatePerson, setNominatePerson] = useState(false);
   const [nominatedName, setNominatedName] = useState('');
-  const [nominatedEmail, setNominatedEmail] = useState('');
   // Simulating coordinates for now
 
   const setQuickDateTime = (type: 'now' | 'today' | 'tomorrow') => {
@@ -410,7 +409,7 @@ export default function UserDashboard() {
       collection(db, 'trips'),
       or(
         where('userId', '==', profile.userId),
-        where('nominatedEmail', '==', profile.email)
+        where('nominatedName', '==', profile.name || '')
       )
     );
     
@@ -459,8 +458,7 @@ export default function UserDashboard() {
         dropoffLng: 0,
         pickupTime: Date.now(),
         ...(nominatePerson ? {
-          nominatedName: nominatedName.trim(),
-          nominatedEmail: nominatedEmail.toLowerCase().trim()
+          nominatedName: nominatedName.trim()
         } : {}),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -477,7 +475,6 @@ export default function UserDashboard() {
       setRemarks('');
       setNominatePerson(false);
       setNominatedName('');
-      setNominatedEmail('');
       toast.success('Trip requested successfully!');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'trips');
@@ -688,7 +685,7 @@ export default function UserDashboard() {
               </div>
 
               {nominatePerson && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 animate-fadeIn">
+                <div className="pt-1 animate-fadeIn">
                   <div>
                     <label className="label">Nominee Name</label>
                     <input
@@ -698,17 +695,6 @@ export default function UserDashboard() {
                       onChange={(e) => setNominatedName(e.target.value)}
                       className="input-field"
                       placeholder="e.g. John Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="label">Nominee Email</label>
-                    <input
-                      type="email"
-                      required={nominatePerson}
-                      value={nominatedEmail}
-                      onChange={(e) => setNominatedEmail(e.target.value)}
-                      className="input-field"
-                      placeholder="e.g. john@sanken.app"
                     />
                   </div>
                 </div>

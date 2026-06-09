@@ -65,7 +65,6 @@
         "dropoffTime": { "type": "integer" },
         "nominatedUserId": { "type": "string" },
         "nominatedName": { "type": "string" },
-        "nominatedEmail": { "type": "string" },
         "createdAt": { "type": "integer" },
         "updatedAt": { "type": "integer" }
       },
