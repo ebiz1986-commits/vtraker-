@@ -743,6 +743,10 @@ export default function UserDashboard() {
               Request Booking
             </Button>
           </form>
+
+          <div className="text-center text-[10px] font-medium tracking-wider text-slate-500 select-none pt-5 mt-5 border-t border-white/5">
+            Copyright © {new Date().getFullYear()} <span className="font-bold">@SKOADMIN</span>. All Rights Reserved.
+          </div>
         </div>
         
         <div className="lg:col-span-1 space-y-6">

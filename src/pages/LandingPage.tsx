@@ -191,17 +191,17 @@ export default function LandingPage() {
               </Button>
             </form>
 
-            <div className="text-center pt-4 animate-in fade-in duration-1000 delay-300">
+            <div className="text-center text-[10px] font-medium tracking-wider text-slate-500 select-none pb-1">
+              Copyright © {new Date().getFullYear()} <span className="font-bold">@SKOADMIN</span>. All Rights Reserved.
+            </div>
+
+            <div className="text-center pt-2 animate-in fade-in duration-1000 delay-300">
               <p className="text-xs text-[#A0A0A0]">
                 Contact your Admin Department to get your PIN.
               </p>
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center text-[10px] font-bold tracking-widest text-slate-500 uppercase select-none pb-2">
-          All Rights @skoadmin
-        </div>
       </div>
 
       <InstallPWA isOpen={isInstallOpen} onClose={() => setIsInstallOpen(false)} />
