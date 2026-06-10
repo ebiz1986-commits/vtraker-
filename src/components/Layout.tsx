@@ -39,7 +39,10 @@ export default function Layout({ children, title }: { children: React.ReactNode,
         <header className={`bg-[rgba(255,255,255,0.05)] backdrop-blur-[10px] border-[rgba(255,255,255,0.1)] border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`}>
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3">
-            <SankenLogo iconSize="md" />
+            <SankenLogo 
+              iconSize="md" 
+              subtitle={profile?.role === 'driver' ? "" : undefined} 
+            />
           </div>
           {title && (
             <div className={`hidden sm:flex border-l border-[rgba(255,255,255,0.1)] pl-6 items-center`}>

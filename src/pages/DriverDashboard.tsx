@@ -651,70 +651,72 @@ export default function DriverDashboard() {
   return (
     <Layout title="Driver Console">
       {/* Alert Notification Setup Manager */}
-      <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
-        <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300
-          ${notiPermission === 'granted' 
-            ? 'bg-emerald-950/15 border-emerald-500/20 text-[#E0E0E0]' 
-            : notiPermission === 'denied'
-            ? 'bg-red-950/15 border-red-500/20 text-[#E0E0E0]'
-            : 'bg-amber-950/15 border-amber-500/20 text-[#E0E0E0]'}`}>
-          <div className="flex items-start gap-3.5">
-            <div className={`p-2.5 rounded-lg shrink-0 flex items-center justify-center mt-0.5
-              ${notiPermission === 'granted' 
-                ? 'bg-emerald-500/10 text-emerald-400' 
-                : notiPermission === 'denied'
-                ? 'bg-red-500/10 text-red-500'
-                : 'bg-amber-500/10 text-amber-500 animate-pulse'}`}>
-              {notiPermission === 'granted' ? (
-                <Bell className="w-5 h-5" />
-              ) : notiPermission === 'denied' ? (
-                <BellOff className="w-5 h-5" />
-              ) : (
-                <Bell className="w-5 h-5" />
-              )}
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-                Driver Instant Travel Alert System
-                <span className={`px-2 py-0.5 text-[9px] font-mono tracking-widest font-semibold uppercase rounded-full border
-                  ${notiPermission === 'granted' 
-                    ? 'bg-emerald-950/35 text-emerald-400 border-emerald-500/30' 
-                    : notiPermission === 'denied'
-                    ? 'bg-red-950/35 text-red-400 border-red-500/30'
-                    : 'bg-amber-950/35 text-[#ff9900]/70 border-amber-500/30 animate-pulse'}`}>
-                  {notiPermission === 'granted' ? 'Fully Active' : notiPermission === 'denied' ? 'Blocked' : 'Action Required'}
-                </span>
-              </h3>
-              <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+      {notiPermission !== 'granted' && (
+        <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300
+            ${notiPermission === 'granted' 
+              ? 'bg-emerald-950/15 border-emerald-500/20 text-[#E0E0E0]' 
+              : notiPermission === 'denied'
+              ? 'bg-red-950/15 border-red-500/20 text-[#E0E0E0]'
+              : 'bg-amber-950/15 border-amber-500/20 text-[#E0E0E0]'}`}>
+            <div className="flex items-start gap-3.5">
+              <div className={`p-2.5 rounded-lg shrink-0 flex items-center justify-center mt-0.5
+                ${notiPermission === 'granted' 
+                  ? 'bg-emerald-500/10 text-emerald-400' 
+                  : notiPermission === 'denied'
+                  ? 'bg-red-500/10 text-red-500'
+                  : 'bg-amber-500/10 text-amber-500 animate-pulse'}`}>
                 {notiPermission === 'granted' ? (
-                  "Your device is successfully configured to receive instant audio-visual chimes. You will receive alert popups immediately when admin allocates new trips."
+                  <Bell className="w-5 h-5" />
                 ) : notiPermission === 'denied' ? (
-                  "Browser alerts are blocked. To receive live assignments, you must unblock notification permissions in your browser's address bar settings."
+                  <BellOff className="w-5 h-5" />
                 ) : (
-                  "Enable background notifications and auditory ringing so you can instantly respond to assigned bookings even when this tab is closed or minimized."
+                  <Bell className="w-5 h-5" />
                 )}
-              </p>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                  Driver Instant Travel Alert System
+                  <span className={`px-2 py-0.5 text-[9px] font-mono tracking-widest font-semibold uppercase rounded-full border
+                    ${notiPermission === 'granted' 
+                      ? 'bg-emerald-950/35 text-emerald-400 border-emerald-500/30' 
+                      : notiPermission === 'denied'
+                      ? 'bg-red-950/35 text-red-400 border-red-500/30'
+                      : 'bg-amber-950/35 text-[#ff9900]/70 border-amber-500/30 animate-pulse'}`}>
+                    {notiPermission === 'granted' ? 'Fully Active' : notiPermission === 'denied' ? 'Blocked' : 'Action Required'}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                  {notiPermission === 'granted' ? (
+                    "Your device is successfully configured to receive instant audio-visual chimes. You will receive alert popups immediately when admin allocates new trips."
+                  ) : notiPermission === 'denied' ? (
+                    "Browser alerts are blocked. To receive live assignments, you must unblock notification permissions in your browser's address bar settings."
+                  ) : (
+                    "Enable background notifications and auditory ringing so you can instantly respond to assigned bookings even when this tab is closed or minimized."
+                  )}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2.5 w-full md:w-auto shrink-0 mt-2 md:mt-0">
-            {notiPermission !== 'granted' && (
+            <div className="flex gap-2.5 w-full md:w-auto shrink-0 mt-2 md:mt-0">
+              {notiPermission !== 'granted' && (
+                <Button 
+                  onClick={requestPermission} 
+                  className="w-full md:w-auto bg-[#ff9900] hover:bg-[#e08800] text-black font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-[#ff9900]/5 hover:shadow-[#ff9900]/15"
+                >
+                  <Bell className="w-3.5 h-3.5" /> Request Permissions
+                </Button>
+              )}
               <Button 
-                onClick={requestPermission} 
-                className="w-full md:w-auto bg-[#ff9900] hover:bg-[#e08800] text-black font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-[#ff9900]/5 hover:shadow-[#ff9900]/15"
+                onClick={handleTestSound} 
+                variant="outline"
+                className="w-full md:w-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Bell className="w-3.5 h-3.5" /> Request Permissions
+                <Volume2 className="w-3.5 h-3.5" /> Test Sound Chime
               </Button>
-            )}
-            <Button 
-              onClick={handleTestSound} 
-              variant="outline"
-              className="w-full md:w-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Volume2 className="w-3.5 h-3.5" /> Test Sound Chime
-            </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">

@@ -128,7 +128,7 @@ export function SankenLogo({
     ? 'Vehicle Tracking & Dispatch System'
     : 'Vehicle Tracking & Dispatch';
 
-  const displaySubtitle = subtitle || defaultSub;
+  const displaySubtitle = subtitle !== undefined ? subtitle : defaultSub;
 
   return (
     <div className={`flex items-center ${gapSizes[iconSize]} ${className}`}>
