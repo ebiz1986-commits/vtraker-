@@ -5,7 +5,7 @@ import http from "http";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const httpServer = http.createServer(app);
 
   // Determine if we are running in development mode (e.g. via dev script or typescript server directly)
