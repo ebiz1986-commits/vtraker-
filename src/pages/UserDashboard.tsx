@@ -8,11 +8,21 @@ import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, upd
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert } from 'lucide-react';
 import { TripItemSkeleton } from '../components/ui/Skeleton';
 import { TripMap } from '../components/TripMap';
 
-const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdometerValues, handleCancelTrip, handleConfirmOdometer, handleUpdateStatus }: any) => {
+const UserTripItem = ({ 
+  trip, 
+  index, 
+  profile, 
+  isNormalFlow, 
+  userOdometerValues, 
+  setUserOdometerValues, 
+  handleCancelTrip, 
+  handleConfirmOdometer, 
+  handleUpdateStatus 
+}: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   
@@ -227,7 +237,7 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
               </Button>
             )}
             
-            {trip.status === 'allocated' && trip.driverHasSmartphone === false && (
+            {trip.status === 'allocated' && trip.driverHasSmartphone === false && !isNormalFlow && (
               <Button 
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-orange-500/50 transition-all" 
                 onClick={() => handleUpdateStatus(trip.id, trip.status)}
@@ -237,32 +247,39 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
             )}
             
             {trip.status === 'driver_started' && (
-              <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
-                <p className="font-bold text-orange-400 text-base flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+              isNormalFlow ? (
+                <div className="text-base font-semibold text-orange-400 bg-orange-500/10 p-4 rounded-xl border border-orange-500/20 flex justify-center items-center gap-3 backdrop-blur-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse animate-duration-1000"></span>
                   Driver Arrived
-                </p>
-                <div className="text-orange-100">
-                  <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
-                  <input 
-                    type="number" 
-                    className="input-field font-mono"
-                    placeholder="e.g. 15020"
-                    value={userOdometerValues[trip.id] || ''} 
-                    onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
-                  />
-                  <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Start</Button>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
+                  <p className="font-bold text-orange-400 text-base flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                    Driver Arrived
+                  </p>
+                  <div className="text-orange-100">
+                    <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
+                    <input 
+                      type="number" 
+                      className="input-field font-mono"
+                      placeholder="e.g. 15020"
+                      value={userOdometerValues[trip.id] || ''} 
+                      onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
+                    />
+                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Start</Button>
+                  </div>
+                </div>
+              )
             )}
             
             {trip.status === 'in_progress' && (
               <>
                 <div className="text-base font-semibold text-green-400 bg-green-500/10 p-4 rounded-xl border border-green-500/20 flex justify-center items-center gap-3 backdrop-blur-sm">
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse animate-duration-1000"></span>
                   Trip in Progress
                 </div>
-                {trip.driverHasSmartphone === false && (
+                {trip.driverHasSmartphone === false && !isNormalFlow && (
                   <Button 
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-green-500/50 transition-all mt-2" 
                     onClick={() => handleUpdateStatus(trip.id, trip.status)}
@@ -274,23 +291,30 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
             )}
             
             {trip.status === 'driver_ended' && (
-              <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
-                <p className="font-bold text-orange-400 text-base flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-                  Destination Reached
-                </p>
-                <div className="text-orange-100">
-                  <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
-                  <input 
-                    type="number" 
-                    className="input-field font-mono"
-                    placeholder="e.g. 15045"
-                    value={userOdometerValues[trip.id] || ''} 
-                    onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
-                  />
-                  <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Drop-off</Button>
+              isNormalFlow ? (
+                <div className="text-base font-semibold text-emerald-400 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 flex justify-center items-center gap-3 backdrop-blur-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse animate-duration-1000"></span>
+                  Completed & Awaiting Receipt...
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
+                  <p className="font-bold text-orange-400 text-base flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                    Destination Reached
+                  </p>
+                  <div className="text-orange-100">
+                    <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
+                    <input 
+                      type="number" 
+                      className="input-field font-mono"
+                      placeholder="e.g. 15045"
+                      value={userOdometerValues[trip.id] || ''} 
+                      onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
+                    />
+                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Drop-off</Button>
+                  </div>
+                </div>
+              )
             )}
           </div>
           
@@ -303,10 +327,61 @@ const UserTripItem = ({ trip, index, profile, userOdometerValues, setUserOdomete
   );
 };
 
+const isPinLikeName = (name: string) => {
+  if (!name) return false;
+  const cleaned = name.trim();
+  return /^[a-zA-Z]{1,3}\d+$/.test(cleaned) || /^\d+$/.test(cleaned);
+};
+
 export default function UserDashboard() {
   const { profile } = useAuth();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // System settings configurations state
+  const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
+
+  // Profile editing states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [tempProfileName, setTempProfileName] = useState('');
+  const [tempProfileDept, setTempProfileDept] = useState('');
+
+  useEffect(() => {
+    if (profile) {
+      setTempProfileName(profile.name || '');
+      setTempProfileDept(profile.department || '');
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    if (!tempProfileName.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    try {
+      const userDocRef = doc(db, 'users', profile!.userId);
+      await updateDoc(userDocRef, {
+        name: tempProfileName.trim(),
+        department: tempProfileDept.trim()
+      });
+      setIsEditingProfile(false);
+      toast.success("Profile saved successfully!");
+    } catch (error) {
+      console.error("Failed to update profile name:", error);
+      toast.error("Failed to update profile.");
+    }
+  };
+
+  useEffect(() => {
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
+      if (snap.exists()) {
+        setIsNormalFlow(snap.data().normal !== false);
+      } else {
+        setIsNormalFlow(true);
+      }
+    });
+    return unsubSettings;
+  }, []);
   
   const initialLoadRef = useRef(true);
   const prevTripStatusRef = useRef<Record<string, string>>({});
@@ -424,9 +499,46 @@ export default function UserDashboard() {
         );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!initialLoadRef.current) {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'modified') {
+            const docId = change.doc.id;
+            const trip = change.doc.data();
+            const prevStatus = prevTripStatusRef.current[docId];
+            if (prevStatus && prevStatus !== trip.status) {
+              if (trip.status === 'in_progress') {
+                toast.info("Your trip has started!", {
+                  description: `Odometer reading started at ${trip.startOdometer} KM`,
+                  duration: 8000,
+                  position: 'top-center'
+                });
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification("Trip Started 🚗", {
+                    body: `Your trip has started! Odometer: ${trip.startOdometer} KM.`
+                  });
+                }
+              } else if (trip.status === 'completed') {
+                toast.success("Your trip is completed!", {
+                  description: `Ended at ${trip.endOdometer} KM. Thank you!`,
+                  duration: 8000,
+                  position: 'top-center'
+                });
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification("Trip Completed ✅", {
+                    body: `Your trip has completed! Odometer: ${trip.endOdometer} KM.`
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+
       const tripsData = snapshot.docs.map(doc => {
-        prevTripStatusRef.current[doc.id] = doc.data().status;
-        return { id: doc.id, ...(doc.data() as any) }
+        const data = doc.data();
+        const oldVal = prevTripStatusRef.current[doc.id];
+        prevTripStatusRef.current[doc.id] = data.status;
+        return { id: doc.id, ...(data as any) }
       });
       // Sort in memory since we don't have an index yet
       tripsData.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
@@ -750,6 +862,113 @@ export default function UserDashboard() {
         </div>
         
         <div className="lg:col-span-1 space-y-6">
+          {/* User Profile Card with Inline Name/Dept Editor */}
+          {profile && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-4 rounded-2xl border ${
+                isPinLikeName(profile.name || '')
+                  ? 'border-orange-500/30 bg-orange-500/5'
+                  : 'border-white/10 bg-[#0f172a]/30'
+              } backdrop-blur-md`}
+            >
+              {isEditingProfile ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <h4 className="text-sm font-bold text-slate-200">Edit Profile Information</h4>
+                    <button 
+                      onClick={() => setIsEditingProfile(false)}
+                      className="text-slate-400 hover:text-slate-200 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Name</label>
+                      <input
+                        type="text"
+                        value={tempProfileName}
+                        onChange={(e) => setTempProfileName(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500"
+                        placeholder="Your Name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Department</label>
+                      <input
+                        type="text"
+                        value={tempProfileDept}
+                        onChange={(e) => setTempProfileDept(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500"
+                        placeholder="Your Department"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setIsEditingProfile(false)}
+                      className="text-xs text-slate-400 hover:text-slate-200"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleSaveProfile}
+                      className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Save Changes
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">My Profile</span>
+                      {isPinLikeName(profile.name || '') && (
+                        <span className="flex items-center gap-1 text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/20">
+                          <ShieldAlert className="w-3 h-3" /> PIN Username Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <h3 className="text-lg font-bold text-slate-100">
+                        {profile.name}
+                      </h3>
+                      {profile.department && (
+                        <span className="text-xs text-slate-400 font-medium">({profile.department})</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      {isPinLikeName(profile.name || '') 
+                        ? "Please click 'Edit Name' to set your real passenger name for drivers and admins."
+                        : `Credential code: ${profile.email?.split('@')[0] || 'N/A'}`
+                      }
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTempProfileName(profile.name || '');
+                      setTempProfileDept(profile.department || '');
+                      setIsEditingProfile(true);
+                    }}
+                    className={`text-xs gap-1.5 shrink-0 select-none py-1.5 px-3 rounded-lg border-white/10 text-slate-300 hover:text-white hover:bg-white/5 border ${
+                      isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
+                    }`}
+                  >
+                    <Edit className="w-3.5 h-3.5" /> Edit Name
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 border-b border-white/5 pb-4">
             <div>
               <h2 className="text-2xl font-bold text-white mb-0.5">My Bookings</h2>
@@ -811,6 +1030,7 @@ export default function UserDashboard() {
                       trip={trip} 
                       index={index} 
                       profile={profile}
+                      isNormalFlow={isNormalFlow}
                       userOdometerValues={userOdometerValues}
                       setUserOdometerValues={setUserOdometerValues}
                       handleCancelTrip={handleCancelTrip}

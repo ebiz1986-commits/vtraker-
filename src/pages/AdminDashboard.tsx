@@ -10,7 +10,7 @@ import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from 'sonner';
 
-import { ChevronDown, ArrowRight, MapPin, Clock, Users } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Users, Edit, Check, X } from 'lucide-react';
 import { TripItemSkeleton, LiveDriverItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 const AdminPendingTripItem = ({ 
@@ -719,10 +719,41 @@ export default function AdminDashboard() {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [tick, setTick] = useState(0);
 
-  // Date folding state for records more than 3 days old
+  // States for inline editing of user names
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingUserName, setEditingUserName] = useState('');
+
+  // Normal flow config state
+  const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
+
+  useEffect(() => {
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
+      if (snap.exists()) {
+        setIsNormalFlow(snap.data().normal !== false);
+      } else {
+        setIsNormalFlow(true);
+      }
+    }, (err) => {
+      console.error("Failed to load settings:", err);
+    });
+    return unsubSettings;
+  }, []);
+
+  const handleToggleNormalFlow = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const checked = e.target.checked;
+      await setDoc(doc(db, 'settings', 'system'), { normal: checked }, { merge: true });
+      toast.success(`Normal flow ${checked ? 'enabled' : 'disabled'}!`);
+    } catch (error) {
+      console.error("Error toggling system flow:", error);
+      toast.error("Failed to update system setting.");
+    }
+  };
+
+  // Date folding state for records more than 1 day old
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
-  const isMoreThan3DaysOld = (dateStr: string) => {
+  const isMoreThan1DayOld = (dateStr: string) => {
     if (!dateStr || dateStr === 'Unspecified Date') return false;
     try {
       const today = new Date();
@@ -731,7 +762,7 @@ export default function AdminDashboard() {
       date.setHours(0, 0, 0, 0);
       const differenceInTime = today.getTime() - date.getTime();
       const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-      return differenceInDays > 3;
+      return differenceInDays > 1;
     } catch (e) {
       return false;
     }
@@ -942,6 +973,20 @@ export default function AdminDashboard() {
       toast.success("User removed from the system");
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `users/${userId}`);
+    }
+  };
+
+  const handleUpdateUserName = async (userId: string, newName: string) => {
+    if (!newName.trim()) return;
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        name: newName.trim()
+      });
+      setEditingUserId(null);
+      toast.success("User display name updated successfully!");
+    } catch (error) {
+      console.error("Failed to update user's name:", error);
+      toast.error("Failed to update user's name");
     }
   };
 
@@ -1201,8 +1246,28 @@ export default function AdminDashboard() {
             <CardHeader className="flex flex-row justify-between items-center pb-2">
               <CardTitle>Reports & Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button onClick={() => handleExportCSV(7)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+            <CardContent className="space-y-4">
+              {/* Normal Flow Settings Switch */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900 transition-colors">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    <p className="text-sm font-semibold text-slate-105">Normal Flow</p>
+                  </div>
+                  <p className="text-[11px] text-slate-400">Driver logs start/end ODO directly (removes passenger steps)</p>
+                </div>
+                <div className="relative flex items-center pr-1.5">
+                  <input 
+                    type="checkbox"
+                    id="normal-flow-checkbox"
+                    checked={isNormalFlow !== false}
+                    onChange={handleToggleNormalFlow}
+                    className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-700 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={() => handleExportCSV(7)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-1">
                 Export 7-Day Travel Record (CSV)
               </Button>
               <Button onClick={() => handleExportCSV(30)} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
@@ -1374,15 +1439,54 @@ export default function AdminDashboard() {
                     <li className="py-2 text-slate-400 text-xs">No users found.</li>
                   ) : (
                     allUsers.filter(u => u.role !== 'admin').map(u => (
-                      <li key={u.id} className="py-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-[#1f2937] transition-all hover:bg-[#1e293b]/50 -mx-2 px-2 rounded-md">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-xs text-slate-700">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
+                      <li key={u.id} className="py-2.5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b border-[#1f2937] transition-all hover:bg-[#1e293b]/50 -mx-2 px-2 rounded-md">
+                        <div className="flex-1 min-w-0">
+                          {editingUserId === u.userId ? (
+                            <div className="flex items-center gap-2 mt-1 max-w-xs">
+                              <input 
+                                type="text"
+                                value={editingUserName}
+                                onChange={(e) => setEditingUserName(e.target.value)}
+                                className="px-2 py-1 text-xs border border-slate-700 bg-slate-950 text-slate-100 rounded w-full focus:outline-none focus:border-blue-500 font-medium"
+                                placeholder="Edit Name"
+                                autoFocus
+                              />
+                              <button 
+                                className="p-1 text-emerald-400 hover:bg-white/5 rounded shrink-0"
+                                onClick={() => handleUpdateUserName(u.userId, editingUserName)}
+                                title="Save"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button 
+                                className="p-1 text-red-400 hover:bg-white/5 rounded shrink-0"
+                                onClick={() => setEditingUserId(null)}
+                                title="Cancel"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-xs text-slate-100">{u.name || (u.role === 'driver' ? 'Driver' : 'User')}</span>
+                              <button 
+                                onClick={() => {
+                                  setEditingUserId(u.userId);
+                                  setEditingUserName(u.name || '');
+                                }}
+                                className="text-slate-400 hover:text-slate-200 p-0.5 shrink-0 transition-colors"
+                                title="Edit Name"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-1">
                             <span className="text-[10px] font-mono text-slate-500 bg-[#0f172a] border border-[#1f2937] px-1.5 py-0.5 rounded break-all leading-tight">{u.email}</span>
                             <span className="text-[10px] font-semibold text-[#4a90e2] bg-blue-900/20 px-1.5 py-0.5 rounded capitalize w-fit">{u.role}</span>
                           </div>
                         </div>
-                        <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0">
+                        <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-0 mt-1 sm:mt-0 shrink-0">
                           {u.role === 'user' ? (
                             <button className="text-[10px] bg-[#0a0f1c] border border-[#1f2937] text-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-[#1e293b] hover:text-slate-100 transition-colors font-medium cursor-pointer" onClick={() => handleSetRole(u.userId, 'driver')}>Make Driver</button>
                           ) : (
@@ -1466,7 +1570,7 @@ export default function AdminDashboard() {
                       const isToday = date === new Date().toISOString().split('T')[0];
                       const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
                       const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
-                      const hasOlderState = isMoreThan3DaysOld(date);
+                      const hasOlderState = isMoreThan1DayOld(date);
                       const groupKey = `pending-${date}`;
                       const isCollapsed = hasOlderState && !expandedDates[groupKey];
                       
@@ -1563,7 +1667,7 @@ export default function AdminDashboard() {
                       const isToday = date === new Date().toISOString().split('T')[0];
                       const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
                       const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
-                      const hasOlderState = isMoreThan3DaysOld(date);
+                      const hasOlderState = isMoreThan1DayOld(date);
                       const groupKey = `active-${date}`;
                       const isCollapsed = hasOlderState && !expandedDates[groupKey];
                       
@@ -1706,7 +1810,7 @@ export default function AdminDashboard() {
                           const isToday = date === new Date().toISOString().split('T')[0];
                           const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
                           const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
-                          const hasOlderState = isMoreThan3DaysOld(date);
+                          const hasOlderState = isMoreThan1DayOld(date);
                           const groupKey = `completed-${date}`;
                           const isCollapsed = hasOlderState && !expandedDates[groupKey];
                           

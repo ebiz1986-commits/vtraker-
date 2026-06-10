@@ -9,11 +9,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { sendPushNotification, playNotificationSound } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info, Edit, Check, X, ShieldAlert } from 'lucide-react';
 import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { TripMap } from '../components/TripMap';
 
-const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
+const TripItem = ({ 
+  trip, 
+  index, 
+  handleUpdateStatus, 
+  isNormalFlow, 
+  driverOdoValues, 
+  setDriverOdoValues, 
+  handleStartTripWithOdo, 
+  handleEndTripWithOdo 
+}: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
 
@@ -279,36 +288,111 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
           )}
           
           <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              {trip.status === 'allocated' && (
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-blue-900/20" 
-                  onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                >
-                  Start Trip
-                </Button>
-              )}
-              {trip.status === 'driver_started' && (
-                <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                  Waiting for passenger to enter Start Odometer...
-                </div>
-              )}
-              {trip.status === 'in_progress' && (
-                <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
-                  onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                >
-                  End Trip (Drop-off)
-                </Button>
-              )}
-              {trip.status === 'driver_ended' && (
-                <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                  Waiting for passenger to enter End Odometer...
-                </div>
-              )}
-            </div>
+            {isNormalFlow ? (
+              <div className="w-full space-y-3">
+                {trip.status === 'allocated' && (
+                  <div className="flex flex-col gap-2 p-4 bg-blue-600/5 border border-blue-500/20 rounded-xl w-full">
+                    <p className="text-xs font-bold text-blue-400 uppercase tracking-wider text-left">Start Odometer (KM)</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="e.g. 15000"
+                        className="input-field font-mono text-sm py-2 bg-slate-950/80 border-slate-700 max-w-[200px] flex-1 text-slate-100"
+                        value={driverOdoValues[trip.id] || ''}
+                        onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
+                      />
+                      <Button 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 text-sm shadow-lg shadow-blue-900/20 rounded-lg min-w-[120px]"
+                        onClick={() => handleStartTripWithOdo(trip.id, driverOdoValues[trip.id])}
+                      >
+                        Start Trip
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {trip.status === 'driver_started' && (
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2 text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span>Transitioning to in-progress... (Normal Flow active)</span>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => handleStartTripWithOdo(trip.id, trip.startOdometer || "0")}
+                    >
+                      Force Start Trip
+                    </Button>
+                  </div>
+                )}
+                {trip.status === 'in_progress' && (
+                  <div className="flex flex-col gap-2 p-4 bg-emerald-600/5 border border-emerald-500/20 rounded-xl w-full">
+                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-left">End Odometer (KM)</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="e.g. 15120"
+                        className="input-field font-mono text-sm py-2 bg-slate-950/80 border-slate-700 max-w-[200px] flex-1 text-slate-100"
+                        value={driverOdoValues[trip.id] || ''}
+                        onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
+                      />
+                      <Button 
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 text-sm shadow-lg shadow-emerald-900/20 rounded-lg min-w-[120px]"
+                        onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
+                      >
+                        End Trip
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {trip.status === 'driver_ended' && (
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2 text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span>Finishing trip... (Normal Flow active)</span>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, trip.endOdometer || "0")}
+                    >
+                      Force Complete Trip
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex gap-3 w-full">
+                {trip.status === 'allocated' && (
+                  <Button 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-blue-900/20" 
+                    onClick={() => handleUpdateStatus(trip.id, trip.status)}
+                  >
+                    Start Trip
+                  </Button>
+                )}
+                {trip.status === 'driver_started' && (
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Waiting for passenger to enter Start Odometer...
+                  </div>
+                )}
+                {trip.status === 'in_progress' && (
+                  <Button 
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
+                    onClick={() => handleUpdateStatus(trip.id, trip.status)}
+                  >
+                    End Trip (Drop-off)
+                  </Button>
+                )}
+                {trip.status === 'driver_ended' && (
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Waiting for passenger to enter End Odometer...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {['allocated', 'driver_started', 'in_progress', 'driver_ended'].includes(trip.status) && (
@@ -320,6 +404,12 @@ const TripItem = ({ trip, index, handleUpdateStatus }: any) => {
   );
 };
 
+const isPinLikeName = (name: string) => {
+  if (!name) return false;
+  const cleaned = name.trim();
+  return /^[a-zA-Z]{1,3}\d+$/.test(cleaned) || /^\d+$/.test(cleaned);
+};
+
 export default function DriverDashboard() {
   const { profile } = useAuth();
   const [activeTrips, setActiveTrips] = useState<any[]>([]);
@@ -329,10 +419,99 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [notiPermission, setNotiPermission] = useState<NotificationPermission>('default');
 
-  // Date folding state for records more than 3 days old
+  // Profile editing/renaming states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [tempProfileName, setTempProfileName] = useState('');
+
+  useEffect(() => {
+    if (profile) {
+      setTempProfileName(profile.name || '');
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    if (!tempProfileName.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    try {
+      const userDocRef = doc(db, 'users', profile!.userId);
+      await updateDoc(userDocRef, {
+        name: tempProfileName.trim()
+      });
+      setIsEditingProfile(false);
+      toast.success("Driver display name updated successfully!");
+    } catch (error) {
+      console.error("Failed to update profile name:", error);
+      toast.error("Failed to update profile.");
+    }
+  };
+
+  // System settings dynamic toggle
+  const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
+  const [driverOdoValues, setDriverOdoValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
+      if (snap.exists()) {
+        setIsNormalFlow(snap.data().normal !== false);
+      } else {
+        setIsNormalFlow(true);
+      }
+    }, (err) => {
+      console.error("Failed to load settings:", err);
+    });
+    return unsubSettings;
+  }, []);
+
+  const handleStartTripWithOdo = async (tripId: string, odoVal: string) => {
+    if (!odoVal || isNaN(Number(odoVal))) {
+      toast.error("Please enter a valid numeric start odometer reading (KM).");
+      return;
+    }
+    const odometer = Number(odoVal);
+    try {
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'in_progress',
+        startOdometer: odometer,
+        currentOdometer: odometer,
+        expectedEndOdometer: odometer + 15,
+        pickupTime: Date.now(),
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Trip started successfully! Odometer logged at " + odometer + " KM.");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
+  const handleEndTripWithOdo = async (tripId: string, startOdo: number, odoVal: string) => {
+    if (!odoVal || isNaN(Number(odoVal))) {
+      toast.error("Please enter a valid numeric end odometer reading (KM).");
+      return;
+    }
+    const odometer = Number(odoVal);
+    if (odometer < startOdo) {
+      const confirmed = window.confirm(`Warning: End odometer (${odometer} KM) is less than start odometer (${startOdo} KM). Are you sure?`);
+      if (!confirmed) return;
+    }
+    try {
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'completed',
+        endOdometer: odometer,
+        dropoffTime: Date.now(),
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Trip completed and logged successfully! Final Odometer: " + odometer + " KM.");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
+  // Date folding state for records more than 1 day old
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
-  const isMoreThan3DaysOld = (dateStr: string) => {
+  const isMoreThan1DayOld = (dateStr: string) => {
     if (!dateStr || dateStr === 'Unspecified Date') return false;
     try {
       const today = new Date();
@@ -341,7 +520,7 @@ export default function DriverDashboard() {
       date.setHours(0, 0, 0, 0);
       const differenceInTime = today.getTime() - date.getTime();
       const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-      return differenceInDays > 3;
+      return differenceInDays > 1;
     } catch (e) {
       return false;
     }
@@ -543,7 +722,99 @@ export default function DriverDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
+          {/* Driver Profile Card with Inline Name Editor */}
+          {profile && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`p-4 rounded-xl border ${
+                isPinLikeName(profile.name || '')
+                  ? 'border-orange-500/30 bg-orange-500/5'
+                  : 'bg-[#111827] border-[#1e293b]'
+              } shadow-xl backdrop-blur-md`}
+            >
+              {isEditingProfile ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <h4 className="text-sm font-bold text-slate-200">Edit Driver Display Name</h4>
+                    <button 
+                      onClick={() => setIsEditingProfile(false)}
+                      className="text-slate-400 hover:text-slate-200 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Driver Full Name</label>
+                    <input
+                      type="text"
+                      value={tempProfileName}
+                      onChange={(e) => setTempProfileName(e.target.value)}
+                      className="w-full mt-1.5 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
+                      placeholder="e.g. Priyantha Jayasundara"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setIsEditingProfile(false)}
+                      className="text-xs text-slate-400 hover:text-slate-200"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleSaveProfile}
+                      className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Save display name
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Driver Account</span>
+                        {isPinLikeName(profile.name || '') && (
+                          <span className="flex items-center gap-1 text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/20">
+                            <ShieldAlert className="w-3 h-3 text-orange-400" /> RAW PIN
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-base font-bold text-slate-100 leading-snug">
+                        {profile.name}
+                      </h4>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTempProfileName(profile.name || '');
+                        setIsEditingProfile(true);
+                      }}
+                      className={`text-xs gap-1 py-1 px-2.5 rounded-lg border-white/10 text-slate-300 hover:text-white hover:bg-white/5 border ${
+                        isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
+                      }`}
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit Name
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    {isPinLikeName(profile.name || '') 
+                      ? "Your name is currently set to your login PIN. Change it so passengers and admins can properly identify you!"
+                      : `PIN Username: ${profile.email?.split('@')[0] || 'N/A'}`
+                    }
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
           <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
             <CardHeader>
               <CardTitle className="text-slate-100 font-bold">Daily Summary</CardTitle>
@@ -616,7 +887,7 @@ export default function DriverDashboard() {
                       const isToday = date === new Date().toISOString().split('T')[0];
                       const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
                       const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
-                      const hasOlderState = isMoreThan3DaysOld(date);
+                      const hasOlderState = isMoreThan1DayOld(date);
                       const groupKey = `driver-${date}`;
                       const isCollapsed = hasOlderState && !expandedDates[groupKey];
                       
@@ -645,7 +916,17 @@ export default function DriverDashboard() {
                           {!isCollapsed && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                               {groups[date].map((trip, index) => (
-                                <TripItem key={trip.id} trip={trip} index={index} handleUpdateStatus={handleUpdateStatus} />
+                                <TripItem 
+                                  key={trip.id} 
+                                  trip={trip} 
+                                  index={index} 
+                                  handleUpdateStatus={handleUpdateStatus}
+                                  isNormalFlow={isNormalFlow}
+                                  driverOdoValues={driverOdoValues}
+                                  setDriverOdoValues={setDriverOdoValues}
+                                  handleStartTripWithOdo={handleStartTripWithOdo}
+                                  handleEndTripWithOdo={handleEndTripWithOdo}
+                                />
                               ))}
                             </div>
                           )}
