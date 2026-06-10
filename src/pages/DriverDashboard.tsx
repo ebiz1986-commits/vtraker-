@@ -328,6 +328,31 @@ export default function DriverDashboard() {
   const [totalKmLogged, setTotalKmLogged] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notiPermission, setNotiPermission] = useState<NotificationPermission>('default');
+
+  // Date folding state for records more than 3 days old
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
+
+  const isMoreThan3DaysOld = (dateStr: string) => {
+    if (!dateStr || dateStr === 'Unspecified Date') return false;
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const date = new Date(dateStr);
+      date.setHours(0, 0, 0, 0);
+      const differenceInTime = today.getTime() - date.getTime();
+      const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+      return differenceInDays > 3;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const handleToggleDate = (key: string) => {
+    setExpandedDates(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
   
   const initialLoadRef = useRef(true);
   const prevTripStatusRef = useRef<Record<string, string>>({});
@@ -591,26 +616,39 @@ export default function DriverDashboard() {
                       const isToday = date === new Date().toISOString().split('T')[0];
                       const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
                       const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
+                      const hasOlderState = isMoreThan3DaysOld(date);
+                      const groupKey = `driver-${date}`;
+                      const isCollapsed = hasOlderState && !expandedDates[groupKey];
                       
                       return (
                         <div key={date} className="mb-6 last:mb-0 animate-in fade-in duration-500">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2
+                          <div 
+                            className={`flex items-center gap-3 mb-4 select-none ${hasOlderState ? 'cursor-pointer group/date' : ''}`}
+                            onClick={() => hasOlderState && handleToggleDate(groupKey)}
+                          >
+                            <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2 transition-colors
                               ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
-                                'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                                'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700/80'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
                               {dateLabel}
+                              {hasOlderState && (
+                                <ChevronDown className={`w-3.5 h-3.5 ml-0.5 transition-transform duration-200 ${!isCollapsed ? 'rotate-180' : ''}`} />
+                              )}
                             </div>
                             <div className="h-px bg-slate-800 flex-1"></div>
-                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{groups[date].length} Bookings</span>
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider group-hover/date:text-slate-400 transition-colors">
+                              {groups[date].length} Bookings {hasOlderState && (isCollapsed ? '(Click to expand)' : '(Click to collapse)')}
+                            </span>
                           </div>
                       
-                          <div className="space-y-4">
-                            {groups[date].map((trip, index) => (
-                              <TripItem key={trip.id} trip={trip} index={index} handleUpdateStatus={handleUpdateStatus} />
-                            ))}
-                          </div>
+                          {!isCollapsed && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                              {groups[date].map((trip, index) => (
+                                <TripItem key={trip.id} trip={trip} index={index} handleUpdateStatus={handleUpdateStatus} />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     });
