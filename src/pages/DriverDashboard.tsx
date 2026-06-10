@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { sendPushNotification, playNotificationSound } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info, Edit, Check, X, ShieldAlert } from 'lucide-react';
 import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
-import { TripMap } from '../components/TripMap';
 
 const TripItem = ({ 
   trip, 
@@ -394,10 +393,6 @@ const TripItem = ({
               </div>
             )}
           </div>
-          
-          {['allocated', 'driver_started', 'in_progress', 'driver_ended'].includes(trip.status) && (
-            <TripMap trip={trip} isDriver={true} />
-          )}
         </div>
       </div>
     </motion.div>
@@ -921,7 +916,7 @@ export default function DriverDashboard() {
                                   trip={trip} 
                                   index={index} 
                                   handleUpdateStatus={handleUpdateStatus}
-                                  isNormalFlow={isNormalFlow}
+                                  isNormalFlow={trip.normal !== false}
                                   driverOdoValues={driverOdoValues}
                                   setDriverOdoValues={setDriverOdoValues}
                                   handleStartTripWithOdo={handleStartTripWithOdo}

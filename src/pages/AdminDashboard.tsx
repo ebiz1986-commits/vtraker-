@@ -189,6 +189,37 @@ const AdminPendingTripItem = ({
                )}
             </div>
 
+            {/* Odometer Process Setting */}
+            <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900/80 transition-colors mb-4 max-w-lg">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-orange-500 animate-pulse' : 'bg-slate-500'}`}></span>
+                  <p className="text-sm font-semibold text-slate-100">Normal Flow</p>
+                </div>
+                <p className="text-[11px] text-slate-400 font-sans">Driver logs start/end ODO directly (removes passenger steps)</p>
+              </div>
+              <div className="relative flex items-center pr-1.5">
+                <input 
+                  type="checkbox"
+                  id={`normal-flow-checkbox-${trip.id}`}
+                  checked={trip.normal !== false}
+                  onChange={async (e) => {
+                    try {
+                      const checked = e.target.checked;
+                      await updateDoc(doc(db, 'trips', trip.id), {
+                        normal: checked,
+                        updatedAt: serverTimestamp()
+                      });
+                      toast.success(`Normal flow ${checked ? 'enabled' : 'disabled'} for this specific booking!`);
+                    } catch (err) {
+                      toast.error("Failed to update booking mode.");
+                    }
+                  }}
+                  className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-705 cursor-pointer"
+                />
+              </div>
+            </div>
+
             {!isCouplingMode && allocatingTrip === trip.id ? (
               <div className="bg-blue-900/10 p-4 border border-blue-900/40 rounded-lg mt-2 shadow-lg mb-2">
                  <h4 className="text-sm font-semibold mb-4 text-blue-300 uppercase tracking-widest flex items-center gap-2">Allocate Trip</h4>
@@ -472,6 +503,37 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
                 Admin Authority Panel
               </h4>
 
+              {/* Odometer Process Setting */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900/80 transition-colors font-sans">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-orange-500 animate-pulse' : 'bg-slate-500'}`}></span>
+                    <p className="text-sm font-semibold text-slate-100">Normal Flow</p>
+                  </div>
+                  <p className="text-[11px] text-slate-400">Driver logs start/end ODO directly (removes passenger steps)</p>
+                </div>
+                <div className="relative flex items-center pr-1.5">
+                  <input 
+                    type="checkbox"
+                    id={`normal-flow-action-checkbox-${trip.id}`}
+                    checked={trip.normal !== false}
+                    onChange={async (e) => {
+                      try {
+                        const checked = e.target.checked;
+                        await updateDoc(doc(db, 'trips', trip.id), {
+                          normal: checked,
+                          updatedAt: serverTimestamp()
+                        });
+                        toast.success(`Normal flow ${checked ? 'enabled' : 'disabled'} for this active booking!`);
+                      } catch (err) {
+                        toast.error("Failed to update booking mode.");
+                      }
+                    }}
+                    className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-705 cursor-pointer"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Hot driver selection swap */}
@@ -620,6 +682,10 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
                 Nominee trip: {trip.nominatedName}
               </span>
             )}
+            <span className={`text-[10px] px-2 py-0.5 rounded border font-medium uppercase tracking-wider
+              ${trip.normal !== false ? 'bg-orange-950/20 text-orange-400 border-orange-900/30' : 'bg-slate-800/40 text-slate-400 border-slate-700/50'}`}>
+              {trip.normal !== false ? 'Normal Mode' : 'Passenger ODO Mode'}
+            </span>
           </div>
 
           <div className="flex items-center gap-2 text-right">
@@ -1247,26 +1313,6 @@ export default function AdminDashboard() {
               <CardTitle>Reports & Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Normal Flow Settings Switch */}
-              <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900 transition-colors">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                    <p className="text-sm font-semibold text-slate-105">Normal Flow</p>
-                  </div>
-                  <p className="text-[11px] text-slate-400">Driver logs start/end ODO directly (removes passenger steps)</p>
-                </div>
-                <div className="relative flex items-center pr-1.5">
-                  <input 
-                    type="checkbox"
-                    id="normal-flow-checkbox"
-                    checked={isNormalFlow !== false}
-                    onChange={handleToggleNormalFlow}
-                    className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-700 cursor-pointer"
-                  />
-                </div>
-              </div>
-
               <Button onClick={() => handleExportCSV(7)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-1">
                 Export 7-Day Travel Record (CSV)
               </Button>

@@ -11,7 +11,7 @@ service cloud.firestore {
     // We check admin from users col with safe token-based verification fallbacks
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email_verified == true && request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app']) ||
+        request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app'] ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
@@ -19,7 +19,7 @@ service cloud.firestore {
     // We check driver with safe token-based verification fallbacks
     function isDriver() {
       return isSignedIn() && (
-        (request.auth.token.email_verified == true && request.auth.token.email == '222222@sanken.app') ||
+        request.auth.token.email == '222222@sanken.app' ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver')
       );
     }
@@ -37,7 +37,7 @@ service cloud.firestore {
       }
 
       allow get: if isSignedIn() && (isAdmin() || userId == request.auth.uid);
-      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && (request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app'] || resource.data.userId == request.auth.uid);
       
       allow create: if isSignedIn() && isValidId(userId) && isValidUser(incoming())
         && incoming().keys().hasAll(['userId', 'email', 'role', 'createdAt']) && incoming().keys().size() <= 8
@@ -119,6 +119,9 @@ service cloud.firestore {
           && (!('endOdometer' in data) || (data.endOdometer is number))
           && (!('currentOdometer' in data) || (data.currentOdometer is number))
           && (!('expectedEndOdometer' in data) || (data.expectedEndOdometer is number))
+          && (!('currentLocation' in data) || (data.currentLocation is map))
+          && (!('pickupCoords' in data) || (data.pickupCoords is map))
+          && (!('dropoffCoords' in data) || (data.dropoffCoords is map))
           && (!('forceCompleted' in data) || (data.forceCompleted is bool))
           && (!('isJointTrip' in data) || (data.isJointTrip is bool))
           && (!('expectedDistance' in data) || (data.expectedDistance is number))
@@ -142,7 +145,7 @@ service cloud.firestore {
       );
       
       allow list: if isSignedIn() && (
-        isAdmin() ||
+        request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app'] ||
         resource.data.userId == request.auth.uid ||
         ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
         ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
@@ -157,8 +160,8 @@ service cloud.firestore {
         && incoming().updatedAt == request.time;
         
        allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName'])) ||
-        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverEndedTime', 'currentOdometer'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName', 'currentLocation', 'pickupCoords', 'dropoffCoords'])) ||
+        (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime', 'driverEndedTime', 'startOdometer', 'endOdometer', 'currentOdometer', 'currentLocation', 'pickupCoords', 'dropoffCoords'])) ||
         (isParticipant(existing()) && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
         (isParticipant(existing()) && existing().status == 'allocated' && existing().driverHasSmartphone == false && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime']) && incoming().status == 'driver_started') ||
         (isParticipant(existing()) && existing().status == 'driver_started' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'startOdometer', 'currentOdometer', 'expectedEndOdometer']) && incoming().status == 'in_progress') ||
@@ -179,7 +182,7 @@ service cloud.firestore {
       }
       
       allow get: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
-      allow list: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      allow list: if isSignedIn() && (request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app'] || resource.data.driverId == request.auth.uid);
       
       allow create: if isSignedIn() && isValidId(timesheetId) && isValidTimesheet(incoming())
         && incoming().keys().hasAll(['driverId', 'date', 'totalHours', 'tripsCompleted', 'createdAt'])
@@ -193,6 +196,15 @@ service cloud.firestore {
       );
       
       allow delete: if isAdmin();
+    }
+    
+    match /settings/{settingsId} {
+      function isValidSettings(data) {
+        return (!('normal' in data) || (data.normal is bool));
+      }
+
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidSettings(incoming());
     }
   }
 }

@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
 import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert } from 'lucide-react';
 import { TripItemSkeleton } from '../components/ui/Skeleton';
-import { TripMap } from '../components/TripMap';
 
 const UserTripItem = ({ 
   trip, 
@@ -317,10 +316,6 @@ const UserTripItem = ({
               )
             )}
           </div>
-          
-          {['allocated', 'driver_started', 'in_progress'].includes(trip.status) && (
-            <TripMap trip={trip} isDriver={false} />
-          )}
         </div>
       </div>
     </motion.div>
@@ -591,10 +586,10 @@ export default function UserDashboard() {
         estimatedDestinationTime: estimatedDestinationTime ? estimatedDestinationTime : null,
         passengerCount,
         remarks: remarks || null,
-        pickupLat: 0, // Mock for now
-        pickupLng: 0,
-        dropoffLat: 0,
-        dropoffLng: 0,
+        pickupLat: 6.9271,
+        pickupLng: 79.8612,
+        dropoffLat: 6.9412,
+        dropoffLng: 79.8732,
         pickupTime: Date.now(),
         ...(nominatePerson ? {
           nominatedName: nominatedName.trim()
@@ -1030,7 +1025,7 @@ export default function UserDashboard() {
                       trip={trip} 
                       index={index} 
                       profile={profile}
-                      isNormalFlow={isNormalFlow}
+                      isNormalFlow={trip.normal !== false}
                       userOdometerValues={userOdometerValues}
                       setUserOdometerValues={setUserOdometerValues}
                       handleCancelTrip={handleCancelTrip}

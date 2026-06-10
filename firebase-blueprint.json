@@ -81,6 +81,14 @@
         "tripsCompleted": { "type": "integer" }
       },
       "required": ["driverId", "date", "totalHours", "tripsCompleted"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "System flow configuration (normal vs simulation).",
+      "type": "object",
+      "properties": {
+        "normal": { "type": "boolean" }
+      }
     }
   },
   "firestore": {
@@ -99,6 +107,10 @@
     "/timesheets/{timesheetId}": {
       "schema": { "$ref": "#/entities/Timesheet" },
       "description": "Driver timesheets."
+    },
+    "/settings/{settingsId}": {
+      "schema": { "$ref": "#/entities/SystemSettings" },
+      "description": "Global system configurations."
     }
   }
 }
