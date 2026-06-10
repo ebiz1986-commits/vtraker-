@@ -406,6 +406,23 @@ body.light-theme .glass-card[class*="border-white/"] {
   display: inline-block;
 }
 
+@keyframes professional-fade-loop {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(58, 110, 246, 0.45));
+  }
+  50% {
+    opacity: 0.18;
+    transform: scale(0.96);
+    filter: drop-shadow(0 0 2px rgba(58, 110, 246, 0.05));
+  }
+}
+
+.animate-professional-fade {
+  animation: professional-fade-loop 4.5s infinite ease-in-out;
+}
+
 
 
 

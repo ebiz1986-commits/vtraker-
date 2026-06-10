@@ -156,7 +156,7 @@ export default function LandingPage() {
           <CardHeader className="space-y-4 text-center pb-6 border-b border-[rgba(255,255,255,0.1)]">
             <div className="flex justify-center mb-4 mt-6 animate-in slide-in-from-bottom-4 fade-in duration-700">
               <div className="flex flex-col items-center gap-2">
-                <SankenLogo iconSize="xl" className="flex-col text-center" shouldSpin={true} />
+                <SankenLogo iconSize="xl" className="flex-col text-center" shouldFade={true} />
                 <p className="text-[11px] text-amber-500/90 font-medium px-6 mt-3 max-w-[280px] text-center leading-normal animate-warning-flash">
                   This app is not using your GPS location, or any other personal information.
                 </p>

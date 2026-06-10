@@ -6,6 +6,7 @@ interface SankenLogoProps {
   iconSize?: 'sm' | 'md' | 'lg' | 'xl';
   subtitle?: string;
   shouldSpin?: boolean;
+  shouldFade?: boolean;
 }
 
 export function SankenLogo({ 
@@ -13,7 +14,8 @@ export function SankenLogo({
   className = '', 
   iconSize = 'md', 
   subtitle,
-  shouldSpin = false
+  shouldSpin = false,
+  shouldFade = false
 }: SankenLogoProps) {
   // Dimensions based on icon size
   const sizeClasses = {
@@ -27,7 +29,9 @@ export function SankenLogo({
 
   const logoIcon = (
     <div 
-      className={`relative ${svgSize} flex-shrink-0 flex items-center justify-center ${shouldSpin ? 'animate-spin' : ''}`}
+      className={`relative ${svgSize} flex-shrink-0 flex items-center justify-center ${
+        shouldSpin ? 'animate-spin' : shouldFade ? 'animate-professional-fade' : ''
+      }`}
       style={shouldSpin ? { animationDuration: '16s' } : undefined}
     >
       <svg 
