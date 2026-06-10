@@ -250,7 +250,7 @@ const AdminPendingTripItem = ({
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers, index = 0, vehicles = [] }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCancelTrip, allUsers, index = 0, vehicles = [] }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
@@ -605,6 +605,29 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
 
               </div>
             </div>
+
+            {/* For allocated (unstarted) trips, show cancellation option */}
+            {trip.status === 'allocated' && (
+              <div className="border border-red-900/30 bg-red-950/10 p-4 rounded-lg mt-2 mb-4 space-y-2.5 shadow-md">
+                <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5 font-sans">
+                  <span>⚠️</span>
+                  Cancel Unstarted Allocation
+                </h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <p className="text-[11.5px] text-slate-400 max-w-xl font-sans font-medium">
+                    This trip is allocated but the journey has not started yet. You can cancel this booking allocation to release the driver and vehicle.
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="destructive" 
+                    onClick={() => handleCancelTrip(trip.id)}
+                    className="w-full sm:w-auto shrink-0 bg-red-600 hover:bg-red-700 text-white font-bold"
+                  >
+                    Cancel Booking
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {trip.status === 'driver_ended' && Date.now() - (trip.driverEndedTime || 0) > 10 * 60 * 1000 && (
               <div className="bg-red-900/10 p-4 border border-red-900/40 rounded-lg flex flex-col gap-3 shadow-lg mt-4">
@@ -968,6 +991,19 @@ export default function AdminDashboard() {
         updatedAt: serverTimestamp()
       });
       toast.success("Trip rejected");
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
+  const handleCancelTrip = async (tripId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this allocated trip? This will free up the associated driver and vehicle.")) return;
+    try {
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'cancelled',
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Trip allocation cancelled successfully");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -1747,6 +1783,7 @@ export default function AdminDashboard() {
                                   trip={trip} 
                                   drivers={drivers} 
                                   handleForceCompleteTrip={handleForceCompleteTrip} 
+                                  handleCancelTrip={handleCancelTrip}
                                   allUsers={allUsers}
                                   index={idx}
                                   vehicles={vehicles}
