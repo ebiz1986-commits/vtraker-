@@ -124,7 +124,7 @@ const AdminPendingTripItem = ({
         <div className="flex flex-col gap-2 pl-0 sm:pl-8">
            <div>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               USER: <span className="text-blue-300 font-bold ml-1">{allUsers.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
+               USER: <span className="text-blue-300 font-bold ml-1">{allUsers.find((u: any) => (u.userId || u.id) === trip.userId)?.name || trip.passengerName || 'Unknown User'}</span>
              </span>
            </div>
            
@@ -223,7 +223,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
-  const passengerUser = allUsers?.find((u: any) => u.userId === trip.userId);
+  const passengerUser = allUsers?.find((u: any) => (u.userId || u.id) === trip.userId);
 
   // States for hot-swapping and odometer bypass inside the card
   const [midDriverId, setMidDriverId] = useState(trip.driverId || '');
@@ -382,10 +382,10 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
         <div className="flex flex-col gap-2">
            <div className="flex flex-col sm:flex-row gap-y-1 gap-x-4">
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               USER: <span className="text-blue-300 font-bold ml-1">{allUsers?.find((u: any) => u.userId === trip.userId)?.name || 'Unknown'}</span>
+               USER: <span className="text-blue-300 font-bold ml-1">{passengerUser?.name || trip.passengerName || 'Unknown User'}</span>
              </span>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               DRIVER: <span className="text-emerald-300 font-bold ml-1">{driver?.name || 'Unknown'}</span>
+               DRIVER: <span className="text-emerald-300 font-bold ml-1">{driver?.name || trip.driverName || 'Unknown Driver'}</span>
              </span>
            </div>
            
@@ -564,8 +564,8 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, allUsers,
 const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles = [] }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-  const driver = drivers.find((d: any) => d.userId === trip.driverId);
-  const passenger = allUsers?.find((u: any) => u.userId === trip.userId);
+  const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
+  const passenger = allUsers?.find((u: any) => (u.userId || u.id) === trip.userId);
 
   // A visually appealing trip ID based on original document ID
   const displayId = `SO-${new Date().getFullYear()}-${trip.id.substring(0, 4).toUpperCase()}`;
@@ -634,9 +634,9 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
 
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-slate-300 text-xs font-semibold">
-            <span>UP: <span className="text-blue-300">{passenger?.name || 'Unknown'}</span></span>
+            <span>UP: <span className="text-blue-300">{passenger?.name || trip.passengerName || 'Unknown User'}</span></span>
             <span className="hidden sm:inline text-slate-600">|</span>
-            <span>DR: <span className="text-emerald-300">{driver?.name || 'Unknown'}</span></span>
+            <span>DR: <span className="text-emerald-300">{driver?.name || trip.driverName || 'Unknown Driver'}</span></span>
           </div>
           
           <p className="text-xs text-slate-400 truncate max-w-xl">
@@ -650,12 +650,12 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-[10px] font-bold text-slate-500 uppercase">Passenger Details</p>
-              <p className="font-medium text-slate-300 mt-0.5">{passenger?.name || 'Unknown'} ({passenger?.department || 'N/A'})</p>
+              <p className="font-medium text-slate-300 mt-0.5">{passenger?.name || trip.passengerName || 'Unknown User'} ({passenger?.department || trip.passengerDepartment || 'N/A'})</p>
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-500 uppercase">Driver & Vehicle</p>
               <p className="font-medium text-slate-300 mt-0.5">
-                {driver?.name || 'Unknown'}{' '}
+                {driver?.name || trip.driverName || 'Unknown Driver'}{' '}
                 {trip.vehicleId ? `[Vehicle: ${vehicles.find(v => v.id === trip.vehicleId)?.registrationNumber || trip.vehicleId}]` : ''}
               </p>
             </div>
@@ -983,8 +983,8 @@ export default function AdminDashboard() {
     let csvContent = headers.join(',') + '\n';
     
     recentTrips.forEach(trip => {
-      const user = allUsers.find(u => u.userId === trip.userId) || {};
-      const driver = allUsers.find(d => d.userId === trip.driverId) || {};
+      const user = allUsers.find(u => (u.userId || u.id) === trip.userId) || {};
+      const driver = allUsers.find(d => (d.userId || d.id) === trip.driverId) || {};
       const vehicle = vehicles.find(v => v.id === trip.vehicleId) || {};
       
       const tripDate = trip.createdAt ? new Date(trip.createdAt?.toMillis?.() || Date.now()).toLocaleString().replace(/,/g, '') : '';
@@ -998,9 +998,9 @@ export default function AdminDashboard() {
         tripDate,
         `"${trip.requestedDate || ''}"`,
         `"${(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}"`,
-        `"${user.name || ''}"`,
+        `"${user.name || trip.passengerName || ''}"`,
         `"${user.email || ''}"`,
-        `"${driver.name || ''}"`,
+        `"${driver.name || trip.driverName || ''}"`,
         `"${vehicle.registrationNumber || ''}"`,
         `"${(trip.pickupAddress || '').replace(/"/g, '""')}"`,
         `"${(trip.dropoffAddress || '').replace(/"/g, '""')}"`,
