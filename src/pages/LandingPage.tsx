@@ -150,7 +150,7 @@ export default function LandingPage() {
 
 
       <div
-        className="w-full max-w-md z-10 mx-4 animate-in fade-in zoom-in duration-500"
+        className="w-full max-w-md z-10 mx-4 flex flex-col gap-6 animate-in fade-in zoom-in duration-500"
       >
         <Card className="glass-card">
           <CardHeader className="space-y-4 text-center pb-6 border-b border-[rgba(255,255,255,0.1)]">
@@ -198,6 +198,10 @@ export default function LandingPage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="text-center text-[10px] font-bold tracking-widest text-slate-500 uppercase select-none pb-2">
+          All Rights @skoadmin
+        </div>
       </div>
 
       <InstallPWA isOpen={isInstallOpen} onClose={() => setIsInstallOpen(false)} />

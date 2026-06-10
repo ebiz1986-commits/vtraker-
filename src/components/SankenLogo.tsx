@@ -4,9 +4,10 @@ interface SankenLogoProps {
   iconOnly?: boolean;
   className?: string; // class for the container
   iconSize?: 'sm' | 'md' | 'lg' | 'xl';
+  subtitle?: string;
 }
 
-export function SankenLogo({ iconOnly = false, className = '', iconSize = 'md' }: SankenLogoProps) {
+export function SankenLogo({ iconOnly = false, className = '', iconSize = 'md', subtitle }: SankenLogoProps) {
   // Dimensions based on icon size
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -109,6 +110,12 @@ export function SankenLogo({ iconOnly = false, className = '', iconSize = 'md' }
     xl: 'gap-5'
   };
 
+  const defaultSub = iconSize === 'xl' || iconSize === 'lg' 
+    ? 'Vehicle Tracking & Dispatch System'
+    : 'Vehicle Tracking & Dispatch';
+
+  const displaySubtitle = subtitle || defaultSub;
+
   return (
     <div className={`flex items-center ${gapSizes[iconSize]} ${className}`}>
       {logoIcon}
@@ -121,7 +128,7 @@ export function SankenLogo({ iconOnly = false, className = '', iconSize = 'md' }
           <span className="text-blue-400">Overseas</span>
         </h1>
         <p className={`font-bold tracking-widest uppercase transition-colors text-slate-400 ${subTextSizes[iconSize]}`}>
-          Vehicle Tracker
+          {displaySubtitle}
         </p>
       </div>
     </div>
