@@ -404,6 +404,19 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
               </p>
               <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
             </div>
+            {trip.status === 'allocated' && (
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancelTrip(trip.id);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] h-8 px-3 rounded shadow-md shrink-0 font-sans cursor-pointer"
+              >
+                Cancel Booking
+              </Button>
+            )}
             <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
               <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
             </div>
