@@ -19,8 +19,11 @@ service cloud.firestore {
     // We check driver with safe token-based verification fallbacks
     function isDriver() {
       return isSignedIn() && (
-        request.auth.token.email == '222222@sanken.app' ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver')
+        request.auth.token.email in ['222222@sanken.app', 'ebiz1986@gmail.com', '445566@sanken.app'] ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        ))
       );
     }
 
@@ -95,11 +98,11 @@ service cloud.firestore {
           && (!('dropoffAddress' in data) || data.dropoffAddress == null || (data.dropoffAddress is string && data.dropoffAddress.size() <= 500))
           && (!('returnLocations' in data) || data.returnLocations == null || (data.returnLocations is string && data.returnLocations.size() <= 1500))
           && (!('remarks' in data) || data.remarks == null || (data.remarks is string && data.remarks.size() <= 1000))
-          && data.pickupLat is number
-          && data.pickupLng is number
-          && data.dropoffLat is number
-          && data.dropoffLng is number
-          && data.pickupTime is number
+          && (!('pickupLat' in data) || data.pickupLat is number)
+          && (!('pickupLng' in data) || data.pickupLng is number)
+          && (!('dropoffLat' in data) || data.dropoffLat is number)
+          && (!('dropoffLng' in data) || data.dropoffLng is number)
+          && (!('pickupTime' in data) || data.pickupTime is number)
           && (!('requestedStartTime' in data) || (data.requestedStartTime is string && data.requestedStartTime.size() <= 50))
           && (!('passengerCount' in data) || (data.passengerCount is number))
           && (!('passengerName' in data) || (data.passengerName is string && data.passengerName.size() <= 100))
