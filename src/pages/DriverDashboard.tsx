@@ -240,10 +240,10 @@ const TripItem = ({
                         අවධානය යොමු කරන්න / Important Notice
                       </div>
                       <p className="text-[12.5px] font-bold leading-relaxed text-red-350">
-                        කරුණාකර වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
+                        කරුණාකර ස්ටාර්ට් බටන් (Start Trip) එක එබීමට පෙර, වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
                       </p>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        (Please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
+                        (Before pushing the start button, please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
                       </p>
                     </motion.div>
 
@@ -331,10 +331,10 @@ const TripItem = ({
                         අවධානය යොමු කරන්න / Important Notice
                       </div>
                       <p className="text-[12.5px] font-bold leading-relaxed text-red-350">
-                        කරුණාකර වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
+                        කරුණාකර ස්ටාර්ට් බටන් (Start Trip) එක එබීමට පෙර, වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
                       </p>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        (Please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
+                        (Before pushing the start button, please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
                       </p>
                     </motion.div>
 
@@ -580,7 +580,7 @@ export default function DriverDashboard() {
         pickupTime: Date.now(),
         updatedAt: serverTimestamp()
       });
-      toast.success(`Trip started successfully! Odometer automatically defaulted to last ended reading: ${lastOdo} KM.`);
+      toast.success(`ගමන සාර්ථකව ආරම්භ කරන ලදී! ඕඩොමීටරය ස්වයංක්‍රීයව ${lastOdo} KM ලෙස සටහන් විය. කරුණාකර වාහනයේ මීටරය සමඟ සසඳා නොගැලපේ නම් ඇඩ්මින් (Admin) සම්බන්ධ කර නිවැරදි කරගන්න.`);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     } finally {
@@ -619,7 +619,7 @@ export default function DriverDashboard() {
 
   const handleStartTripWithOdo = async (tripId: string, odoVal: string) => {
     if (!odoVal || isNaN(Number(odoVal))) {
-      toast.error("Please enter a valid numeric start odometer reading (KM).");
+      toast.error("කරුණාකර වලංගු ආරම්භක ඕඩොමීටර කියවීමක් (KM) ඇතුළත් කරන්න.");
       return;
     }
     const odometer = Number(odoVal);
@@ -632,7 +632,7 @@ export default function DriverDashboard() {
         pickupTime: Date.now(),
         updatedAt: serverTimestamp()
       });
-      toast.success("Trip started successfully! Odometer logged at " + odometer + " KM.");
+      toast.success("ගමන සාර්ථකව ආරම්භ කරන ලදී! ඕඩොමීටරය " + odometer + " KM ලෙස සටහන් විය.");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -640,7 +640,7 @@ export default function DriverDashboard() {
 
   const handleEndTripWithOdo = async (tripId: string, startOdo: number, odoVal: string) => {
     if (!odoVal || isNaN(Number(odoVal))) {
-      toast.error("Please enter a valid numeric end odometer reading (KM).");
+      toast.error("කරුණාකර වලංගු අවසාන ඕඩොමීටර කියවීමක් (KM) ඇතුළත් කරන්න.");
       return;
     }
     const odometer = Number(odoVal);
@@ -655,7 +655,7 @@ export default function DriverDashboard() {
         dropoffTime: Date.now(),
         updatedAt: serverTimestamp()
       });
-      toast.success("Trip completed and logged successfully! Final Odometer: " + odometer + " KM.");
+      toast.success("ගමන සාර්ථකව අවසන් කර වාර්තා කරන ලදී! අවසාන ඕඩොමීටරය: " + odometer + " KM.");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
