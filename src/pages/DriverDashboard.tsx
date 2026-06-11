@@ -25,12 +25,6 @@ const TripItem = ({
   const [showEndModal, setShowEndModal] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
 
-  const [currentOdoInput, setCurrentOdoInput] = useState(String(trip.currentOdometer || trip.startOdometer || 0));
-
-  useEffect(() => {
-    setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
-  }, [trip.currentOdometer, trip.startOdometer]);
-
   const startOdometerVal = Number(trip.startOdometer) || 0;
 
   // Real-time local validations
@@ -58,59 +52,6 @@ const TripItem = ({
     : endOdoStr && !endOdoError && distanceTraveled === 0
     ? "Warning: Distance traveled is 0 KM."
     : null;
-
-  // 3. Current Odometer Validation
-  const currentOdoNum = Number(currentOdoInput);
-  const currentOdoError = currentOdoInput && (isNaN(currentOdoNum) || currentOdoNum < startOdometerVal)
-    ? `Cannot be less than start odometer (${startOdometerVal} KM).`
-    : currentOdoInput && currentOdoNum > 999999
-    ? "Odometer exceeds 999,999 KM."
-    : null;
-
-  const currentOdoWarning = currentOdoInput && !currentOdoError && (currentOdoNum - startOdometerVal) > 350
-    ? `High value alert (+${currentOdoNum - startOdometerVal} KM)`
-    : null;
-
-  const handleIncrementCurrentOdo = async (tripItem: any, amount: number) => {
-    const startOdo = Number(tripItem.startOdometer) || 0;
-    const currentOdo = Number(tripItem.currentOdometer) || startOdo;
-    const nextOdo = currentOdo + amount;
-
-    if (nextOdo < startOdo) {
-      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, 'trips', tripItem.id), {
-        currentOdometer: nextOdo,
-        updatedAt: serverTimestamp()
-      });
-      toast.success(`Current Odometer updated to ${nextOdo} KM`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to update current odometer.');
-    }
-  };
-
-  const handleDirectUpdateCurrentOdo = async (tripItem: any, value: number) => {
-    const startOdo = Number(tripItem.startOdometer) || 0;
-    if (value < startOdo) {
-      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, 'trips', tripItem.id), {
-        currentOdometer: value,
-        updatedAt: serverTimestamp()
-      });
-      toast.success(`Current Odometer updated to ${value} KM`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to update current odometer.');
-    }
-  };
   
   return (
     <>
@@ -272,99 +213,6 @@ const TripItem = ({
               </div>
             )}
           </div>
-          
-          {/* Interactive Current Odometer Updates Controls */}
-          {trip.status === 'in_progress' && (
-            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3.5 shadow-md mb-4 text-center pb-5">
-              <p className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 justify-center">
-                <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
-                Update Current Odometer (KM)
-              </p>
-              
-              <div className="flex flex-wrap items-center gap-2 justify-center">
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
-                  onClick={() => handleIncrementCurrentOdo(trip, -1)}
-                >
-                  -1 KM
-                </button>
-                <div className="flex items-center gap-1 font-mono text-white text-sm font-bold bg-[#0c1222] px-4 py-2 border border-slate-800 rounded-xl shadow-inner min-w-[70px] justify-center text-center">
-                  <span>{trip.currentOdometer || trip.startOdometer || 0} km</span>
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
-                  onClick={() => handleIncrementCurrentOdo(trip, 1)}
-                >
-                  +1 KM
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
-                  onClick={() => handleIncrementCurrentOdo(trip, 5)}
-                >
-                  +5 KM
-                </button>
-              </div>
-              
-              <div className="flex gap-2 max-w-[260px] mx-auto items-center pt-2 flex-col">
-                <div className="flex items-center gap-2 w-full justify-center">
-                  <span className="text-xs text-slate-400 shrink-0 font-semibold uppercase tracking-wider">Set KM:</span>
-                  <input
-                    type="text"
-                    pattern="[0-9]*"
-                    inputMode="numeric"
-                    placeholder="KM"
-                    className={`input-field text-center font-mono py-2 text-base font-semibold bg-slate-950/60 rounded-xl w-32 border ${
-                      currentOdoError 
-                        ? 'border-red-500/80 focus:border-red-500 text-red-400' 
-                        : currentOdoWarning 
-                        ? 'border-amber-500/85 focus:border-amber-500 text-amber-300' 
-                        : 'border-slate-800 focus:border-orange-500'
-                    }`}
-                    value={currentOdoInput}
-                    onChange={(e) => {
-                      const clean = e.target.value.replace(/\D/g, '');
-                      setCurrentOdoInput(clean);
-                    }}
-                    onBlur={() => {
-                      if (currentOdoError) {
-                        toast.error(`Invalid entry discarded: ${currentOdoError}`);
-                        setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
-                      } else if (currentOdoInput) {
-                        handleDirectUpdateCurrentOdo(trip, Number(currentOdoInput));
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        if (currentOdoError) {
-                          toast.error(`Invalid entry discarded: ${currentOdoError}`);
-                          setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
-                        } else if (currentOdoInput) {
-                          handleDirectUpdateCurrentOdo(trip, Number(currentOdoInput));
-                        }
-                        (e.target as HTMLInputElement).blur();
-                      }
-                    }}
-                  />
-                </div>
-                {/* Visual validations alerts */}
-                {currentOdoError && (
-                  <p className="text-[11px] text-red-400 font-semibold mt-1 leading-snug flex items-center justify-center gap-1">
-                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                    {currentOdoError}
-                  </p>
-                )}
-                {currentOdoWarning && (
-                  <p className="text-[11px] text-amber-400 font-semibold mt-1 leading-snug flex items-center justify-center gap-1 animate-pulse">
-                    <Info className="w-3.5 h-3.5 shrink-0" />
-                    {currentOdoWarning}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
           
           <div className="flex flex-col gap-3">
             {isNormalFlow ? (
@@ -710,47 +558,6 @@ export default function DriverDashboard() {
       toast.success("Trip completed and logged successfully! Final Odometer: " + odometer + " KM.");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
-    }
-  };
-
-  const handleIncrementCurrentOdoOuter = async (tripItem: any, amount: number) => {
-    const startOdo = Number(tripItem.startOdometer) || 0;
-    const currentOdo = Number(tripItem.currentOdometer) || startOdo;
-    const nextOdo = currentOdo + amount;
-
-    if (nextOdo < startOdo) {
-      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, 'trips', tripItem.id), {
-        currentOdometer: nextOdo,
-        updatedAt: serverTimestamp()
-      });
-      toast.success(`Current Odometer updated to ${nextOdo} KM`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to update current odometer.');
-    }
-  };
-
-  const handleDirectUpdateCurrentOdoOuter = async (tripItem: any, value: number) => {
-    const startOdo = Number(tripItem.startOdometer) || 0;
-    if (value < startOdo) {
-      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, 'trips', tripItem.id), {
-        currentOdometer: value,
-        updatedAt: serverTimestamp()
-      });
-      toast.success(`Current Odometer updated to ${value} KM`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to update current odometer.');
     }
   };
 
@@ -1291,39 +1098,9 @@ export default function DriverDashboard() {
 
                         {trip.status === 'in_progress' && (
                           <div className="space-y-3">
-                            <div className="flex justify-between items-center text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                            <div className="flex justify-between items-center text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-800 pb-2">
                               <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wider">Start Odo Saved</span>
                               <span className="font-mono text-amber-400 font-bold text-xs">{trip.startOdometer || 0} KM</span>
-                            </div>
-
-                            <div className="flex flex-col gap-1.5 border-b border-slate-900 pb-2">
-                              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                <span>Running Odometer</span>
-                                <span className="font-mono text-amber-400 font-bold">{trip.currentOdometer || trip.startOdometer || 0} KM</span>
-                              </div>
-                              <div className="flex gap-1.5 justify-center">
-                                <button
-                                  type="button"
-                                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
-                                  onClick={() => handleIncrementCurrentOdoOuter(trip, -1)}
-                                >
-                                  -1 KM
-                                </button>
-                                <button
-                                  type="button"
-                                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
-                                  onClick={() => handleIncrementCurrentOdoOuter(trip, 1)}
-                                >
-                                  +1 KM
-                                </button>
-                                <button
-                                  type="button"
-                                  className="px-2.5 py-1 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
-                                  onClick={() => handleIncrementCurrentOdoOuter(trip, 5)}
-                                >
-                                  +5 KM
-                                </button>
-                              </div>
                             </div>
 
                             <div className="space-y-2">
