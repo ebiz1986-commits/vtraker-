@@ -9,7 +9,7 @@ async function startServer() {
   const httpServer = http.createServer(app);
 
   // Determine if we are running in development mode (e.g. via dev script or typescript server directly)
-  const isDev = process.env.NODE_ENV !== "production" || process.argv.some(arg => arg.includes("server.ts"));
+  const isDev = process.env.NODE_ENV !== "production" && !process.argv.some(arg => arg.includes("server.cjs")) || process.argv.some(arg => arg.includes("server.ts"));
 
   // Vite middleware for development
   if (isDev) {
