@@ -261,6 +261,8 @@ const UserTripItem = ({
                     <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
                     <input 
                       type="number" 
+                      pattern="[0-9]*"
+                      inputMode="numeric"
                       className="input-field font-mono"
                       placeholder="e.g. 15020"
                       value={userOdometerValues[trip.id] || ''} 
@@ -305,6 +307,8 @@ const UserTripItem = ({
                     <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
                     <input 
                       type="number" 
+                      pattern="[0-9]*"
+                      inputMode="numeric"
                       className="input-field font-mono"
                       placeholder="e.g. 15045"
                       value={userOdometerValues[trip.id] || ''} 
@@ -886,7 +890,7 @@ export default function UserDashboard() {
                         type="text"
                         value={tempProfileName}
                         onChange={(e) => setTempProfileName(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500"
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
                         placeholder="Your Name"
                       />
                     </div>
@@ -896,7 +900,7 @@ export default function UserDashboard() {
                         type="text"
                         value={tempProfileDept}
                         onChange={(e) => setTempProfileDept(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500"
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
                         placeholder="Your Department"
                       />
                     </div>

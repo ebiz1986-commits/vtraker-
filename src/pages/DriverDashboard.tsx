@@ -227,45 +227,47 @@ const TripItem = ({
           
           {/* Interactive Current Odometer Updates Controls */}
           {trip.status === 'in_progress' && (
-            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3 shadow-md mb-4 text-center">
+            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3.5 shadow-md mb-4 text-center">
               <p className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 justify-center">
                 <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
                 Update Current Odometer (KM)
               </p>
               
-              <div className="flex items-center gap-2.5 justify-center">
+              <div className="flex flex-wrap items-center gap-2 justify-center">
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
                   onClick={() => handleIncrementCurrentOdo(trip, -1)}
                 >
                   -1 KM
                 </button>
-                <div className="flex items-center gap-1 font-mono text-white text-xs font-bold bg-[#0c1222] px-3 py-1.5 border border-slate-800 rounded-lg shadow-inner">
+                <div className="flex items-center gap-1 font-mono text-white text-sm font-bold bg-[#0c1222] px-4 py-2 border border-slate-800 rounded-xl shadow-inner min-w-[70px] justify-center">
                   <span>{trip.currentOdometer || trip.startOdometer || 0} km</span>
                 </div>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
                   onClick={() => handleIncrementCurrentOdo(trip, 1)}
                 >
                   +1 KM
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-md transition-all active:scale-95 text-[11px] font-semibold"
+                  className="px-4 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
                   onClick={() => handleIncrementCurrentOdo(trip, 5)}
                 >
                   +5 KM
                 </button>
               </div>
               
-              <div className="flex gap-2 max-w-[200px] mx-auto items-center">
-                <span className="text-[10px] text-slate-500 shrink-0 font-medium">Direct:</span>
+              <div className="flex gap-2 max-w-[220px] mx-auto items-center pt-1.5">
+                <span className="text-xs text-slate-400 shrink-0 font-semibold uppercase tracking-wider">Set KM:</span>
                 <input
                   type="number"
-                  placeholder="Set reading"
-                  className="input-field text-center font-mono py-1 text-xs bg-slate-950/60"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  placeholder="KM"
+                  className="input-field text-center font-mono py-2 text-base font-semibold bg-slate-950/60 border-slate-800 focus:border-orange-500 rounded-xl"
                   defaultValue={trip.currentOdometer || trip.startOdometer || 0}
                   onBlur={(e) => {
                     const val = Number(e.target.value);
@@ -290,18 +292,20 @@ const TripItem = ({
             {isNormalFlow ? (
               <div className="w-full space-y-3">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-2 p-4 bg-blue-600/5 border border-blue-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-2.5 p-4 bg-blue-600/5 border border-blue-500/20 rounded-xl w-full">
                     <p className="text-xs font-bold text-blue-400 uppercase tracking-wider text-left">Start Odometer (KM)</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
                       <input
                         type="number"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
                         placeholder="e.g. 15000"
-                        className="input-field font-mono text-sm py-2 bg-slate-950/80 border-slate-700 max-w-[200px] flex-1 text-slate-100"
+                        className="input-field font-mono text-base py-3 px-4 bg-slate-950/80 border-slate-700 w-full sm:max-w-[200px] text-slate-100"
                         value={driverOdoValues[trip.id] || ''}
                         onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
                       />
                       <Button 
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 text-sm shadow-lg shadow-blue-900/20 rounded-lg min-w-[120px]"
+                        className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base shadow-lg shadow-blue-900/20 rounded-lg"
                         onClick={() => handleStartTripWithOdo(trip.id, driverOdoValues[trip.id])}
                       >
                         Start Trip
@@ -310,14 +314,14 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'driver_started' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2 text-sm font-medium">
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                       <span>Transitioning to in-progress... (Normal Flow active)</span>
                     </div>
                     <Button 
-                      size="sm" 
-                      className="bg-blue-600 hover:bg-blue-700"
+                      size="lg" 
+                      className="bg-blue-600 hover:bg-blue-700 h-auto py-3 text-base text-white font-semibold rounded-lg"
                       onClick={() => handleStartTripWithOdo(trip.id, trip.startOdometer || "0")}
                     >
                       Force Start Trip
@@ -325,18 +329,20 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'in_progress' && (
-                  <div className="flex flex-col gap-2 p-4 bg-emerald-600/5 border border-emerald-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-2.5 p-4 bg-emerald-600/5 border border-emerald-500/20 rounded-xl w-full">
                     <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-left">End Odometer (KM)</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
                       <input
                         type="number"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
                         placeholder="e.g. 15120"
-                        className="input-field font-mono text-sm py-2 bg-slate-950/80 border-slate-700 max-w-[200px] flex-1 text-slate-100"
+                        className="input-field font-mono text-base py-3 px-4 bg-slate-950/80 border-slate-700 w-full sm:max-w-[200px] text-slate-100"
                         value={driverOdoValues[trip.id] || ''}
                         onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
                       />
                       <Button 
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 text-sm shadow-lg shadow-emerald-900/20 rounded-lg min-w-[120px]"
+                        className="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 text-base shadow-lg shadow-emerald-900/20 rounded-lg"
                         onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
                       >
                         End Trip
@@ -345,14 +351,14 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'driver_ended' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2 text-sm font-medium">
+                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                       <span>Finishing trip... (Normal Flow active)</span>
                     </div>
                     <Button 
-                      size="sm" 
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      size="lg" 
+                      className="bg-emerald-600 hover:bg-emerald-700 h-auto py-3 text-base text-white font-semibold rounded-lg"
                       onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, trip.endOdometer || "0")}
                     >
                       Force Complete Trip
@@ -748,7 +754,7 @@ export default function DriverDashboard() {
                       type="text"
                       value={tempProfileName}
                       onChange={(e) => setTempProfileName(e.target.value)}
-                      className="w-full mt-1.5 px-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
+                      className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
                       placeholder="e.g. Priyantha Jayasundara"
                       autoFocus
                     />
