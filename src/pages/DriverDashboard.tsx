@@ -8,8 +8,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp }
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { sendPushNotification, playNotificationSound } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock, Bell, BellOff, Volume2, Info, Edit, Check, X, ShieldAlert } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Info, Edit, Check, X, ShieldAlert, Zap, Car, Navigation } from 'lucide-react';
 import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 const TripItem = ({ 
@@ -24,6 +23,52 @@ const TripItem = ({
 }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+
+  const [currentOdoInput, setCurrentOdoInput] = useState(String(trip.currentOdometer || trip.startOdometer || 0));
+
+  useEffect(() => {
+    setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
+  }, [trip.currentOdometer, trip.startOdometer]);
+
+  const startOdometerVal = Number(trip.startOdometer) || 0;
+
+  // Real-time local validations
+  // 1. Start Odometer Validation (For Allocated status)
+  const startOdoStr = driverOdoValues[trip.id] || '';
+  const startOdoNum = Number(startOdoStr);
+  const startOdoError = startOdoStr && (isNaN(startOdoNum) || startOdoNum <= 0)
+    ? "Odometer must be greater than 0 KM."
+    : startOdoStr && startOdoNum > 999999
+    ? "Plausible odometer limit is 999,999 KM."
+    : null;
+
+  // 2. End Odometer Validation (For In Progress status)
+  const endOdoStr = driverOdoValues[trip.id] || '';
+  const endOdoNum = Number(endOdoStr);
+  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
+    ? `End odometer must be greater than start odometer (${startOdometerVal} KM).`
+    : endOdoStr && endOdoNum > 999999
+    ? "Odometer reading is unrealistically large (> 999,999 KM)."
+    : null;
+
+  const distanceTraveled = endOdoNum - startOdometerVal;
+  const endOdoWarning = endOdoStr && !endOdoError && distanceTraveled > 350
+    ? `High distance alert: Trip is ${distanceTraveled} KM. Please verify.`
+    : endOdoStr && !endOdoError && distanceTraveled === 0
+    ? "Warning: Distance traveled is 0 KM."
+    : null;
+
+  // 3. Current Odometer Validation
+  const currentOdoNum = Number(currentOdoInput);
+  const currentOdoError = currentOdoInput && (isNaN(currentOdoNum) || currentOdoNum < startOdometerVal)
+    ? `Cannot be less than start odometer (${startOdometerVal} KM).`
+    : currentOdoInput && currentOdoNum > 999999
+    ? "Odometer exceeds 999,999 KM."
+    : null;
+
+  const currentOdoWarning = currentOdoInput && !currentOdoError && (currentOdoNum - startOdometerVal) > 350
+    ? `High value alert (+${currentOdoNum - startOdometerVal} KM)`
+    : null;
 
   const handleIncrementCurrentOdo = async (tripItem: any, amount: number) => {
     const startOdo = Number(tripItem.startOdometer) || 0;
@@ -68,6 +113,7 @@ const TripItem = ({
   
   return (
     <motion.div 
+      id={`trip-card-${trip.id}`}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
@@ -227,7 +273,7 @@ const TripItem = ({
           
           {/* Interactive Current Odometer Updates Controls */}
           {trip.status === 'in_progress' && (
-            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3.5 shadow-md mb-4 text-center">
+            <div className="p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl space-y-3.5 shadow-md mb-4 text-center pb-5">
               <p className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 justify-center">
                 <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></span>
                 Update Current Odometer (KM)
@@ -236,54 +282,84 @@ const TripItem = ({
               <div className="flex flex-wrap items-center gap-2 justify-center">
                 <button
                   type="button"
-                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
+                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
                   onClick={() => handleIncrementCurrentOdo(trip, -1)}
                 >
                   -1 KM
                 </button>
-                <div className="flex items-center gap-1 font-mono text-white text-sm font-bold bg-[#0c1222] px-4 py-2 border border-slate-800 rounded-xl shadow-inner min-w-[70px] justify-center">
+                <div className="flex items-center gap-1 font-mono text-white text-sm font-bold bg-[#0c1222] px-4 py-2 border border-slate-800 rounded-xl shadow-inner min-w-[70px] justify-center text-center">
                   <span>{trip.currentOdometer || trip.startOdometer || 0} km</span>
                 </div>
                 <button
                   type="button"
-                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
+                  className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
                   onClick={() => handleIncrementCurrentOdo(trip, 1)}
                 >
                   +1 KM
                 </button>
                 <button
                   type="button"
-                  className="px-4 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer"
+                  className="px-4 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-xl transition-all active:scale-95 text-xs font-semibold select-none cursor-pointer text-center"
                   onClick={() => handleIncrementCurrentOdo(trip, 5)}
                 >
                   +5 KM
                 </button>
               </div>
               
-              <div className="flex gap-2 max-w-[220px] mx-auto items-center pt-1.5">
-                <span className="text-xs text-slate-400 shrink-0 font-semibold uppercase tracking-wider">Set KM:</span>
-                <input
-                  type="number"
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  placeholder="KM"
-                  className="input-field text-center font-mono py-2 text-base font-semibold bg-slate-950/60 border-slate-800 focus:border-orange-500 rounded-xl"
-                  defaultValue={trip.currentOdometer || trip.startOdometer || 0}
-                  onBlur={(e) => {
-                    const val = Number(e.target.value);
-                    if (val) {
-                      handleDirectUpdateCurrentOdo(trip, val);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const val = Number((e.target as HTMLInputElement).value);
-                      if (val) {
-                        handleDirectUpdateCurrentOdo(trip, val);
+              <div className="flex gap-2 max-w-[260px] mx-auto items-center pt-2 flex-col">
+                <div className="flex items-center gap-2 w-full justify-center">
+                  <span className="text-xs text-slate-400 shrink-0 font-semibold uppercase tracking-wider">Set KM:</span>
+                  <input
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    placeholder="KM"
+                    className={`input-field text-center font-mono py-2 text-base font-semibold bg-slate-950/60 rounded-xl w-32 border ${
+                      currentOdoError 
+                        ? 'border-red-500/80 focus:border-red-500 text-red-400' 
+                        : currentOdoWarning 
+                        ? 'border-amber-500/85 focus:border-amber-500 text-amber-300' 
+                        : 'border-slate-800 focus:border-orange-500'
+                    }`}
+                    value={currentOdoInput}
+                    onChange={(e) => {
+                      const clean = e.target.value.replace(/\D/g, '');
+                      setCurrentOdoInput(clean);
+                    }}
+                    onBlur={() => {
+                      if (currentOdoError) {
+                        toast.error(`Invalid entry discarded: ${currentOdoError}`);
+                        setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
+                      } else if (currentOdoInput) {
+                        handleDirectUpdateCurrentOdo(trip, Number(currentOdoInput));
                       }
-                    }
-                  }}
-                />
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (currentOdoError) {
+                          toast.error(`Invalid entry discarded: ${currentOdoError}`);
+                          setCurrentOdoInput(String(trip.currentOdometer || trip.startOdometer || 0));
+                        } else if (currentOdoInput) {
+                          handleDirectUpdateCurrentOdo(trip, Number(currentOdoInput));
+                        }
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                  />
+                </div>
+                {/* Visual validations alerts */}
+                {currentOdoError && (
+                  <p className="text-[11px] text-red-400 font-semibold mt-1 leading-snug flex items-center justify-center gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    {currentOdoError}
+                  </p>
+                )}
+                {currentOdoWarning && (
+                  <p className="text-[11px] text-amber-400 font-semibold mt-1 leading-snug flex items-center justify-center gap-1 animate-pulse">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    {currentOdoWarning}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -294,18 +370,38 @@ const TripItem = ({
                 {trip.status === 'allocated' && (
                   <div className="flex flex-col gap-2.5 p-4 bg-blue-600/5 border border-blue-500/20 rounded-xl w-full">
                     <p className="text-xs font-bold text-blue-400 uppercase tracking-wider text-left">Start Odometer (KM)</p>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full">
-                      <input
-                        type="number"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        placeholder="e.g. 15000"
-                        className="input-field font-mono text-base py-3 px-4 bg-slate-950/80 border-slate-700 w-full sm:max-w-[200px] text-slate-100"
-                        value={driverOdoValues[trip.id] || ''}
-                        onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
-                      />
+                    <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
+                      <div className="w-full sm:max-w-[200px] flex flex-col gap-1">
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          placeholder="e.g. 15000"
+                          className={`input-field font-mono text-base py-3 px-4 bg-slate-950/80 w-full text-slate-100 rounded-lg border ${
+                            startOdoError 
+                              ? 'border-red-500/80 focus:border-red-500' 
+                              : 'border-slate-700 focus:border-blue-500'
+                          }`}
+                          value={driverOdoValues[trip.id] || ''}
+                          onChange={(e) => {
+                            const clean = e.target.value.replace(/\D/g, '');
+                            setDriverOdoValues({...driverOdoValues, [trip.id]: clean});
+                          }}
+                        />
+                        {startOdoError && (
+                          <span className="text-[11px] text-red-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1">
+                            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                            {startOdoError}
+                          </span>
+                        )}
+                      </div>
                       <Button 
-                        className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base shadow-lg shadow-blue-900/20 rounded-lg"
+                        disabled={!driverOdoValues[trip.id] || !!startOdoError}
+                        className={`w-full sm:flex-1 font-semibold py-3 text-base shadow-lg rounded-lg transition-all ${
+                          (!driverOdoValues[trip.id] || startOdoError)
+                            ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 active:scale-[0.98]'
+                        }`}
                         onClick={() => handleStartTripWithOdo(trip.id, driverOdoValues[trip.id])}
                       >
                         Start Trip
@@ -331,18 +427,46 @@ const TripItem = ({
                 {trip.status === 'in_progress' && (
                   <div className="flex flex-col gap-2.5 p-4 bg-emerald-600/5 border border-emerald-500/20 rounded-xl w-full">
                     <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-left">End Odometer (KM)</p>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full">
-                      <input
-                        type="number"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        placeholder="e.g. 15120"
-                        className="input-field font-mono text-base py-3 px-4 bg-slate-950/80 border-slate-700 w-full sm:max-w-[200px] text-slate-100"
-                        value={driverOdoValues[trip.id] || ''}
-                        onChange={(e) => setDriverOdoValues({...driverOdoValues, [trip.id]: e.target.value})}
-                      />
+                    <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
+                      <div className="w-full sm:max-w-[200px] flex flex-col gap-1">
+                        <input
+                          type="text"
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          placeholder="e.g. 15120"
+                          className={`input-field font-mono text-base py-3 px-4 bg-slate-950/80 w-full text-slate-100 rounded-lg border ${
+                            endOdoError 
+                              ? 'border-red-500/80 focus:border-red-500' 
+                              : endOdoWarning 
+                              ? 'border-amber-500/85 focus:border-amber-500 text-amber-300' 
+                              : 'border-slate-700 focus:border-emerald-500'
+                          }`}
+                          value={driverOdoValues[trip.id] || ''}
+                          onChange={(e) => {
+                            const clean = e.target.value.replace(/\D/g, '');
+                            setDriverOdoValues({...driverOdoValues, [trip.id]: clean});
+                          }}
+                        />
+                        {endOdoError && (
+                          <span className="text-[11px] text-red-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1">
+                            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                            {endOdoError}
+                          </span>
+                        )}
+                        {endOdoWarning && (
+                          <span className="text-[11px] text-amber-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1 animate-pulse">
+                            <Info className="w-3.5 h-3.5 shrink-0" />
+                            {endOdoWarning}
+                          </span>
+                        )}
+                      </div>
                       <Button 
-                        className="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 text-base shadow-lg shadow-emerald-900/20 rounded-lg"
+                        disabled={!driverOdoValues[trip.id] || !!endOdoError}
+                        className={`w-full sm:flex-1 font-semibold py-3 text-base shadow-lg rounded-lg transition-all ${
+                          (!driverOdoValues[trip.id] || endOdoError)
+                            ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20 active:scale-[0.98]'
+                        }`}
                         onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
                       >
                         End Trip
@@ -415,10 +539,10 @@ export default function DriverDashboard() {
   const { profile } = useAuth();
   const [activeTrips, setActiveTrips] = useState<any[]>([]);
   const [completedTripsCount, setCompletedTripsCount] = useState(0);
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const [completedHours, setCompletedHours] = useState('0.0');
   const [totalKmLogged, setTotalKmLogged] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [notiPermission, setNotiPermission] = useState<NotificationPermission>('default');
 
   // Profile editing/renaming states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -509,6 +633,47 @@ export default function DriverDashboard() {
     }
   };
 
+  const handleIncrementCurrentOdoOuter = async (tripItem: any, amount: number) => {
+    const startOdo = Number(tripItem.startOdometer) || 0;
+    const currentOdo = Number(tripItem.currentOdometer) || startOdo;
+    const nextOdo = currentOdo + amount;
+
+    if (nextOdo < startOdo) {
+      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'trips', tripItem.id), {
+        currentOdometer: nextOdo,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Current Odometer updated to ${nextOdo} KM`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update current odometer.');
+    }
+  };
+
+  const handleDirectUpdateCurrentOdoOuter = async (tripItem: any, value: number) => {
+    const startOdo = Number(tripItem.startOdometer) || 0;
+    if (value < startOdo) {
+      toast.error(`Odometer cannot go below starting reading (${startOdo} KM)`);
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'trips', tripItem.id), {
+        currentOdometer: value,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Current Odometer updated to ${value} KM`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update current odometer.');
+    }
+  };
+
   // Date folding state for records more than 1 day old
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
@@ -538,51 +703,7 @@ export default function DriverDashboard() {
   const prevTripStatusRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    if ('Notification' in window) {
-      setNotiPermission(Notification.permission);
-    }
-  }, []);
-
-  const requestPermission = async () => {
-    if (!('Notification' in window)) {
-      toast.error('Push notifications are not supported in this browser.');
-      return;
-    }
-    
-    try {
-      const permission = await Notification.requestPermission();
-      setNotiPermission(permission);
-      if (permission === 'granted') {
-        toast.success('Notifications Enabled!', {
-          description: 'You will receive instant chimes and notices for incoming trips.'
-        });
-        sendPushNotification('Driver Alerts Active! 🚀', {
-          body: 'You are now ready to receive immediate push alerts for incoming trips.'
-        });
-        playNotificationSound();
-      } else if (permission === 'denied') {
-        toast.warning('Notifications Blocked', {
-          description: 'Please enable notifications in your browser settings to receive live bookings.'
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleTestSound = () => {
-    playNotificationSound();
-    toast.info('Test chime played!', {
-      description: 'If you did not hear anything, please check your device volume.'
-    });
-  };
-
-  useEffect(() => {
     if (!profile?.userId) return;
-    
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
     
     // Get all trips for this driver
     const q = query(
@@ -656,74 +777,6 @@ export default function DriverDashboard() {
 
   return (
     <Layout title="Driver Console">
-      {/* Alert Notification Setup Manager */}
-      {notiPermission !== 'granted' && (
-        <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300
-            ${notiPermission === 'granted' 
-              ? 'bg-emerald-950/15 border-emerald-500/20 text-[#E0E0E0]' 
-              : notiPermission === 'denied'
-              ? 'bg-red-950/15 border-red-500/20 text-[#E0E0E0]'
-              : 'bg-amber-950/15 border-amber-500/20 text-[#E0E0E0]'}`}>
-            <div className="flex items-start gap-3.5">
-              <div className={`p-2.5 rounded-lg shrink-0 flex items-center justify-center mt-0.5
-                ${notiPermission === 'granted' 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
-                  : notiPermission === 'denied'
-                  ? 'bg-red-500/10 text-red-500'
-                  : 'bg-amber-500/10 text-amber-500 animate-pulse'}`}>
-                {notiPermission === 'granted' ? (
-                  <Bell className="w-5 h-5" />
-                ) : notiPermission === 'denied' ? (
-                  <BellOff className="w-5 h-5" />
-                ) : (
-                  <Bell className="w-5 h-5" />
-                )}
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-                  Driver Instant Travel Alert System
-                  <span className={`px-2 py-0.5 text-[9px] font-mono tracking-widest font-semibold uppercase rounded-full border
-                    ${notiPermission === 'granted' 
-                      ? 'bg-emerald-950/35 text-emerald-400 border-emerald-500/30' 
-                      : notiPermission === 'denied'
-                      ? 'bg-red-950/35 text-red-400 border-red-500/30'
-                      : 'bg-amber-950/35 text-[#ff9900]/70 border-amber-500/30 animate-pulse'}`}>
-                    {notiPermission === 'granted' ? 'Fully Active' : notiPermission === 'denied' ? 'Blocked' : 'Action Required'}
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                  {notiPermission === 'granted' ? (
-                    "Your device is successfully configured to receive instant audio-visual chimes. You will receive alert popups immediately when admin allocates new trips."
-                  ) : notiPermission === 'denied' ? (
-                    "Browser alerts are blocked. To receive live assignments, you must unblock notification permissions in your browser's address bar settings."
-                  ) : (
-                    "Enable background notifications and auditory ringing so you can instantly respond to assigned bookings even when this tab is closed or minimized."
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2.5 w-full md:w-auto shrink-0 mt-2 md:mt-0">
-              {notiPermission !== 'granted' && (
-                <Button 
-                  onClick={requestPermission} 
-                  className="w-full md:w-auto bg-[#ff9900] hover:bg-[#e08800] text-black font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-[#ff9900]/5 hover:shadow-[#ff9900]/15"
-                >
-                  <Bell className="w-3.5 h-3.5" /> Request Permissions
-                </Button>
-              )}
-              <Button 
-                onClick={handleTestSound} 
-                variant="outline"
-                className="w-full md:w-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Volume2 className="w-3.5 h-3.5" /> Test Sound Chime
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           {/* Driver Profile Card with Inline Name Editor */}
@@ -943,6 +996,258 @@ export default function DriverDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Floating Quick Action Center for Active Bookings */}
+      {activeTrips.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans">
+          {/* Quick Action Drawer/Card */}
+          {isQuickMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-4 w-[310px] sm:w-[360px] backdrop-blur-xl max-h-[82vh] overflow-y-auto mb-2 text-slate-100 flex flex-col gap-3.5 ring-1 ring-white/10"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="bg-orange-500/10 text-orange-400 p-1.5 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 fill-current animate-pulse text-orange-400" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-sm font-bold text-slate-100">Quick Travel Controls</h4>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeTrips.length} Active Booking{activeTrips.length > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsQuickMenuOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4 divide-y divide-slate-850">
+                {activeTrips.map((trip, idx) => {
+                  const dest = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+                  
+                  // Local validations specifically for the quick action inputs
+                  const startOdoStr = driverOdoValues[trip.id] || '';
+                  const startOdoNum = Number(startOdoStr);
+                  const startOdoError = startOdoStr && (isNaN(startOdoNum) || startOdoNum <= 0)
+                    ? "Odometer must be > 0"
+                    : startOdoStr && startOdoNum > 999999
+                    ? "Too large (>999,999)"
+                    : null;
+
+                  const startOdometerVal = Number(trip.startOdometer) || 0;
+                  const endOdoStr = driverOdoValues[trip.id] || '';
+                  const endOdoNum = Number(endOdoStr);
+                  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
+                    ? `Must be > start (${startOdometerVal} KM)`
+                    : endOdoStr && endOdoNum > 999999
+                    ? "Too large"
+                    : null;
+
+                  return (
+                    <div key={trip.id} className="pt-3 first:pt-0 space-y-3 text-left">
+                      {/* Destination and Status Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <Car className="w-3" /> Passenger: {trip.passengerName || 'N/A'}
+                          </p>
+                          <h5 className="font-bold text-sm text-slate-200 truncate mt-0.5">
+                            To: {dest || 'N/A'}
+                          </h5>
+                        </div>
+                        <span className={`px-2 py-0.5 text-[9px] rounded-full font-bold uppercase tracking-wider shrink-0 border
+                          ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/40' : 
+                            trip.status === 'in_progress' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-900/40' : 
+                            'bg-purple-900/40 text-purple-400 border-purple-900/40'}`}>
+                          {trip.status.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      {/* Rapid Interactive Odometer and Status Controls */}
+                      <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-3 space-y-3">
+                        {trip.status === 'allocated' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Start Odometer</span>
+                              {startOdoError && <span className="text-[10px] text-red-400 font-semibold">{startOdoError}</span>}
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                pattern="[0-9]*"
+                                inputMode="numeric"
+                                placeholder="Start KM (e.g. 15000)"
+                                className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
+                                  startOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-blue-500'
+                                }`}
+                                value={driverOdoValues[trip.id] || ''}
+                                onChange={(e) => {
+                                  const clean = e.target.value.replace(/\D/g, '');
+                                  setDriverOdoValues({ ...driverOdoValues, [trip.id]: clean });
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                disabled={!driverOdoValues[trip.id] || !!startOdoError}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-auto px-4 rounded-lg shrink-0 text-xs"
+                                onClick={() => handleStartTripWithOdo(trip.id, driverOdoValues[trip.id])}
+                              >
+                                Start
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {trip.status === 'driver_started' && (
+                          <div className="space-y-2 text-center py-1">
+                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">Waiting for passenger start odometer. Trigger manually if trip is underway:</p>
+                            <Button
+                              size="sm"
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs"
+                              onClick={() => handleStartTripWithOdo(trip.id, trip.startOdometer || "0")}
+                            >
+                              Force Start (With {trip.startOdometer || 0} KM)
+                            </Button>
+                          </div>
+                        )}
+
+                        {trip.status === 'in_progress' && (
+                          <div className="space-y-3">
+                            <div className="flex flex-col gap-1.5 border-b border-slate-900 pb-2">
+                              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                <span>Running Odometer</span>
+                                <span className="font-mono text-amber-400 font-bold">{trip.currentOdometer || trip.startOdometer || 0} KM</span>
+                              </div>
+                              <div className="flex gap-1.5 justify-center">
+                                <button
+                                  type="button"
+                                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
+                                  onClick={() => handleIncrementCurrentOdoOuter(trip, -1)}
+                                >
+                                  -1 KM
+                                </button>
+                                <button
+                                  type="button"
+                                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
+                                  onClick={() => handleIncrementCurrentOdoOuter(trip, 1)}
+                                >
+                                  +1 KM
+                                </button>
+                                <button
+                                  type="button"
+                                  className="px-2.5 py-1 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-500/20 rounded-lg text-xs font-semibold active:scale-95 cursor-pointer"
+                                  onClick={() => handleIncrementCurrentOdoOuter(trip, 5)}
+                                >
+                                  +5 KM
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">End Odometer</span>
+                                {endOdoError && <span className="text-[10px] text-red-500/90 font-semibold">{endOdoError}</span>}
+                              </div>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  pattern="[0-9]*"
+                                  inputMode="numeric"
+                                  placeholder="End KM (e.g. 15120)"
+                                  className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
+                                    endOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-emerald-500'
+                                  }`}
+                                  value={driverOdoValues[trip.id] || ''}
+                                  onChange={(e) => {
+                                    const clean = e.target.value.replace(/\D/g, '');
+                                    setDriverOdoValues({ ...driverOdoValues, [trip.id]: clean });
+                                  }}
+                                />
+                                <Button
+                                  size="sm"
+                                  disabled={!driverOdoValues[trip.id] || !!endOdoError}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-auto px-4 rounded-lg shrink-0 text-xs"
+                                  onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
+                                >
+                                  End
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {trip.status === 'driver_ended' && (
+                          <div className="space-y-2 text-center py-1">
+                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">Waiting for passenger end odometer. Force complete trip if needed:</p>
+                            <Button
+                              size="sm"
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs"
+                              onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, trip.endOdometer || "0")}
+                            >
+                              Force Complete Trip
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Navigation Shortcut Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const element = document.getElementById(`trip-card-${trip.id}`);
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            element.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2', 'ring-offset-slate-950');
+                            setTimeout(() => {
+                              element.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2', 'ring-offset-slate-950');
+                            }, 3000);
+                          } else {
+                            toast.error("Could not locate trip card in view.");
+                          }
+                          setIsQuickMenuOpen(false);
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 bg-slate-800/40 hover:bg-slate-800/80 text-xs text-slate-300 font-semibold rounded-lg border border-slate-800 transition-all active:scale-95 cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5 text-orange-400" />
+                        <span>Locate & View Details In Feed</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Floating Action Circle Button */}
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            type="button"
+            onClick={() => setIsQuickMenuOpen(!isQuickMenuOpen)}
+            className={`h-14 w-14 rounded-full flex items-center justify-center text-white shadow-2xl relative select-none cursor-pointer duration-300 ring-4 ring-slate-950 border border-white/5
+              ${isQuickMenuOpen 
+                ? 'bg-slate-850 text-slate-300 hover:bg-slate-800' 
+                : 'bg-gradient-to-tr from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white ring-orange-500/10'
+              }`}
+          >
+            {isQuickMenuOpen ? (
+              <X className="w-5 h-5 animate-in spin-in duration-200" />
+            ) : (
+              <div className="relative">
+                <Zap className="w-6 h-6 fill-current text-white animate-pulse" />
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center animate-bounce border border-slate-950">
+                  {activeTrips.length}
+                </span>
+              </div>
+            )}
+          </motion.button>
+        </div>
+      )}
     </Layout>
   );
 }
