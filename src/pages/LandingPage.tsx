@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader } from '../components/ui
 import { Download, Sun, Moon, Compass } from 'lucide-react';
 import { InstallPWA } from '../components/InstallPWA';
 import { SankenLogo } from '../components/SankenLogo';
+import { clearBrowserCacheMemory } from '../lib/cacheUtils';
 
 export default function LandingPage() {
   const { user, profile, loading } = useAuth();
@@ -40,6 +41,9 @@ export default function LandingPage() {
     e.preventDefault();
     setLoginError('');
     if (!pin) return;
+    
+    // Clear browser cache memory to guarantee fresh state clean of prior session traces
+    clearBrowserCacheMemory();
     
     setIsLoggingIn(true);
     const generatedEmail = `${pin}@sanken.app`;

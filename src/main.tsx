@@ -2,6 +2,10 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { clearBrowserCacheMemory } from './lib/cacheUtils';
+
+// Clear browser cache memory on initial load
+clearBrowserCacheMemory();
 
 // Register PWA Service Worker for home-screen installation support
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {

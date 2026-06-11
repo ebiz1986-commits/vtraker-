@@ -43,10 +43,10 @@ const TripItem = ({
     : null;
 
   // 2. End Odometer Validation (For In Progress status)
-  const endOdoStr = driverOdoValues[trip.id] || '';
+  const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
   const endOdoNum = Number(endOdoStr);
-  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
-    ? `End odometer must be greater than start odometer (${startOdometerVal} KM).`
+  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum < startOdometerVal)
+    ? `End odometer cannot be less than start odometer (${startOdometerVal} KM).`
     : endOdoStr && endOdoNum > 999999
     ? "Odometer reading is unrealistically large (> 999,999 KM)."
     : null;
@@ -426,6 +426,12 @@ const TripItem = ({
                 )}
                 {trip.status === 'in_progress' && (
                   <div className="flex flex-col gap-2.5 p-4 bg-emerald-600/5 border border-emerald-500/20 rounded-xl w-full">
+                    {/* Visual box showing saved starting odometer */}
+                    <div className="flex justify-between items-center text-xs bg-[#0b0f19] px-3.5 py-2.5 rounded-lg border border-slate-800">
+                      <span className="text-[#ff9900] text-[10px] font-bold uppercase tracking-wider">Start Odometer Saved</span>
+                      <span className="font-mono text-[#ff9900] font-bold text-sm">{trip.startOdometer || 0} KM</span>
+                    </div>
+
                     <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-left">End Odometer (KM)</p>
                     <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
                       <div className="w-full sm:max-w-[200px] flex flex-col gap-1">
@@ -441,7 +447,7 @@ const TripItem = ({
                               ? 'border-amber-500/85 focus:border-amber-500 text-amber-300' 
                               : 'border-slate-700 focus:border-emerald-500'
                           }`}
-                          value={driverOdoValues[trip.id] || ''}
+                          value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '')}
                           onChange={(e) => {
                             const clean = e.target.value.replace(/\D/g, '');
                             setDriverOdoValues({...driverOdoValues, [trip.id]: clean});
@@ -461,13 +467,16 @@ const TripItem = ({
                         )}
                       </div>
                       <Button 
-                        disabled={!driverOdoValues[trip.id] || !!endOdoError}
+                        disabled={!!endOdoError}
                         className={`w-full sm:flex-1 font-semibold py-3 text-base shadow-lg rounded-lg transition-all ${
-                          (!driverOdoValues[trip.id] || endOdoError)
+                          !!endOdoError
                             ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50'
                             : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20 active:scale-[0.98]'
                         }`}
-                        onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
+                        onClick={() => {
+                          const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
+                          handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, finalOdoVal);
+                        }}
                       >
                         End Trip
                       </Button>
@@ -538,6 +547,7 @@ const isPinLikeName = (name: string) => {
 export default function DriverDashboard() {
   const { profile } = useAuth();
   const [activeTrips, setActiveTrips] = useState<any[]>([]);
+  const [completedTrips, setCompletedTrips] = useState<any[]>([]);
   const [completedTripsCount, setCompletedTripsCount] = useState(0);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const [completedHours, setCompletedHours] = useState('0.0');
@@ -720,6 +730,10 @@ export default function DriverDashboard() {
       const active = tripsData.filter(t => t.status === 'allocated' || t.status === 'driver_started' || t.status === 'in_progress' || t.status === 'driver_ended');
       active.sort((a, b) => (a.pickupTime || 0) - (b.pickupTime || 0)); // earliest first
       setActiveTrips(active);
+      
+      const completed = tripsData.filter(t => t.status === 'completed');
+      completed.sort((a, b) => (b.dropoffTime || b.pickupTime || 0) - (a.dropoffTime || a.pickupTime || 0)); // most recent first
+      setCompletedTrips(completed);
       
       // Calculate today's completed trips and hours
       const today = new Date().setHours(0, 0, 0, 0);
@@ -910,8 +924,8 @@ export default function DriverDashboard() {
           </Card>
         </div>
         
-        <div className="lg:col-span-2">
-          <Card className="h-full bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
             <CardHeader>
               <CardTitle>My Active Trips</CardTitle>
             </CardHeader>
@@ -994,6 +1008,88 @@ export default function DriverDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Trip History Section */}
+          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-4">
+              <div>
+                <CardTitle className="text-slate-100">Trip History (Completed)</CardTitle>
+                <p className="text-[11px] text-slate-400 mt-1">Full record of your completed transport logs</p>
+              </div>
+              <span className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded-full text-xs border border-emerald-500/20">
+                {completedTrips.length} Total
+              </span>
+            </CardHeader>
+            <CardContent className="pt-5">
+              {loading ? (
+                <div className="space-y-4">
+                  <TripItemSkeleton />
+                  <TripItemSkeleton />
+                </div>
+              ) : completedTrips.length === 0 ? (
+                <div className="text-slate-400 text-center py-8 text-sm">You haven't completed any trips yet. Completed travel records will remain saved here.</div>
+              ) : (
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                  {completedTrips.map((trip) => {
+                    const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
+                    return (
+                      <div key={trip.id} className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/60 hover:bg-slate-900/30 transition-colors flex flex-col gap-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-900/10 px-2 py-0.5 rounded border border-emerald-500/15 uppercase tracking-wider">
+                              COMPLETED
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium ml-2">
+                              ID: {trip.id.substring(0, 8)}...
+                            </span>
+                          </div>
+                          {trip.dropoffTime && (
+                            <span className="text-xs text-slate-400 font-mono">
+                              {format(new Date(trip.dropoffTime), 'MMM dd, h:mm a')}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-slate-100 font-medium text-sm flex flex-col gap-1.5">
+                          <div className="flex items-start gap-1.5">
+                            <span className="text-[#ff9900] text-[10px] font-extrabold uppercase mt-0.5 min-w-[32px]">START</span>
+                            <p className="text-slate-200">{trip.pickupAddress}</p>
+                          </div>
+                          <div className="w-px h-2.5 bg-slate-800 ml-4"></div>
+                          <div className="flex items-start gap-1.5">
+                            <span className="text-emerald-400 text-[10px] font-extrabold uppercase mt-0.5 min-w-[32px]">ROUTE</span>
+                            <p className="text-slate-200">{destination}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 border-t border-slate-800/60 pt-3 mt-1.5 font-mono text-center">
+                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
+                            <span className="text-[9px] text-slate-400 uppercase font-sans font-bold block">Start Odo</span>
+                            <span className="text-xs text-slate-200 font-semibold">{trip.startOdometer || 0} KM</span>
+                          </div>
+                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
+                            <span className="text-[9px] text-slate-400 uppercase font-sans font-bold block">End Odo</span>
+                            <span className="text-xs text-slate-200 font-semibold">{trip.endOdometer || 0} KM</span>
+                          </div>
+                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
+                            <span className="text-[9px] text-[#ff9900] uppercase font-sans font-bold block">Distance</span>
+                            <span className="text-xs text-[#ff9900] font-semibold">
+                              {Math.max(0, (trip.endOdometer || 0) - (trip.startOdometer || 0))} KM
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-[11px] text-slate-400/80 flex justify-between items-center bg-slate-900/50 px-3 py-1.5 rounded-lg">
+                          <span>Passenger: <strong className="text-slate-300">{(trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User' || !trip.passengerName) ? 'Sanken User' : trip.passengerName}</strong></span>
+                          {trip.tripType && <span className="uppercase text-[9px] tracking-wider font-bold bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">{trip.tripType}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -1041,10 +1137,10 @@ export default function DriverDashboard() {
                     : null;
 
                   const startOdometerVal = Number(trip.startOdometer) || 0;
-                  const endOdoStr = driverOdoValues[trip.id] || '';
+                  const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
                   const endOdoNum = Number(endOdoStr);
-                  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
-                    ? `Must be > start (${startOdometerVal} KM)`
+                  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum < startOdometerVal)
+                    ? `Must be >= start (${startOdometerVal} KM)`
                     : endOdoStr && endOdoNum > 999999
                     ? "Too large"
                     : null;
@@ -1119,6 +1215,11 @@ export default function DriverDashboard() {
 
                         {trip.status === 'in_progress' && (
                           <div className="space-y-3">
+                            <div className="flex justify-between items-center text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                              <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wider">Start Odo Saved</span>
+                              <span className="font-mono text-amber-400 font-bold text-xs">{trip.startOdometer || 0} KM</span>
+                            </div>
+
                             <div className="flex flex-col gap-1.5 border-b border-slate-900 pb-2">
                               <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                                 <span>Running Odometer</span>
@@ -1163,7 +1264,7 @@ export default function DriverDashboard() {
                                   className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
                                     endOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-emerald-500'
                                   }`}
-                                  value={driverOdoValues[trip.id] || ''}
+                                  value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '')}
                                   onChange={(e) => {
                                     const clean = e.target.value.replace(/\D/g, '');
                                     setDriverOdoValues({ ...driverOdoValues, [trip.id]: clean });
@@ -1171,9 +1272,12 @@ export default function DriverDashboard() {
                                 />
                                 <Button
                                   size="sm"
-                                  disabled={!driverOdoValues[trip.id] || !!endOdoError}
+                                  disabled={!!endOdoError}
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-auto px-4 rounded-lg shrink-0 text-xs"
-                                  onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, driverOdoValues[trip.id])}
+                                  onClick={() => {
+                                    const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
+                                    handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, finalOdoVal);
+                                  }}
                                 >
                                   End
                                 </Button>
