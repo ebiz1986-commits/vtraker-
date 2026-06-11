@@ -348,6 +348,24 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
     }
   };
 
+  const handleAdjustStartOdometer = async () => {
+    const startNum = midStartOdo !== '' ? Number(midStartOdo) : undefined;
+    if (startNum === undefined || isNaN(startNum) || startNum < 0) {
+      toast.error("Please enter a valid numeric starting odometer of 0 KM or greater.");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'trips', trip.id), {
+        startOdometer: startNum,
+        currentOdometer: startNum,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Successfully adjusted start odometer to ${startNum} KM. Trip remains active, and driver will use this value for calculations.`);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `trips/${trip.id}`);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 15 }}
@@ -606,13 +624,22 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                         />
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={handleBypassOdometer}
-                      className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 h-auto rounded transition-colors font-sans"
-                    >
-                      Bypass User & Save Details
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleAdjustStartOdometer}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-2 px-1.5 h-auto rounded transition-colors font-sans"
+                      >
+                        Adjust Start Odo ONLY
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleBypassOdometer}
+                        className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold py-2 px-1.5 h-auto rounded transition-colors font-sans"
+                      >
+                        Bypass & Complete
+                      </Button>
+                    </div>
                   </div>
                 </div>
 

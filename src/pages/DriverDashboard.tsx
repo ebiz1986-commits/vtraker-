@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -19,7 +19,10 @@ const TripItem = ({
   driverOdoValues, 
   setDriverOdoValues, 
   handleStartTripWithOdo, 
-  handleEndTripWithOdo 
+  handleEndTripWithOdo,
+  lastOdo,
+  loadingStart,
+  handleStartTripAuto
 }: any) => {
   const [expanded, setExpanded] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
@@ -218,48 +221,47 @@ const TripItem = ({
             {isNormalFlow ? (
               <div className="w-full space-y-3">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-2.5 p-4 bg-blue-600/5 border border-blue-500/20 rounded-xl w-full">
-                    <p className="text-xs font-bold text-blue-400 uppercase tracking-wider text-left">Start Odometer (KM)</p>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
-                      <div className="w-full sm:max-w-[200px] flex flex-col gap-1">
-                        <input
-                          type="text"
-                          pattern="[0-9]*"
-                          inputMode="numeric"
-                          placeholder="e.g. 15000"
-                          className={`input-field font-mono text-base py-3 px-4 bg-slate-950/80 w-full text-slate-100 rounded-lg border ${
-                            startOdoError 
-                              ? 'border-red-500/80 focus:border-red-500' 
-                              : 'border-slate-700 focus:border-blue-500'
-                          }`}
-                          value={driverOdoValues[trip.id] || ''}
-                          onChange={(e) => {
-                            const clean = e.target.value.replace(/\D/g, '');
-                            setDriverOdoValues({...driverOdoValues, [trip.id]: clean});
-                          }}
-                        />
-                        {startOdoError && (
-                          <span className="text-[11px] text-red-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1">
-                            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                            {startOdoError}
-                          </span>
-                        )}
-                      </div>
-                      <Button 
-                        disabled={!driverOdoValues[trip.id] || !!startOdoError}
-                        className={`w-full sm:flex-1 font-semibold py-3 text-base shadow-lg rounded-lg transition-all ${
-                          (!driverOdoValues[trip.id] || startOdoError)
-                            ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 active:scale-[0.98]'
-                        }`}
-                        onClick={async () => {
-                          await handleStartTripWithOdo(trip.id, driverOdoValues[trip.id]);
-                          setExpanded(false);
-                        }}
-                      >
-                        Start Trip
-                      </Button>
+                  <div className="flex flex-col gap-3 p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
+                      <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
+                        {lastOdo !== undefined ? `${lastOdo} KM` : 'Detecting...'}
+                      </span>
                     </div>
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.35 }}
+                      className="p-3 bg-red-950/45 border border-red-500/30 rounded-lg text-red-200 text-left space-y-1.5 shadow-md shadow-black/30"
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs uppercase text-red-400">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+                        අවධානය යොමු කරන්න / Important Notice
+                      </div>
+                      <p className="text-[12.5px] font-bold leading-relaxed text-red-350">
+                        කරුණාකර වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        (Please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
+                      </p>
+                    </motion.div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
+                      <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      <span>The journey will automatically log at the last recorded vehicle ending odometer.</span>
+                    </div>
+                    
+                    <Button 
+                      disabled={loadingStart || lastOdo === undefined}
+                      className={`w-full mt-1 font-semibold py-3 text-base shadow-lg rounded-lg transition-all active:scale-[0.98] cursor-pointer bg-blue-600 hover:bg-blue-700 text-white`}
+                      onClick={async () => {
+                        await handleStartTripAuto(trip.id, trip.vehicleId);
+                        setExpanded(false);
+                      }}
+                    >
+                      {loadingStart ? 'Retrieving odometer & starting...' : 'Start Trip'}
+                    </Button>
                   </div>
                 )}
                 {trip.status === 'driver_started' && (
@@ -269,14 +271,15 @@ const TripItem = ({
                       <span>Transitioning to in-progress... (Normal Flow active)</span>
                     </div>
                     <Button 
+                      disabled={loadingStart || lastOdo === undefined}
                       size="lg" 
                       className="bg-blue-600 hover:bg-blue-700 h-auto py-3 text-base text-white font-semibold rounded-lg"
                       onClick={async () => {
-                        await handleStartTripWithOdo(trip.id, trip.startOdometer || "0");
+                        await handleStartTripAuto(trip.id, trip.vehicleId);
                         setExpanded(false);
                       }}
                     >
-                      Force Start Trip
+                      {loadingStart ? 'Transitioning...' : 'Force Start Trip'}
                     </Button>
                   </div>
                 )}
@@ -307,14 +310,50 @@ const TripItem = ({
                 )}
               </div>
             ) : (
-              <div className="flex gap-3 w-full">
+              <div className="flex gap-3 w-full flex-col">
                 {trip.status === 'allocated' && (
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-blue-900/20" 
-                    onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                  >
-                    Start Trip
-                  </Button>
+                  <div className="flex flex-col gap-3 p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
+                      <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
+                        {lastOdo !== undefined ? `${lastOdo} KM` : 'Detecting...'}
+                      </span>
+                    </div>
+
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.35 }}
+                      className="p-3 bg-red-950/45 border border-red-500/30 rounded-lg text-red-200 text-left space-y-1.5 shadow-md shadow-black/30"
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs uppercase text-red-400">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+                        අවධානය යොමු කරන්න / Important Notice
+                      </div>
+                      <p className="text-[12.5px] font-bold leading-relaxed text-red-350">
+                        කරුණාකර වාහනයේ මීටරය ඇප් එකේ මීටරය සමඟ පරීක්ෂා කරන්න. එය නොගැලපේ නම්, කරුණාකර ඇඩ්මින් (Admin) සම්බන්ධ කර එය නිවැරදි කරවා ගන්න.
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        (Please check the vehicle meter with app odometer. If not matching, contact Admin and get it corrected.)
+                      </p>
+                    </motion.div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
+                      <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      <span>Starts automatically with the last recorded vehicle ending odometer.</span>
+                    </div>
+                    
+                    <Button 
+                      disabled={loadingStart || lastOdo === undefined}
+                      className="w-full mt-1 font-semibold py-3 text-base bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-lg transition-all active:scale-[0.98] cursor-pointer" 
+                      onClick={async () => {
+                        await handleStartTripAuto(trip.id, trip.vehicleId);
+                        setExpanded(false);
+                      }}
+                    >
+                      {loadingStart ? 'Starting Trip...' : 'Start Trip'}
+                    </Button>
+                  </div>
                 )}
                 {trip.status === 'driver_started' && (
                   <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
@@ -466,6 +505,8 @@ export default function DriverDashboard() {
   const { profile } = useAuth();
   const [activeTrips, setActiveTrips] = useState<any[]>([]);
   const [completedTrips, setCompletedTrips] = useState<any[]>([]);
+  const [lastOdoValues, setLastOdoValues] = useState<Record<string, number>>({});
+  const [loadingStartTrip, setLoadingStartTrip] = useState<Record<string, boolean>>({});
   const [completedTripsCount, setCompletedTripsCount] = useState(0);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const [completedHours, setCompletedHours] = useState('0.0');
@@ -503,6 +544,65 @@ export default function DriverDashboard() {
   // System settings dynamic toggle
   const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
   const [driverOdoValues, setDriverOdoValues] = useState<Record<string, string>>({});
+
+  const getLastOdometerForVehicle = async (vehicleId: string): Promise<number> => {
+    if (!vehicleId) return 0;
+    try {
+      const q = query(
+        collection(db, 'trips'),
+        where('vehicleId', '==', vehicleId)
+      );
+      const snap = await getDocs(q);
+      const tripsList = snap.docs.map(doc => doc.data());
+      const completedTrips = tripsList
+        .filter(t => t.status === 'completed' && t.endOdometer != null && !isNaN(Number(t.endOdometer)))
+        .sort((a, b) => (Number(b.dropoffTime) || 0) - (Number(a.dropoffTime) || 0));
+      
+      if (completedTrips.length > 0) {
+        return Number(completedTrips[0].endOdometer) || 0;
+      }
+    } catch (e) {
+      console.error("Error getting last vehicle odometer:", e);
+    }
+    return 0;
+  };
+
+  const handleStartTripAuto = async (tripId: string, vehicleId: string) => {
+    try {
+      setLoadingStartTrip(prev => ({ ...prev, [tripId]: true }));
+      const lastOdo = await getLastOdometerForVehicle(vehicleId);
+      
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'in_progress',
+        startOdometer: lastOdo,
+        currentOdometer: lastOdo,
+        expectedEndOdometer: lastOdo + 15,
+        pickupTime: Date.now(),
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Trip started successfully! Odometer automatically defaulted to last ended reading: ${lastOdo} KM.`);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    } finally {
+      setLoadingStartTrip(prev => ({ ...prev, [tripId]: false }));
+    }
+  };
+
+  useEffect(() => {
+    const fetchOdos = async () => {
+      const newOdos: Record<string, number> = {};
+      for (const trip of activeTrips) {
+        if (trip.status === 'allocated' && trip.vehicleId && lastOdoValues[trip.id] === undefined) {
+          const lastOdo = await getLastOdometerForVehicle(trip.vehicleId);
+          newOdos[trip.id] = lastOdo;
+        }
+      }
+      if (Object.keys(newOdos).length > 0) {
+        setLastOdoValues(prev => ({ ...prev, ...newOdos }));
+      }
+    };
+    fetchOdos();
+  }, [activeTrips]);
 
   useEffect(() => {
     const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
@@ -873,6 +973,9 @@ export default function DriverDashboard() {
                                   setDriverOdoValues={setDriverOdoValues}
                                   handleStartTripWithOdo={handleStartTripWithOdo}
                                   handleEndTripWithOdo={handleEndTripWithOdo}
+                                  lastOdo={lastOdoValues[trip.id]}
+                                  loadingStart={loadingStartTrip[trip.id]}
+                                  handleStartTripAuto={handleStartTripAuto}
                                 />
                               ))}
                             </div>
