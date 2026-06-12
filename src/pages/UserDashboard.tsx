@@ -402,9 +402,28 @@ export default function UserDashboard() {
   const [nominatedName, setNominatedName] = useState('');
   // Simulating coordinates for now
 
+  const isGayan = 
+    profile?.name?.trim().toLowerCase().includes('gayan') ||
+    profile?.email?.trim().toLowerCase().includes('gayan');
+
+  const isSelectedDateWeekend = () => {
+    if (!requestedDate) return false;
+    const [yr, mo, dy] = requestedDate.split('-').map(Number);
+    const selectedDate = new Date(yr, mo - 1, dy);
+    const day = selectedDate.getDay();
+    return day === 0 || day === 6;
+  };
+
   const showMondayQuickSelect = [5, 6, 0].includes(new Date().getDay());
 
   const getMaxBookingDate = () => {
+    if (isGayan) {
+      // Gayan has unlimited override to schedule weekend bookings up to 14 days in advance
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + 14);
+      return maxDate.toISOString().split('T')[0];
+    }
+
     const d = new Date();
     const dayOfWeek = d.getDay(); // 0: Sunday, 1: Monday, ..., 5: Friday, 6: Saturday
     let daysLimit = 1; // Default: 1 day in the future (today + tomorrow = 2 days total)
@@ -605,6 +624,21 @@ export default function UserDashboard() {
     if (!pickupAddress || !requestedDate || !requestedStartTime || passengerCount < 1) return;
     if (tripType === 'dropoff' && !dropoffAddress) return;
     if (tripType === 'return' && !returnLocations) return;
+    
+    // Weekend booking check: Saturdays and Sundays are non-working days
+    const [yr, mo, dy] = requestedDate.split('-').map(Number);
+    const selectedDate = new Date(yr, mo - 1, dy);
+    const requestedDayOfWeek = selectedDate.getDay();
+    const isWeekend = requestedDayOfWeek === 0 || requestedDayOfWeek === 6;
+
+    if (isWeekend && !isGayan) {
+      toast.error("Saturday & Sunday are non-working days. Booking is not allowed on weekends.", {
+        description: "Only administrative bypass user Gayan can book on weekends.",
+        duration: 5000,
+        position: 'top-center'
+      });
+      return;
+    }
     
     try {
       await addDoc(collection(db, 'trips'), {
@@ -832,6 +866,15 @@ export default function UserDashboard() {
                </div>
             </div>
             
+            {isSelectedDateWeekend() && (
+              <div className={`mb-4 text-[11px] font-sans px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all ${isGayan ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-500 font-medium'}`}>
+                {isGayan ? (
+                  <span>✨ Gayan override active: Weekend booking permitted.</span>
+                ) : (
+                  <span>⚠️ Saturday & Sunday are non-working days. Booking blocked.</span>
+                )}
+              </div>
+            )}
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className="label">Passengers</label>
