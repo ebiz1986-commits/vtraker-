@@ -402,7 +402,27 @@ export default function UserDashboard() {
   const [nominatedName, setNominatedName] = useState('');
   // Simulating coordinates for now
 
-  const setQuickDateTime = (type: 'now' | 'today' | 'tomorrow') => {
+  const showMondayQuickSelect = [5, 6, 0].includes(new Date().getDay());
+
+  const getMaxBookingDate = () => {
+    const d = new Date();
+    const dayOfWeek = d.getDay(); // 0: Sunday, 1: Monday, ..., 5: Friday, 6: Saturday
+    let daysLimit = 1; // Default: 1 day in the future (today + tomorrow = 2 days total)
+    
+    if (dayOfWeek === 5) {
+      // Friday: allow up to Monday (Friday + 3 days)
+      daysLimit = 3;
+    } else if (dayOfWeek === 6) {
+      // Saturday: allow up to Monday (Saturday + 2 days)
+      daysLimit = 2;
+    }
+    
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + daysLimit);
+    return maxDate.toISOString().split('T')[0];
+  };
+
+  const setQuickDateTime = (type: 'now' | 'today' | 'tomorrow' | 'monday') => {
     const d = new Date();
     if (type === 'now') {
       setRequestedDate(d.toISOString().split('T')[0]);
@@ -418,6 +438,18 @@ export default function UserDashboard() {
       setRequestedDate(tomorrow.toISOString().split('T')[0]);
       setRequestedStartTime("08:00");
       toast.success("Set departure to Tomorrow at 8:00 AM", { position: 'bottom-right' });
+    } else if (type === 'monday') {
+      const d = new Date();
+      const dayOfWeek = d.getDay();
+      let daysToAdd = 1; // Default
+      if (dayOfWeek === 5) daysToAdd = 3; // Friday -> Monday
+      else if (dayOfWeek === 6) daysToAdd = 2; // Saturday -> Monday
+      else if (dayOfWeek === 0) daysToAdd = 1; // Sunday -> Monday
+      
+      const monday = new Date(Date.now() + daysToAdd * 86400000);
+      setRequestedDate(monday.toISOString().split('T')[0]);
+      setRequestedStartTime("08:00");
+      toast.success("Set departure to Monday at 8:00 AM", { position: 'bottom-right' });
     }
   };
   
@@ -731,7 +763,12 @@ export default function UserDashboard() {
 
             <div>
                <div className="flex items-center justify-between mb-1.5">
-                 <label className="label mb-0">Date & Start Time</label>
+                 <div className="flex flex-col">
+                   <label className="label mb-0">Date & Start Time</label>
+                   {showMondayQuickSelect && (
+                     <span className="text-[9px] text-[#A0A0A0] leading-none mt-0.5">Weekend policy active</span>
+                   )}
+                 </div>
                  <div className="flex gap-1.5">
                    <button
                      type="button"
@@ -754,6 +791,15 @@ export default function UserDashboard() {
                    >
                      Tomorrow
                    </button>
+                   {showMondayQuickSelect && (
+                     <button
+                       type="button"
+                       onClick={() => setQuickDateTime('monday')}
+                       className="text-[10px] font-bold text-[#FF8C00] bg-[#FF8C00]/10 hover:bg-[#FF8C00]/20 px-2.5 py-0.5 rounded-lg border border-[#FF8C00]/20 transition-colors cursor-pointer animate-pulse"
+                     >
+                       Monday
+                     </button>
+                   )}
                  </div>
                </div>
                <div className="flex gap-0 border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden focus-within:border-[#FF8C00]/50 transition-colors bg-[rgba(255,255,255,0.03)]">
@@ -765,7 +811,7 @@ export default function UserDashboard() {
                      type="date" 
                      required
                      min={new Date().toISOString().split('T')[0]}
-                     max={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                     max={getMaxBookingDate()}
                      value={requestedDate}
                      onChange={(e) => setRequestedDate(e.target.value)}
                      className="w-full pl-10 pr-3 py-3.5 bg-transparent border-none focus:ring-0 focus:outline-none text-slate-200 [color-scheme:dark]"
