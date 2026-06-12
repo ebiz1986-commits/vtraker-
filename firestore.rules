@@ -142,6 +142,7 @@ service cloud.firestore {
 
       allow get: if isSignedIn() && (
         isAdmin() ||
+        isDriver() ||
         resource.data.userId == request.auth.uid ||
         ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
         ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
@@ -149,9 +150,11 @@ service cloud.firestore {
       
       allow list: if isSignedIn() && (
         request.auth.token.email in ['ebiz1986@gmail.com', '445566@sanken.app'] ||
+        isDriver() ||
         resource.data.userId == request.auth.uid ||
         ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
-        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
+        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name) ||
+        ('vehicleId' in resource.data && 'email' in request.auth.token && (request.auth.token.email.matches('.*@sanken\\.app') || request.auth.token.email == 'ebiz1986@gmail.com'))
       );
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())

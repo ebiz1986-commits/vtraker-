@@ -72,7 +72,7 @@ const TripItem = ({
     >
       {/* Clickable Header */}
       <div 
-        className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
+        className="px-2.5 py-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start justify-between w-full gap-4">
@@ -142,8 +142,8 @@ const TripItem = ({
       <div 
         className={`transition-all duration-300 ease-in-out origin-top ${expanded ? 'max-h-[1500px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-0'}`}
       >
-        <div className="p-4 sm:p-5 pt-0 border-t border-slate-800/50">
-          <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-4 rounded-md mt-4 shadow-inner">
+        <div className="px-2.5 pb-4 sm:px-5 sm:pb-5 pt-0 border-t border-slate-800/50">
+          <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-3 rounded-lg mt-4 shadow-inner">
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup Location</p>
               <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
@@ -221,7 +221,7 @@ const TripItem = ({
             {isNormalFlow ? (
               <div className="w-full space-y-3">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-3 p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
                       <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
@@ -312,7 +312,7 @@ const TripItem = ({
             ) : (
               <div className="flex gap-3 w-full flex-col">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-3 p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
                       <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
@@ -775,7 +775,7 @@ export default function DriverDashboard() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`p-4 rounded-xl border ${
+              className={`p-3.5 sm:p-4 rounded-xl border ${
                 isPinLikeName(profile.name || '')
                   ? 'border-orange-500/30 bg-orange-500/5'
                   : 'bg-[#111827] border-[#1e293b]'
@@ -862,11 +862,11 @@ export default function DriverDashboard() {
             </motion.div>
           )}
 
-          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100">
-            <CardHeader>
-              <CardTitle className="text-slate-100 font-bold">Daily Summary</CardTitle>
+          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100 p-0">
+            <CardHeader className="p-3.5 pb-2.5 sm:p-6 mb-2">
+              <CardTitle className="text-base sm:text-lg text-slate-100 font-bold">Daily Summary</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
               <div className="space-y-4">
                 <div>
                   <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Date</p>
@@ -902,11 +902,11 @@ export default function DriverDashboard() {
         </div>
         
         <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
-            <CardHeader>
-              <CardTitle>My Active Trips</CardTitle>
+          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl p-0">
+            <CardHeader className="p-3.5 pb-2.5 sm:p-6 mb-2">
+              <CardTitle className="text-base sm:text-lg">My Active Trips</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2.5 sm:p-6 pt-0">
               {loading ? (
                 <div className="space-y-4">
                   <TripItemSkeleton />
@@ -990,17 +990,17 @@ export default function DriverDashboard() {
           </Card>
 
           {/* Trip History Section */}
-          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-4">
+          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl p-0">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 p-3.5 pb-3.5 sm:p-6 mb-2">
               <div>
-                <CardTitle className="text-slate-100">Trip History (Completed)</CardTitle>
-                <p className="text-[11px] text-slate-400 mt-1">Full record of your completed transport logs</p>
+                <CardTitle className="text-base sm:text-lg text-slate-100 animate-none">Trip History (Completed)</CardTitle>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Full record of your completed transport logs</p>
               </div>
-              <span className="bg-emerald-950 text-emerald-400 font-bold px-3 py-1 rounded-full text-xs border border-emerald-500/20">
+              <span className="bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs border border-emerald-500/20 shrink-0">
                 {completedTrips.length} Total
               </span>
             </CardHeader>
-            <CardContent className="pt-5">
+            <CardContent className="p-2.5 sm:p-6 pt-3 sm:pt-4">
               {loading ? (
                 <div className="space-y-4">
                   <TripItemSkeleton />

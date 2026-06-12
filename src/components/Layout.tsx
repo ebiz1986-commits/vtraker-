@@ -180,7 +180,7 @@ export default function Layout({ children, title }: { children: React.ReactNode,
         </div>
       </header>
       <main 
-        className="flex-1 p-6 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
+        className="flex-1 p-3.5 sm:p-6 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
       >
         {children}
       </main>
