@@ -119,7 +119,7 @@ export function SankenLogo({
 
   const gapSizes = {
     sm: 'gap-2',
-    md: 'gap-3',
+    md: 'gap-1.5',
     lg: 'gap-4',
     xl: 'gap-5'
   };

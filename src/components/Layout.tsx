@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/Button';
-import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass } from 'lucide-react';
+import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { InstallPWA } from './InstallPWA';
 import { SankenLogo } from './SankenLogo';
@@ -36,31 +36,31 @@ export default function Layout({ children, title }: { children: React.ReactNode,
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-transparent text-[#E0E0E0]">
       <div className="relative z-10 flex flex-col min-h-screen w-full">
-        <header className={`bg-[rgba(255,255,255,0.05)] backdrop-blur-[10px] border-[rgba(255,255,255,0.1)] border-b px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`}>
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3">
-            <SankenLogo 
-              iconSize="md" 
-              subtitle={profile?.role === 'driver' ? "" : undefined} 
-            />
+        <header className={`bg-[rgba(255,255,255,0.05)] backdrop-blur-[10px] border-[rgba(255,255,255,0.1)] border-b px-4 sm:px-6 py-3 flex flex-col gap-3 sticky top-0 z-50 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`}>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-6">
+              <SankenLogo 
+                iconSize="md" 
+                subtitle={profile?.role === 'driver' ? "" : undefined} 
+              />
+            {title && (
+              <div className={`hidden sm:flex border-l border-[rgba(255,255,255,0.1)] pl-4 items-center`}>
+                <h1 className={`text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{title}</h1>
+              </div>
+            )}
           </div>
-          {title && (
-            <div className={`hidden sm:flex border-l border-[rgba(255,255,255,0.1)] pl-6 items-center`}>
-              <h1 className={`text-lg font-bold tracking-tight ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>{title}</h1>
-            </div>
-          )}
         </div>
-        <div className={`flex items-center gap-2 sm:gap-4 text-[#E0E0E0] relative z-10`}>
+        <div className={`flex items-center justify-end gap-2 sm:gap-4 text-[#E0E0E0] relative z-10`}>
 
           {!isStandalone && (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => setIsInstallOpen(true)} 
-              className="gap-1 items-center flex border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 font-sans font-semibold px-2.5 py-1 h-7 text-[10px] rounded-lg shadow focus:outline-none cursor-pointer"
+              className="gap-1 items-center flex border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 font-sans font-semibold px-2 sm:px-2.5 py-1 h-7 text-[10px] rounded-lg shadow focus:outline-none cursor-pointer"
               title="Install Shortcut"
             >
-              <Download className="w-3 h-3" /> <span>Install</span>
+              <Download className="w-3 h-3" /> <span className="hidden sm:inline">Install</span>
             </Button>
           )}
 
@@ -174,8 +174,15 @@ export default function Layout({ children, title }: { children: React.ReactNode,
             )}
           </div>
 
-          <Button variant="outline" size="sm" onClick={handleSignOut} className={`transition-colors flex border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[#E0E0E0] hover:text-white text-xs sm:text-sm px-3 sm:px-4 py-1.5`}>
-            Sign Out
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSignOut} 
+            className="transition-colors flex items-center justify-center gap-1.5 border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.05)] hover:bg-red-500/15 hover:border-red-500/20 hover:text-red-400 text-xs sm:text-sm px-2.5 sm:px-4 py-1.5 h-8 rounded-lg"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign Out</span>
           </Button>
         </div>
       </header>
