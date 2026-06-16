@@ -63,8 +63,8 @@ const AdminPendingTripItem = ({
            }
         }}
       >
-        <div className="flex items-start justify-between w-full gap-4">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between w-full gap-3 sm:gap-4">
+          <div className="flex items-start gap-3 min-w-0 w-full sm:w-auto">
             {isCouplingMode && (
               <div className="pt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                 <input 
@@ -79,7 +79,7 @@ const AdminPendingTripItem = ({
               </div>
             )}
             
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-yellow-900/30 text-yellow-500 border-yellow-900/50`}>
                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
@@ -108,12 +108,16 @@ const AdminPendingTripItem = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
-            <div className="flex flex-col items-end justify-center">
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto mt-1 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-800/20 sm:border-t-0 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-0 sm:flex-col sm:items-end justify-center">
+              <Clock className="w-3.5 h-3.5 text-slate-400 sm:hidden" />
               <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
                 <Clock className="w-3 h-3" /> Req. Time
               </p>
-              <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
+              <div className="flex items-center gap-1">
+                <span className="sm:hidden text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Req. Time:</span>
+                <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
+              </div>
             </div>
             <div className={`p-1.5 rounded-full bg-slate-800 text-slate-400 transition-colors group-hover:text-slate-200 group-hover:bg-slate-700`}>
               <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
@@ -382,9 +386,9 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
         className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-start justify-between w-full gap-4">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between w-full gap-3 sm:gap-4">
+          <div className="flex items-start gap-3 min-w-0 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
                 ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
                   trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-amber-900/30 text-amber-500 border-amber-900/50'}`}>
@@ -415,12 +419,16 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
-            <div className="flex flex-col items-end justify-center">
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-800/20 sm:border-t-0 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-0 sm:flex-col sm:items-end justify-center">
+              <Clock className="w-3.5 h-3.5 text-slate-400 sm:hidden" />
               <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
                 <Clock className="w-3 h-3" /> Req. Time
               </p>
-              <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
+              <div className="flex items-center gap-1">
+                <span className="sm:hidden text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Req. Time:</span>
+                <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.requestedStartTime || 'N/A'}</p>
+              </div>
             </div>
             {trip.status === 'allocated' && (
               <Button 
@@ -721,8 +729,8 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
         className="p-4 flex flex-col gap-3 transition-colors hover:bg-slate-800/10 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-start justify-between w-full gap-4">
-          <div className="flex items-start gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between w-full gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0 w-full sm:w-auto">
             <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium uppercase tracking-wider border flex items-center gap-1.5
               ${trip.status === 'completed' ? 'bg-emerald-950/20 text-emerald-400 border-emerald-950/45' : 'bg-red-950/20 text-red-400 border-red-900/30'}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'completed' ? 'bg-emerald-400' : 'bg-red-400'}`} />
@@ -751,12 +759,16 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-right">
-            <div className="flex flex-col items-end">
-              <p className="font-bold text-slate-300 text-xs">{trip.requestedStartTime || 'N/A'}</p>
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-800/10 sm:border-t-0 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-0 sm:flex-col sm:items-end justify-center">
+              <Clock className="w-3.5 h-3.5 text-slate-400 sm:hidden" />
+              <div className="flex items-center gap-1">
+                <span className="sm:hidden text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Req. Time:</span>
+                <p className="font-bold text-slate-300 text-xs sm:text-sm">{trip.requestedStartTime || 'N/A'}</p>
+              </div>
             </div>
-            <div className="p-1 rounded bg-[#1e293b]/20 text-slate-500 hover:text-slate-200">
-              <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+            <div className="p-1.5 rounded-full bg-[#1e293b]/20 text-slate-500 hover:text-slate-200">
+              <ChevronDown className={`w-4 h-4 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
             </div>
           </div>
         </div>

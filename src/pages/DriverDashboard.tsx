@@ -41,10 +41,10 @@ const TripItem = ({
     : null;
 
   // 2. End Odometer Validation (For In Progress status)
-  const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
+  const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : '';
   const endOdoNum = Number(endOdoStr);
-  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum < startOdometerVal)
-    ? `End odometer cannot be less than start odometer (${startOdometerVal} KM).`
+  const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
+    ? "ඔබ ඇතුලත් කල ඔඩෝ මීටර් අගය වැරදියි. කරුණාකර පරීක්ෂා කර නැවත ඇතුලත් කරන්න. (Odometer you entered is wrong, check and enter)"
     : endOdoStr && endOdoNum > 999999
     ? "Odometer reading is unrealistically large (> 999,999 KM)."
     : null;
@@ -441,7 +441,7 @@ const TripItem = ({
                   ? 'border-amber-500/85 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-amber-300' 
                   : 'border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
               }`}
-              value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '')}
+              value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : ''}
               onChange={(e) => {
                 const clean = e.target.value.replace(/\D/g, '');
                 setDriverOdoValues({...driverOdoValues, [trip.id]: clean});
@@ -473,14 +473,14 @@ const TripItem = ({
               Cancel
             </Button>
             <Button 
-              disabled={!!endOdoError}
+              disabled={!endOdoStr || !!endOdoError}
               className={`flex-1 font-bold py-3 text-base shadow-lg rounded-xl transition-all ${
-                !!endOdoError
+                (!endOdoStr || !!endOdoError)
                   ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20 active:scale-[0.98] cursor-pointer'
               }`}
               onClick={async () => {
-                const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
+                const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : '';
                 await handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, finalOdoVal);
                 setShowEndModal(false);
               }}
@@ -644,9 +644,9 @@ export default function DriverDashboard() {
       return;
     }
     const odometer = Number(odoVal);
-    if (odometer < startOdo) {
-      const confirmed = window.confirm(`Warning: End odometer (${odometer} KM) is less than start odometer (${startOdo} KM). Are you sure?`);
-      if (!confirmed) return;
+    if (odometer <= startOdo) {
+      toast.error("ඔබ ඇතුලත් කල ඔඩෝ මීටර් අගය වැරදියි. කරුණාකර පරීක්ෂා කර නැවත ඇතුලත් කරන්න. (Odometer reading you entered is wrong, check and enter)");
+      return;
     }
     try {
       await updateDoc(doc(db, 'trips', tripId), {
@@ -1220,7 +1220,7 @@ export default function DriverDashboard() {
                                   className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
                                     endOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-emerald-500'
                                   }`}
-                                  value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '')}
+                                  value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : ''}
                                   onChange={(e) => {
                                     const clean = e.target.value.replace(/\D/g, '');
                                     setDriverOdoValues({ ...driverOdoValues, [trip.id]: clean });
@@ -1228,10 +1228,10 @@ export default function DriverDashboard() {
                                 />
                                 <Button
                                   size="sm"
-                                  disabled={!!endOdoError}
+                                  disabled={!endOdoStr || !!endOdoError}
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-auto px-4 rounded-lg shrink-0 text-xs"
                                   onClick={() => {
-                                    const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
+                                    const finalOdoVal = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : '';
                                     handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, finalOdoVal);
                                   }}
                                 >
