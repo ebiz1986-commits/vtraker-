@@ -1697,7 +1697,10 @@ export default function AdminDashboard() {
                     const sortedDates = Object.keys(groups).sort((a, b) => {
                       if (a === 'Unspecified Date') return 1;
                       if (b === 'Unspecified Date') return -1;
-                      return a.localeCompare(b);
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      if (a === todayStr) return -1;
+                      if (b === todayStr) return 1;
+                      return b.localeCompare(a);
                     });
                     
                     return sortedDates.map(date => {
@@ -1793,7 +1796,10 @@ export default function AdminDashboard() {
                     const sortedDates = Object.keys(groups).sort((a, b) => {
                       if (a === 'Unspecified Date') return 1;
                       if (b === 'Unspecified Date') return -1;
-                      return a.localeCompare(b);
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      if (a === todayStr) return -1;
+                      if (b === todayStr) return 1;
+                      return b.localeCompare(a);
                     });
                     
                     return sortedDates.map(date => {

@@ -1109,7 +1109,11 @@ export default function UserDashboard() {
                   const sortedTrips = [...activeTrips].sort((a, b) => {
                     const dateA = a.requestedDate || '';
                     const dateB = b.requestedDate || '';
-                    return dateA.localeCompare(dateB);
+                    if (dateA === dateB) return 0;
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (dateA === todayStr) return -1;
+                    if (dateB === todayStr) return 1;
+                    return dateB.localeCompare(dateA);
                   });
                   
                   return sortedTrips.map((trip, index) => (
