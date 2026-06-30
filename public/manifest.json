@@ -47,5 +47,20 @@
       "sizes": "512x512",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "description": "View and track your active transport bookings",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icon.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
   ]
 }
