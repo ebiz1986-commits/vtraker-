@@ -708,17 +708,19 @@ export default function DriverDashboard() {
       active.sort((a, b) => (a.pickupTime || 0) - (b.pickupTime || 0)); // earliest first
       setActiveTrips(active);
       
-      const completed = tripsData.filter(t => t.status === 'completed');
+      const today = new Date().setHours(0, 0, 0, 0);
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const completed = tripsData.filter(t => 
+        t.status === 'completed' && 
+        ((t.dropoffTime && t.dropoffTime >= today) || 
+         (t.requestedDate === todayStr))
+      );
       completed.sort((a, b) => (b.dropoffTime || b.pickupTime || 0) - (a.dropoffTime || a.pickupTime || 0)); // most recent first
       setCompletedTrips(completed);
       
       // Calculate today's completed trips and hours
-      const today = new Date().setHours(0, 0, 0, 0);
-      const completedToday = tripsData.filter(t => 
-        t.status === 'completed' && 
-        t.dropoffTime && 
-        t.dropoffTime > today
-      );
+      const completedToday = completed;
       
       let totalTimeMillis = 0;
       let totalKm = 0;
@@ -996,11 +998,11 @@ export default function DriverDashboard() {
           <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl p-0">
             <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 p-3.5 pb-3.5 sm:p-6 mb-2">
               <div>
-                <CardTitle className="text-base sm:text-lg text-slate-100 animate-none">Trip History (Completed)</CardTitle>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Full record of your completed transport logs</p>
+                <CardTitle className="text-base sm:text-lg text-slate-100 animate-none">Today's Completed Trips</CardTitle>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Completed travel records for today</p>
               </div>
               <span className="bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs border border-emerald-500/20 shrink-0">
-                {completedTrips.length} Total
+                {completedTrips.length} Today
               </span>
             </CardHeader>
             <CardContent className="p-2.5 sm:p-6 pt-3 sm:pt-4">
@@ -1010,7 +1012,7 @@ export default function DriverDashboard() {
                   <TripItemSkeleton />
                 </div>
               ) : completedTrips.length === 0 ? (
-                <div className="text-slate-400 text-center py-8 text-sm">You haven't completed any trips yet. Completed travel records will remain saved here.</div>
+                <div className="text-slate-400 text-center py-8 text-sm">You haven't completed any trips today yet. Completed records for today will be shown here.</div>
               ) : (
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
                   {completedTrips.map((trip) => {
