@@ -751,7 +751,7 @@ export default function DriverDashboard() {
       setLoading(false);
       initialLoadRef.current = false;
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'trips');
+      handleFirestoreError(error, OperationType.GET, 'trips', false);
     });
     
     return unsubscribe;

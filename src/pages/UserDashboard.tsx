@@ -609,10 +609,10 @@ export default function UserDashboard() {
           setTrips(tripsData);
           setLoading(false);
         }, (fallbackError) => {
-          handleFirestoreError(fallbackError, OperationType.GET, 'trips');
+          handleFirestoreError(fallbackError, OperationType.GET, 'trips', false);
         });
       } else {
-        handleFirestoreError(error, OperationType.GET, 'trips');
+        handleFirestoreError(error, OperationType.GET, 'trips', false);
       }
     });
     

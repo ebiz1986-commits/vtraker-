@@ -89,6 +89,68 @@
       "properties": {
         "normal": { "type": "boolean" }
       }
+    },
+    "FuelRecord": {
+      "title": "FuelRecord",
+      "description": "Fuel logging entry recorded by admins for tracking and vehicle consumption analysis.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "vehicleRegistration": { "type": "string" },
+        "liters": { "type": "number" },
+        "odometer": { "type": "number" },
+        "timestamp": { "type": "integer" },
+        "recordedBy": { "type": "string" },
+        "recordedByName": { "type": "string" },
+        "createdAt": { "type": "integer" },
+        "cost": { "type": "number" }
+      },
+      "required": ["vehicleId", "vehicleRegistration", "liters", "odometer", "timestamp", "createdAt"]
+    },
+    "ComplianceRecord": {
+      "title": "ComplianceRecord",
+      "description": "Vehicle compliance details including revenue license, insurance policy, and latest annual valuation.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "vehicleRegistration": { "type": "string" },
+        "revenueLicenseNo": { "type": "string" },
+        "revenueLicenseExpiry": { "type": "integer" },
+        "revenueLicenseFee": { "type": "number" },
+        "insuranceProvider": { "type": "string" },
+        "insurancePolicyNo": { "type": "string" },
+        "insuranceExpiry": { "type": "integer" },
+        "insurancePremium": { "type": "number" },
+        "valuationAmount": { "type": "number" },
+        "valuationDate": { "type": "integer" },
+        "valuationCompany": { "type": "string" },
+        "createdAt": { "type": "integer" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["vehicleId", "vehicleRegistration", "revenueLicenseExpiry", "insuranceExpiry", "valuationAmount", "createdAt", "updatedAt"]
+    },
+    "AccidentRecord": {
+      "title": "AccidentRecord",
+      "description": "Logs of accidents and related insurance claims.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "vehicleRegistration": { "type": "string" },
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "accidentDate": { "type": "integer" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "severity": { "type": "string", "enum": ["minor", "moderate", "major"] },
+        "hasClaim": { "type": "boolean" },
+        "claimStatus": { "type": "string", "enum": ["none", "pending", "approved", "rejected"] },
+        "claimAmountRequested": { "type": "number" },
+        "claimAmountApproved": { "type": "number" },
+        "insuranceRefNo": { "type": "string" },
+        "createdAt": { "type": "integer" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["vehicleId", "vehicleRegistration", "accidentDate", "severity", "hasClaim", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -111,6 +173,18 @@
     "/settings/{settingsId}": {
       "schema": { "$ref": "#/entities/SystemSettings" },
       "description": "Global system configurations."
+    },
+    "/fuel_records/{recordId}": {
+      "schema": { "$ref": "#/entities/FuelRecord" },
+      "description": "Fuel recording logs for consumption analysis."
+    },
+    "/compliance_records/{complianceId}": {
+      "schema": { "$ref": "#/entities/ComplianceRecord" },
+      "description": "Compliance records including revenue license, insurance, and valuations."
+    },
+    "/accident_records/{accidentId}": {
+      "schema": { "$ref": "#/entities/AccidentRecord" },
+      "description": "Accident history logs and insurance claim details."
     }
   }
 }

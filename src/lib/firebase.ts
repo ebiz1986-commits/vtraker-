@@ -31,9 +31,20 @@ export interface FirestoreErrorInfo {
   }
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, shouldThrow = true) {
+  const errorMsg = error instanceof Error ? error.message : String(error);
+  
+  // Detect if the error is due to being offline, network transient failure, or service unavailable
+  const isConnectionOrOffline = 
+    errorMsg.toLowerCase().includes('unavailable') || 
+    errorMsg.toLowerCase().includes('could not reach') ||
+    errorMsg.toLowerCase().includes('offline') ||
+    errorMsg.toLowerCase().includes('connection failed') ||
+    errorMsg.toLowerCase().includes('internet connection') ||
+    errorMsg.toLowerCase().includes('failed to get document because');
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -44,7 +55,16 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
+
+  if (isConnectionOrOffline) {
+    console.warn(`[Firestore Transient Offline] Operation (${operationType}) on path (${path}): ${errorMsg}`);
+    // Do not throw, do not show a blocking error toast since Firestore works offline and auto-syncs.
+    return;
+  }
+
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   toast.error(`Database Error (${operationType}): ${errInfo.error.substring(0, 100)}`);
-  throw new Error(JSON.stringify(errInfo));
+  if (shouldThrow) {
+    throw new Error(JSON.stringify(errInfo));
+  }
 }

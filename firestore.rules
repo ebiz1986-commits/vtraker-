@@ -212,5 +212,83 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isAdmin() && isValidSettings(incoming());
     }
+
+    match /fuel_records/{recordId} {
+      function isValidFuelRecord(data) {
+        return data.vehicleId is string && data.vehicleId.size() <= 128
+          && data.vehicleRegistration is string && data.vehicleRegistration.size() <= 50
+          && data.liters is number
+          && data.odometer is number
+          && data.timestamp is number
+          && (!('recordedBy' in data) || (data.recordedBy is string && data.recordedBy.size() <= 128))
+          && (!('recordedByName' in data) || (data.recordedByName is string && data.recordedByName.size() <= 100))
+          && (!('cost' in data) || (data.cost is number))
+          && data.createdAt is timestamp;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(recordId) && isValidFuelRecord(incoming())
+        && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'liters', 'odometer', 'timestamp', 'createdAt'])
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidId(recordId) && isValidFuelRecord(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /compliance_records/{complianceId} {
+      function isValidComplianceRecord(data) {
+        return data.vehicleId is string && data.vehicleId.size() <= 128
+          && data.vehicleRegistration is string && data.vehicleRegistration.size() <= 50
+          && (!('revenueLicenseNo' in data) || (data.revenueLicenseNo is string && data.revenueLicenseNo.size() <= 100))
+          && data.revenueLicenseExpiry is number
+          && (!('revenueLicenseFee' in data) || (data.revenueLicenseFee is number))
+          && (!('insuranceProvider' in data) || (data.insuranceProvider is string && data.insuranceProvider.size() <= 150))
+          && (!('insurancePolicyNo' in data) || (data.insurancePolicyNo is string && data.insurancePolicyNo.size() <= 100))
+          && data.insuranceExpiry is number
+          && (!('insurancePremium' in data) || (data.insurancePremium is number))
+          && data.valuationAmount is number
+          && (!('valuationDate' in data) || (data.valuationDate is number))
+          && (!('valuationCompany' in data) || (data.valuationCompany is string && data.valuationCompany.size() <= 150))
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(complianceId) && isValidComplianceRecord(incoming())
+        && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'revenueLicenseExpiry', 'insuranceExpiry', 'valuationAmount', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(complianceId) && isValidComplianceRecord(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /accident_records/{accidentId} {
+      function isValidAccidentRecord(data) {
+        return data.vehicleId is string && data.vehicleId.size() <= 128
+          && data.vehicleRegistration is string && data.vehicleRegistration.size() <= 50
+          && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
+          && (!('driverName' in data) || (data.driverName is string && data.driverName.size() <= 100))
+          && data.accidentDate is number
+          && (!('location' in data) || (data.location is string && data.location.size() <= 500))
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && data.severity in ['minor', 'moderate', 'major']
+          && data.hasClaim is bool
+          && (!('claimStatus' in data) || (data.claimStatus in ['none', 'pending', 'approved', 'rejected']))
+          && (!('claimAmountRequested' in data) || (data.claimAmountRequested is number))
+          && (!('claimAmountApproved' in data) || (data.claimAmountApproved is number))
+          && (!('insuranceRefNo' in data) || (data.insuranceRefNo is string && data.insuranceRefNo.size() <= 100))
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(accidentId) && isValidAccidentRecord(incoming())
+        && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'accidentDate', 'severity', 'hasClaim', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(accidentId) && isValidAccidentRecord(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
   }
 }
