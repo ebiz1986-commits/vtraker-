@@ -11,6 +11,17 @@ import { toast } from 'sonner';
 import { ChevronDown, ArrowRight, MapPin, Clock, Info, Edit, Check, X, ShieldAlert, Zap, Car, Navigation } from 'lucide-react';
 import { TripItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
+const getStatusLabelSinhala = (status: string) => {
+  switch (status) {
+    case 'allocated': return 'පවරා ඇත (Allocated)';
+    case 'driver_started': return 'රියදුරු ආරම්භ කළා (Started)';
+    case 'in_progress': return 'ගමන අතරතුර (In Progress)';
+    case 'driver_ended': return 'රියදුරු අවසන් කළා (Ended)';
+    case 'completed': return 'අවසන් (Completed)';
+    default: return status.replace('_', ' ');
+  }
+};
+
 const TripItem = ({ 
   trip, 
   index, 
@@ -35,25 +46,25 @@ const TripItem = ({
   const startOdoStr = driverOdoValues[trip.id] || '';
   const startOdoNum = Number(startOdoStr);
   const startOdoError = startOdoStr && (isNaN(startOdoNum) || startOdoNum <= 0)
-    ? "Odometer must be greater than 0 KM."
+    ? "ඕඩොමීටරය 0 KM ට වඩා වැඩි විය යුතුය."
     : startOdoStr && startOdoNum > 999999
-    ? "Plausible odometer limit is 999,999 KM."
+    ? "ඕඩොමීටරයේ උපරිම සීමාව 999,999 KM වේ."
     : null;
 
   // 2. End Odometer Validation (For In Progress status)
   const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : '';
   const endOdoNum = Number(endOdoStr);
   const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum <= startOdometerVal)
-    ? "ඔබ ඇතුලත් කල ඔඩෝ මීටර් අගය වැරදියි. කරුණාකර පරීක්ෂා කර නැවත ඇතුලත් කරන්න. (Odometer you entered is wrong, check and enter)"
+    ? "ඔබ ඇතුලත් කළ මීටර අගය වැරදියි. ආරම්භක මීටරයට වඩා වැඩි අගයක් ඇතුළත් කරන්න."
     : endOdoStr && endOdoNum > 999999
-    ? "Odometer reading is unrealistically large (> 999,999 KM)."
+    ? "ඕඩොමීටර කියවීම අසාමාන්‍ය ලෙස විශාලයි (> 999,999 KM)."
     : null;
 
   const distanceTraveled = endOdoNum - startOdometerVal;
   const endOdoWarning = endOdoStr && !endOdoError && distanceTraveled > 350
-    ? `High distance alert: Trip is ${distanceTraveled} KM. Please verify.`
+    ? `වැඩි දුරක් ධාවනය වී ඇත: ගමන ${distanceTraveled} KM වේ. කරුණාකර පරීක්ෂා කරන්න.`
     : endOdoStr && !endOdoError && distanceTraveled === 0
-    ? "Warning: Distance traveled is 0 KM."
+    ? "අවධානයයි: ධාවනය කල දුර 0 KM වේ."
     : null;
   
   return (
@@ -84,7 +95,7 @@ const TripItem = ({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
                 </span>
-                {trip.status.replace('_', ' ')}
+                {getStatusLabelSinhala(trip.status)}
               </span>
               {trip.isJointTrip && (
                 <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
@@ -92,12 +103,12 @@ const TripItem = ({
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
                   </span>
-                  JOINT
+                  හවුල් (JOINT)
                 </span>
               )}
               {trip.tripType && (
                 <span className="text-[10px] font-bold text-slate-300 bg-[#1e293b] px-2 py-0.5 rounded uppercase tracking-wider">
-                  {trip.tripType === 'dropoff' ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
+                  {trip.tripType === 'dropoff' ? 'එක් දිශාවක (Drop)' : trip.tripType === 'return' ? 'දෙදිශා (Return)' : trip.tripType}
                 </span>
               )}
             </div>
@@ -106,7 +117,7 @@ const TripItem = ({
           <div className="flex items-center gap-3 sm:gap-4 text-right flex-shrink-0">
             <div className="flex flex-col items-end justify-center">
               <p className="text-[10px] font-semibold text-slate-400 mb-0.5 flex items-center gap-1 uppercase tracking-wider hidden sm:flex">
-                <Clock className="w-3 h-3" /> Time
+                <Clock className="w-3 h-3" /> වේලාව (Time)
               </p>
               <p className="font-bold text-slate-100 text-sm sm:text-base leading-none">{trip.pickupTime ? format(new Date(trip.pickupTime), 'h:mm a') : (trip.requestedStartTime || 'N/A')}</p>
             </div>
@@ -119,7 +130,7 @@ const TripItem = ({
         <div className="flex flex-col gap-2">
            <div>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               USER: <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-500/20 uppercase tracking-widest ml-2 inline-flex items-center">Nominee: {trip.nominatedName}</span>}
+               මගියා (USER): <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-500/20 uppercase tracking-widest ml-2 inline-flex items-center">පත්කළ මගියා (Nominee): {trip.nominatedName}</span>}
              </span>
            </div>
            
@@ -131,7 +142,7 @@ const TripItem = ({
                <ArrowRight className="w-4 h-4 flex-shrink-0" />
              </div>
              <div className="flex items-start sm:items-center text-slate-100 font-medium text-sm sm:text-base leading-snug break-words">
-               <span className="sm:hidden text-slate-500 text-[10px] font-bold mr-1.5 mt-0.5 uppercase tracking-wider">TO</span>
+               <span className="sm:hidden text-slate-500 text-[10px] font-bold mr-1.5 mt-0.5 uppercase tracking-wider">දක්වා (TO)</span>
                <span>{destination}</span>
              </div>
            </div>
@@ -145,24 +156,24 @@ const TripItem = ({
         <div className="px-2.5 pb-4 sm:px-5 sm:pb-5 pt-0 border-t border-slate-800/50">
           <div className="space-y-3 mb-6 bg-[#0f172a] border border-[#1e293b] p-3 rounded-lg mt-4 shadow-inner">
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Pickup Location</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> ආරම්භක ස්ථානය (Pickup)</p>
               <p className="font-medium text-slate-100 mt-0.5">{trip.pickupAddress}</p>
             </div>
             <div className="w-px h-4 bg-[#1e293b] ml-2"></div>
             {trip.tripType === 'return' ? (
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Destinations</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> ගමනාන්තයන් (Destinations)</p>
                 <p className="font-medium text-slate-100 mt-0.5">{trip.returnLocations}</p>
               </div>
             ) : (
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> Dropoff Location</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> ගමනාන්තය (Dropoff)</p>
                 <p className="font-medium text-slate-100 mt-0.5">{trip.dropoffAddress}</p>
               </div>
             )}
             {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 ? (
               <div className="pt-3 mt-3 border-t border-slate-700/50">
-                <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">Passengers</p>
+                <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">මගීන් (Passengers)</p>
                 <div className="grid gap-1.5">
                   {trip.jointPassengers.map((p: any, i: number) => (
                     <div key={i} className={`flex justify-between bg-slate-800/80 px-2 py-2 rounded items-center border ${p.name === trip.passengerName ? 'border-blue-900/50' : 'border-slate-700'}`}>
@@ -176,9 +187,9 @@ const TripItem = ({
               </div>
             ) : (
               <div className="pt-3 mt-3 border-t border-slate-700/50">
-                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">{trip.nominatedName ? 'Requester & Nominee' : 'Requester'}</p>
+                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">{trip.nominatedName ? 'පත්කළ මගියා සහ අයදුම්කරු (Requester & Nominee)' : 'අයදුම්කරු (Requester)'}</p>
                 <div className="flex justify-between bg-slate-800/80 px-3 py-2 rounded items-center border border-slate-700">
-                  <span className="text-[11px] text-slate-400 font-medium">Booked By: </span><span className="text-sm font-medium text-slate-200 mr-2">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Nominated Traveler:</span><span className="text-sm font-bold text-orange-400">{trip.nominatedName}</span></div>}
+                  <span className="text-[11px] text-slate-400 font-medium">වෙන් කලේ (Booked By): </span><span className="text-sm font-medium text-slate-200 mr-2">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">නම් කරන ලද මගියා (Nominated):</span><span className="text-sm font-bold text-orange-400">{trip.nominatedName}</span></div>}
                   {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
                 </div>
               </div>
@@ -186,32 +197,32 @@ const TripItem = ({
             <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
               {trip.requestedDate && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase">Requested Date</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">ඉල්ලුම් කළ දිනය (Requested Date)</p>
                   <p className="font-medium text-slate-100">{trip.requestedDate}</p>
                 </div>
               )}
               {trip.requestedStartTime && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase">Requested Start</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">ආරම්භක වේලාව (Start Time)</p>
                   <p className="font-medium text-slate-100">{trip.requestedStartTime}</p>
                 </div>
               )}
               {trip.estimatedDestinationTime && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase">Total Est. Time</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">මුළු කාලය (Est. Time)</p>
                   <p className="font-medium text-slate-100">{trip.estimatedDestinationTime}</p>
                 </div>
               )}
               {trip.passengerCount && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase">Passengers</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase">මගීන් ගණන (Passengers)</p>
                   <p className="font-medium text-slate-100">{trip.passengerCount}</p>
                 </div>
               )}
             </div>
             {trip.remarks && (
               <div className="pt-3 mt-3 border-t border-slate-700/50">
-                <p className="text-xs font-semibold text-slate-400 uppercase">Remarks / Notes</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase">විශේෂ සටහන් / Remarks</p>
                 <p className="italic text-[#E0E0E0] mt-1 bg-slate-800/50 p-2 rounded border border-slate-700">"{trip.remarks}"</p>
               </div>
             )}
@@ -223,9 +234,9 @@ const TripItem = ({
                 {trip.status === 'allocated' && (
                   <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
+                      <span className="text-slate-400 font-semibold uppercase tracking-wider">ආරම්භක මීටරය (ස්වයංක්‍රීය)</span>
                       <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
-                        {lastOdo !== undefined ? `${lastOdo} KM` : 'Detecting...'}
+                        {lastOdo !== undefined ? `${lastOdo} KM` : 'හඳුනාගනිමින්...'}
                       </span>
                     </div>
                     
@@ -249,7 +260,7 @@ const TripItem = ({
 
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
                       <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                      <span>The journey will automatically log at the last recorded vehicle ending odometer.</span>
+                      <span>අවසන් වරට සටහන් වූ වාහන මීටර කියවීමෙන් ගමන ස්වයංක්‍රීයව ආරම්භ වේ.</span>
                     </div>
                     
                     <Button 
@@ -260,7 +271,7 @@ const TripItem = ({
                         setExpanded(false);
                       }}
                     >
-                      {loadingStart ? 'Retrieving odometer & starting...' : 'Start Trip'}
+                      {loadingStart ? 'මීටරය පරීක්ෂා කරමින් සහ ආරම්භ වෙමින්...' : 'ගමන ආරම්භ කරන්න (Start Trip)'}
                     </Button>
                   </div>
                 )}
@@ -268,7 +279,7 @@ const TripItem = ({
                   <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      <span>Transitioning to in-progress... (Normal Flow active)</span>
+                      <span>ධාවනය වෙමින් පවතින තත්වයට මාරු වෙමින්...</span>
                     </div>
                     <Button 
                       disabled={loadingStart || lastOdo === undefined}
@@ -279,7 +290,7 @@ const TripItem = ({
                         setExpanded(false);
                       }}
                     >
-                      {loadingStart ? 'Transitioning...' : 'Force Start Trip'}
+                      {loadingStart ? 'මාරු වෙමින්...' : 'බලහත්කාරයෙන් ආරම්භ කරන්න (Force Start)'}
                     </Button>
                   </div>
                 )}
@@ -289,7 +300,7 @@ const TripItem = ({
                       className="w-full font-bold py-4 text-base bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-950/50 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                       onClick={() => setShowEndModal(true)}
                     >
-                      <Check className="w-5 h-5 animate-pulse" /> End Trip (Complete Booking)
+                      <Check className="w-5 h-5 animate-pulse" /> ගමන අවසන් කරන්න (End Trip)
                     </Button>
                   </div>
                 )}
@@ -297,14 +308,14 @@ const TripItem = ({
                   <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      <span>Finishing trip... (Normal Flow active)</span>
+                      <span>ගමන අවසන් කරමින්...</span>
                     </div>
                     <Button 
                       size="lg" 
                       className="bg-emerald-600 hover:bg-emerald-700 h-auto py-3 text-base text-white font-semibold rounded-lg"
                       onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, trip.endOdometer || "0")}
                     >
-                      Force Complete Trip
+                      බලහත්කාරයෙන් අවසන් කරන්න (Force Complete)
                     </Button>
                   </div>
                 )}
@@ -314,9 +325,9 @@ const TripItem = ({
                 {trip.status === 'allocated' && (
                   <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400 font-semibold uppercase tracking-wider">Start Odometer (Auto-filled)</span>
+                      <span className="text-slate-400 font-semibold uppercase tracking-wider">ආරම්භක මීටරය (ස්වයංක්‍රීය)</span>
                       <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
-                        {lastOdo !== undefined ? `${lastOdo} KM` : 'Detecting...'}
+                        {lastOdo !== undefined ? `${lastOdo} KM` : 'හඳුනාගනිමින්...'}
                       </span>
                     </div>
 
@@ -340,7 +351,7 @@ const TripItem = ({
 
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
                       <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                      <span>Starts automatically with the last recorded vehicle ending odometer.</span>
+                      <span>වාහනයේ මීටර අගය අනුව ගමන ස්වයංක්‍රීයව ආරම්භ වේ.</span>
                     </div>
                     
                     <Button 
@@ -351,14 +362,14 @@ const TripItem = ({
                         setExpanded(false);
                       }}
                     >
-                      {loadingStart ? 'Starting Trip...' : 'Start Trip'}
+                      {loadingStart ? 'ගමන ආරම්භ කරමින්...' : 'ගමන ආරම්භ කරන්න (Start Trip)'}
                     </Button>
                   </div>
                 )}
                 {trip.status === 'driver_started' && (
                   <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    Waiting for passenger to enter Start Odometer...
+                    මගියා විසින් ආරම්භක මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී...
                   </div>
                 )}
                 {trip.status === 'in_progress' && (
@@ -366,13 +377,13 @@ const TripItem = ({
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
                     onClick={() => handleUpdateStatus(trip.id, trip.status)}
                   >
-                    End Trip (Drop-off)
+                    ගමන අවසන් කරන්න (End Trip)
                   </Button>
                 )}
                 {trip.status === 'driver_ended' && (
                   <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    Waiting for passenger to enter End Odometer...
+                    මගියා විසින් අවසාන මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී...
                   </div>
                 )}
               </div>
@@ -394,9 +405,9 @@ const TripItem = ({
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Complete Active Trip
+                ගමන සාර්ථකව අවසන් කරන්න (End Trip)
               </h3>
-              <p className="text-xs text-slate-400 mt-1">Please log the final ending odometer value to close the booking.</p>
+              <p className="text-xs text-slate-400 mt-1">ගමන අවසන් කිරීමට කරුණාකර වාහනයේ අවසාන මීටර කියවීම (Ending Odometer) ඇතුළත් කරන්න.</p>
             </div>
             <button 
               type="button"
@@ -410,30 +421,30 @@ const TripItem = ({
           {/* Trip Summary Details */}
           <div className="text-xs bg-slate-950/60 p-3.5 border border-slate-850 rounded-xl space-y-2 text-left">
             <div className="flex justify-between">
-              <span className="text-slate-400 font-semibold uppercase">Passenger:</span>
+              <span className="text-slate-400 font-semibold uppercase">මගියා (Passenger):</span>
               <span className="text-blue-300 font-bold">
                 {(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400 font-semibold uppercase">Destination:</span>
+              <span className="text-slate-400 font-semibold uppercase">ගමනාන්තය (Destination):</span>
               <span className="text-slate-200 font-medium truncate max-w-[200px]">{destination}</span>
             </div>
             <div className="h-px bg-slate-800 my-1"></div>
             <div className="flex justify-between items-center">
-              <span className="text-[#ff9900] font-bold uppercase tracking-wider text-[10px]">Start Odometer Saved:</span>
+              <span className="text-[#ff9900] font-bold uppercase tracking-wider text-[10px]">සුරකින ලද ආරම්භක මීටරය:</span>
               <span className="font-mono text-[#ff9900] font-bold text-sm bg-[#ff9900]/10 px-2.5 py-1 rounded border border-[#ff9900]/25">{startOdometerVal} KM</span>
             </div>
           </div>
 
           {/* Input & Validations */}
           <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">Ending Odometer (KM)</label>
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">අවසාන මීටරය (Ending Odometer KM)</label>
             <input
               type="text"
               pattern="[0-9]*"
               inputMode="numeric"
-              placeholder="e.g. 15120"
+              placeholder="උදා: 15120"
               className={`input-field font-mono text-base py-3 px-4 bg-slate-950/80 w-full text-slate-100 rounded-xl border ${
                 endOdoError 
                   ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-red-300' 
@@ -470,7 +481,7 @@ const TripItem = ({
               className="flex-1 py-3 border-white/10 hover:bg-white/5 text-slate-300 rounded-xl font-bold cursor-pointer"
               onClick={() => setShowEndModal(false)}
             >
-              Cancel
+              අවලංගු කරන්න (Cancel)
             </Button>
             <Button 
               disabled={!endOdoStr || !!endOdoError}
@@ -485,7 +496,7 @@ const TripItem = ({
                 setShowEndModal(false);
               }}
             >
-              Complete Trip
+              ගමන අවසන් කරන්න (Complete)
             </Button>
           </div>
         </motion.div>
@@ -769,7 +780,7 @@ export default function DriverDashboard() {
   };
 
   return (
-    <Layout title="Driver Console">
+    <Layout title="රියදුරු පාලක පැනලය (Driver Console)">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           {/* Driver Profile Card with Inline Name Editor */}
@@ -786,7 +797,7 @@ export default function DriverDashboard() {
               {isEditingProfile ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <h4 className="text-sm font-bold text-slate-200">Edit Driver Display Name</h4>
+                    <h4 className="text-sm font-bold text-slate-200">රියදුරු නම වෙනස් කරන්න (Edit Name)</h4>
                     <button 
                       onClick={() => setIsEditingProfile(false)}
                       className="text-slate-400 hover:text-slate-200 p-1"
@@ -795,13 +806,13 @@ export default function DriverDashboard() {
                     </button>
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Driver Full Name</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">රියදුරු සම්පූර්ණ නම (Full Name)</label>
                     <input
                       type="text"
                       value={tempProfileName}
                       onChange={(e) => setTempProfileName(e.target.value)}
                       className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
-                      placeholder="e.g. Priyantha Jayasundara"
+                      placeholder="උදා: Priyantha Jayasundara"
                       autoFocus
                     />
                   </div>
@@ -812,14 +823,14 @@ export default function DriverDashboard() {
                       onClick={() => setIsEditingProfile(false)}
                       className="text-xs text-slate-400 hover:text-slate-200"
                     >
-                      Cancel
+                      අවලංගු කරන්න (Cancel)
                     </Button>
                     <Button 
                       size="sm" 
                       onClick={handleSaveProfile}
                       className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
                     >
-                      <Check className="w-3.5 h-3.5" /> Save display name
+                      <Check className="w-3.5 h-3.5" /> නම සුරකින්න (Save)
                     </Button>
                   </div>
                 </div>
@@ -828,10 +839,10 @@ export default function DriverDashboard() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Driver Account</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">රියදුරු ගිණුම (Driver Account)</span>
                         {isPinLikeName(profile.name || '') && (
                           <span className="flex items-center gap-1 text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/20">
-                            <ShieldAlert className="w-3 h-3 text-orange-400" /> RAW PIN
+                            <ShieldAlert className="w-3 h-3 text-orange-400" /> PIN අංකය
                           </span>
                         )}
                       </div>
@@ -850,13 +861,13 @@ export default function DriverDashboard() {
                         isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
                       }`}
                     >
-                      <Edit className="w-3.5 h-3.5" /> Edit Name
+                      <Edit className="w-3.5 h-3.5" /> නම වෙනස් කරන්න
                     </Button>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-normal">
                     {isPinLikeName(profile.name || '') 
-                      ? "Your name is currently set to your login PIN. Change it so passengers and admins can properly identify you!"
-                      : `PIN Username: ${profile.email?.split('@')[0] || 'N/A'}`
+                      ? "ඔබේ නම තවමත් PIN අංකය ලෙස පවතී. මගීන්ට සහ ඇඩ්මින්වරුන්ට ඔබව හඳුනා ගැනීමට හැකි වන පරිදි කරුණාකර ඔබේ නම ඇතුළත් කරන්න!"
+                      : `පිවිසුම් PIN අංකය (PIN): ${profile.email?.split('@')[0] || 'N/A'}`
                     }
                   </p>
                 </div>
@@ -864,49 +875,13 @@ export default function DriverDashboard() {
             </motion.div>
           )}
 
-          <Card className="bg-[#111827] border-[#1e293b] shadow-xl text-slate-100 p-0">
-            <CardHeader className="p-3.5 pb-2.5 sm:p-6 mb-2">
-              <CardTitle className="text-base sm:text-lg text-slate-100 font-bold">Daily Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3.5 sm:p-6 pt-0">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Date</p>
-                  <p className="text-xl font-medium">{format(new Date(), 'MMM dd, yyyy')}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Trips Completed Today</p>
-                  {loading ? (
-                    <Skeleton className="h-9 w-16 bg-slate-400/10 mt-1" />
-                  ) : (
-                    <p className="text-4xl font-bold">{completedTripsCount}</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">KM Traveled</p>
-                  {loading ? (
-                    <Skeleton className="h-8 w-24 bg-slate-400/10 mt-1" />
-                  ) : (
-                    <p className="text-3xl font-semibold">{totalKmLogged} km</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Hours Logged</p>
-                  {loading ? (
-                    <Skeleton className="h-8 w-20 bg-slate-400/10 mt-1" />
-                  ) : (
-                    <p className="text-3xl font-semibold">{completedHours}h</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
-        
+
         <div className="lg:col-span-2 space-y-6">
           <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl p-0">
             <CardHeader className="p-3.5 pb-2.5 sm:p-6 mb-2">
-              <CardTitle className="text-base sm:text-lg">My Active Trips</CardTitle>
+              <CardTitle className="text-base sm:text-lg">මගේ සක්‍රීය ගමන් වාර (Active Trips)</CardTitle>
             </CardHeader>
             <CardContent className="p-2.5 sm:p-6 pt-0">
               {loading ? (
@@ -915,7 +890,7 @@ export default function DriverDashboard() {
                   <TripItemSkeleton />
                 </div>
               ) : activeTrips.length === 0 ? (
-                <div className="text-slate-400 text-center py-8">No assigned trips right now. You will be notified when Admin assigns you a trip.</div>
+                <div className="text-slate-400 text-center py-8">ඔබට පවරන ලද ගමන් වාර නොමැත. ඇඩ්මින් විසින් ගමනක් පැවරූ විට ඔබට දන්වනු ලැබේ.</div>
               ) : (
                 <div className="space-y-4">
                   {(() => {
@@ -938,7 +913,7 @@ export default function DriverDashboard() {
                     return sortedDates.map(date => {
                       const isToday = date === new Date().toISOString().split('T')[0];
                       const isTomorrow = date === new Date(Date.now() + 86400000).toISOString().split('T')[0];
-                      const dateLabel = isToday ? 'TODAY' : isTomorrow ? 'TOMORROW' : date;
+                      const dateLabel = isToday ? 'අද (TODAY)' : isTomorrow ? 'හෙට (TOMORROW)' : date;
                       const hasOlderState = isMoreThan1DayOld(date);
                       const groupKey = `driver-${date}`;
                       const isCollapsed = hasOlderState && !expandedDates[groupKey];
@@ -961,7 +936,7 @@ export default function DriverDashboard() {
                             </div>
                             <div className="h-px bg-slate-800 flex-1"></div>
                             <span className="text-xs text-slate-500 font-medium uppercase tracking-wider group-hover/date:text-slate-400 transition-colors">
-                              {groups[date].length} Bookings {hasOlderState && (isCollapsed ? '(Click to expand)' : '(Click to collapse)')}
+                              ගමන් වාර {groups[date].length} ක් {hasOlderState && (isCollapsed ? '(විස්තර පෙන්වන්න)' : '(විස්තර සඟවන්න)')}
                             </span>
                           </div>
                       
@@ -993,88 +968,6 @@ export default function DriverDashboard() {
               )}
             </CardContent>
           </Card>
-
-          {/* Trip History Section */}
-          <Card className="bg-[#111827] border-[#1e293b] text-slate-100 shadow-xl p-0">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 p-3.5 pb-3.5 sm:p-6 mb-2">
-              <div>
-                <CardTitle className="text-base sm:text-lg text-slate-100 animate-none">Today's Completed Trips</CardTitle>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Completed travel records for today</p>
-              </div>
-              <span className="bg-emerald-950 text-emerald-400 font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs border border-emerald-500/20 shrink-0">
-                {completedTrips.length} Today
-              </span>
-            </CardHeader>
-            <CardContent className="p-2.5 sm:p-6 pt-3 sm:pt-4">
-              {loading ? (
-                <div className="space-y-4">
-                  <TripItemSkeleton />
-                  <TripItemSkeleton />
-                </div>
-              ) : completedTrips.length === 0 ? (
-                <div className="text-slate-400 text-center py-8 text-sm">You haven't completed any trips today yet. Completed records for today will be shown here.</div>
-              ) : (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                  {completedTrips.map((trip) => {
-                    const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
-                    return (
-                      <div key={trip.id} className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/60 hover:bg-slate-900/30 transition-colors flex flex-col gap-3">
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-900/10 px-2 py-0.5 rounded border border-emerald-500/15 uppercase tracking-wider">
-                              COMPLETED
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-medium ml-2">
-                              ID: {trip.id.substring(0, 8)}...
-                            </span>
-                          </div>
-                          {trip.dropoffTime && (
-                            <span className="text-xs text-slate-400 font-mono">
-                              {format(new Date(trip.dropoffTime), 'MMM dd, h:mm a')}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-slate-100 font-medium text-sm flex flex-col gap-1.5">
-                          <div className="flex items-start gap-1.5">
-                            <span className="text-[#ff9900] text-[10px] font-extrabold uppercase mt-0.5 min-w-[32px]">START</span>
-                            <p className="text-slate-200">{trip.pickupAddress}</p>
-                          </div>
-                          <div className="w-px h-2.5 bg-slate-800 ml-4"></div>
-                          <div className="flex items-start gap-1.5">
-                            <span className="text-emerald-400 text-[10px] font-extrabold uppercase mt-0.5 min-w-[32px]">ROUTE</span>
-                            <p className="text-slate-200">{destination}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3 border-t border-slate-800/60 pt-3 mt-1.5 font-mono text-center">
-                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
-                            <span className="text-[9px] text-slate-400 uppercase font-sans font-bold block">Start Odo</span>
-                            <span className="text-xs text-slate-200 font-semibold">{trip.startOdometer || 0} KM</span>
-                          </div>
-                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
-                            <span className="text-[9px] text-slate-400 uppercase font-sans font-bold block">End Odo</span>
-                            <span className="text-xs text-slate-200 font-semibold">{trip.endOdometer || 0} KM</span>
-                          </div>
-                          <div className="bg-[#0f172a] rounded-lg p-2 border border-slate-900">
-                            <span className="text-[9px] text-[#ff9900] uppercase font-sans font-bold block">Distance</span>
-                            <span className="text-xs text-[#ff9900] font-semibold">
-                              {Math.max(0, (trip.endOdometer || 0) - (trip.startOdometer || 0))} KM
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-[11px] text-slate-400/80 flex justify-between items-center bg-slate-900/50 px-3 py-1.5 rounded-lg">
-                          <span>Passenger: <strong className="text-slate-300">{(trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User' || !trip.passengerName) ? 'Sanken User' : trip.passengerName}</strong></span>
-                          {trip.tripType && <span className="uppercase text-[9px] tracking-wider font-bold bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">{trip.tripType}</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -1095,8 +988,8 @@ export default function DriverDashboard() {
                     <Zap className="w-4 h-4 fill-current animate-pulse text-orange-400" />
                   </div>
                   <div className="text-left">
-                    <h4 className="text-sm font-bold text-slate-100">Quick Travel Controls</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeTrips.length} Active Booking{activeTrips.length > 1 ? 's' : ''}</p>
+                    <h4 className="text-sm font-bold text-slate-100">ක්ෂණික ගමන් පාලකය (Quick Controls)</h4>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeTrips.length} සක්‍රීය වෙන්කිරීම් (Active)</p>
                   </div>
                 </div>
                 <button
@@ -1116,18 +1009,18 @@ export default function DriverDashboard() {
                   const startOdoStr = driverOdoValues[trip.id] || '';
                   const startOdoNum = Number(startOdoStr);
                   const startOdoError = startOdoStr && (isNaN(startOdoNum) || startOdoNum <= 0)
-                    ? "Odometer must be > 0"
+                    ? "මීටර කියවීම 0 ට වඩා වැඩි විය යුතුය"
                     : startOdoStr && startOdoNum > 999999
-                    ? "Too large (>999,999)"
+                    ? "වැඩි අගයකි (>999,999)"
                     : null;
 
                   const startOdometerVal = Number(trip.startOdometer) || 0;
                   const endOdoStr = driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : String(trip.startOdometer || '');
                   const endOdoNum = Number(endOdoStr);
                   const endOdoError = endOdoStr && (isNaN(endOdoNum) || endOdoNum < startOdometerVal)
-                    ? `Must be >= start (${startOdometerVal} KM)`
+                    ? `ආරම්භක මීටරයට වඩා වැඩි විය යුතුය (${startOdometerVal} KM)`
                     : endOdoStr && endOdoNum > 999999
-                    ? "Too large"
+                    ? "වැඩි අගයකි"
                     : null;
 
                   return (
@@ -1136,17 +1029,17 @@ export default function DriverDashboard() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                            <Car className="w-3" /> Passenger: {trip.passengerName || 'N/A'}
+                            <Car className="w-3" /> මගියා: {trip.passengerName || 'N/A'}
                           </p>
                           <h5 className="font-bold text-sm text-slate-200 truncate mt-0.5">
-                            To: {dest || 'N/A'}
+                            ගමනාන්තය: {dest || 'N/A'}
                           </h5>
                         </div>
                         <span className={`px-2 py-0.5 text-[9px] rounded-full font-bold uppercase tracking-wider shrink-0 border
                           ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/40' : 
                             trip.status === 'in_progress' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-900/40' : 
                             'bg-purple-900/40 text-purple-400 border-purple-900/40'}`}>
-                          {trip.status.replace('_', ' ')}
+                          {trip.status === 'allocated' ? 'පවරන ලදී' : trip.status === 'in_progress' ? 'ක්‍රියාත්මකයි' : trip.status === 'driver_started' ? 'ආරම්භ විය' : 'අවසන් විය'}
                         </span>
                       </div>
 
@@ -1155,7 +1048,7 @@ export default function DriverDashboard() {
                         {trip.status === 'allocated' && (
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Start Odometer</span>
+                              <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">ආරම්භක මීටරය</span>
                               {startOdoError && <span className="text-[10px] text-red-400 font-semibold">{startOdoError}</span>}
                             </div>
                             <div className="flex gap-2">
@@ -1163,7 +1056,7 @@ export default function DriverDashboard() {
                                 type="text"
                                 pattern="[0-9]*"
                                 inputMode="numeric"
-                                placeholder="Start KM (e.g. 15000)"
+                                placeholder="ආරම්භක KM (උදා: 15000)"
                                 className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
                                   startOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-blue-500'
                                 }`}
@@ -1182,7 +1075,7 @@ export default function DriverDashboard() {
                                   setIsQuickMenuOpen(false);
                                 }}
                               >
-                                Start
+                                ආරම්භ කරන්න
                               </Button>
                             </div>
                           </div>
@@ -1190,7 +1083,7 @@ export default function DriverDashboard() {
 
                         {trip.status === 'driver_started' && (
                           <div className="space-y-2 text-center py-1">
-                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">Waiting for passenger start odometer. Trigger manually if trip is underway:</p>
+                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">මගියා විසින් ආරම්භක මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ආරම්භ කිරීමට අවශ්‍ය නම්:</p>
                             <Button
                               size="sm"
                               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs"
@@ -1199,7 +1092,7 @@ export default function DriverDashboard() {
                                 setIsQuickMenuOpen(false);
                               }}
                             >
-                              Force Start (With {trip.startOdometer || 0} KM)
+                              බලහත්කාරයෙන් ආරම්භ කරන්න ({trip.startOdometer || 0} KM සමඟ)
                             </Button>
                           </div>
                         )}
@@ -1207,13 +1100,13 @@ export default function DriverDashboard() {
                         {trip.status === 'in_progress' && (
                           <div className="space-y-3">
                             <div className="flex justify-between items-center text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-800 pb-2">
-                              <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wider">Start Odo Saved</span>
+                              <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wider">සුරකින ලද ආරම්භක මීටරය</span>
                               <span className="font-mono text-amber-400 font-bold text-xs">{trip.startOdometer || 0} KM</span>
                             </div>
 
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">End Odometer</span>
+                                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">අවසාන මීටරය</span>
                                 {endOdoError && <span className="text-[10px] text-red-500/90 font-semibold">{endOdoError}</span>}
                               </div>
                               <div className="flex gap-2">
@@ -1221,7 +1114,7 @@ export default function DriverDashboard() {
                                   type="text"
                                   pattern="[0-9]*"
                                   inputMode="numeric"
-                                  placeholder="End KM (e.g. 15120)"
+                                  placeholder="අවසාන KM (උදා: 15120)"
                                   className={`font-mono text-sm py-2 px-3 bg-slate-950 text-slate-100 rounded-lg flex-1 border ${
                                     endOdoError ? 'border-red-500/80 focus:border-red-500' : 'border-slate-800 focus:border-emerald-500'
                                   }`}
@@ -1240,7 +1133,7 @@ export default function DriverDashboard() {
                                     handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, finalOdoVal);
                                   }}
                                 >
-                                  End
+                                  අවසන් කරන්න
                                 </Button>
                               </div>
                             </div>
@@ -1249,13 +1142,13 @@ export default function DriverDashboard() {
 
                         {trip.status === 'driver_ended' && (
                           <div className="space-y-2 text-center py-1">
-                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">Waiting for passenger end odometer. Force complete trip if needed:</p>
+                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">මගියා විසින් අවසාන මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ගමන අවසන් කිරීමට අවශ්‍ය නම්:</p>
                             <Button
                               size="sm"
                               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs"
                               onClick={() => handleEndTripWithOdo(trip.id, Number(trip.startOdometer) || 0, trip.endOdometer || "0")}
                             >
-                              Force Complete Trip
+                              බලහත්කාරයෙන් අවසන් කරන්න
                             </Button>
                           </div>
                         )}
@@ -1280,7 +1173,7 @@ export default function DriverDashboard() {
                         className="w-full flex items-center justify-center gap-1.5 py-2 bg-slate-800/40 hover:bg-slate-800/80 text-xs text-slate-300 font-semibold rounded-lg border border-slate-800 transition-all active:scale-95 cursor-pointer"
                       >
                         <Navigation className="w-3.5 h-3.5 text-orange-400" />
-                        <span>Locate & View Details In Feed</span>
+                        <span>ප්‍රධාන පැනලයෙහි විස්තර බලන්න (View Details)</span>
                       </button>
                     </div>
                   );
