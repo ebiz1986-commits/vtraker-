@@ -404,7 +404,7 @@ export default function UserDashboard() {
   const [passengerCount, setPassengerCount] = useState(1);
   const [remarks, setRemarks] = useState('');
   const [userOdometerValues, setUserOdometerValues] = useState<{[key: string]: string}>({});
-  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
+  const [activeTab, setActiveTab] = useState<'pending' | 'active' | 'past'>('pending');
   const [nominatePerson, setNominatePerson] = useState(false);
   const [nominatedName, setNominatedName] = useState('');
   // Simulating coordinates for now
@@ -1073,6 +1073,17 @@ export default function UserDashboard() {
             <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl shadow-inner max-w-fit">
               <button
                 type="button"
+                onClick={() => setActiveTab('pending')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'pending' 
+                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Pending ({trips.filter(t => ['pending', 'allocated'].includes(t.status)).length})
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('active')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'active' 
@@ -1080,7 +1091,7 @@ export default function UserDashboard() {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Active ({trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length})
+                Active ({trips.filter(t => ['driver_started', 'in_progress', 'driver_ended'].includes(t.status)).length})
               </button>
               <button
                 type="button"
@@ -1102,17 +1113,52 @@ export default function UserDashboard() {
               <TripItemSkeleton />
               <TripItemSkeleton />
             </div>
-          ) : activeTab === 'active' ? (
-            trips.filter(t => !['completed', 'cancelled'].includes(t.status)).length === 0 ? (
+          ) : activeTab === 'pending' ? (
+            trips.filter(t => ['pending', 'allocated'].includes(t.status)).length === 0 ? (
               <div className="glass-card text-center py-10 text-[#A0A0A0] flex flex-col items-center justify-center gap-3">
-                <Car className="w-8 h-8 text-slate-600 animate-pulse" />
-                <p className="text-xs font-semibold text-slate-300">No active bookings right now.</p>
-                <p className="text-[11px] text-slate-500 max-w-[220px] leading-relaxed">Book a vehicle using the form to start your journey!</p>
+                <Clock className="w-8 h-8 text-slate-600 animate-pulse" />
+                <p className="text-xs font-semibold text-slate-300">No pending bookings right now.</p>
+                <p className="text-[11px] text-slate-500 max-w-[220px] leading-relaxed">Your requested rides and allocated trips awaiting start will appear here.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {(() => {
-                  const activeTrips = trips.filter(t => !['completed', 'cancelled'].includes(t.status));
+                  const pendingTrips = trips.filter(t => ['pending', 'allocated'].includes(t.status));
+                  const sortedTrips = [...pendingTrips].sort((a, b) => {
+                    const dateA = a.requestedDate || '';
+                    const dateB = b.requestedDate || '';
+                    if (dateA === dateB) return 0;
+                    return dateB.localeCompare(dateA);
+                  });
+                  
+                  return sortedTrips.map((trip, index) => (
+                    <UserTripItem 
+                      key={trip.id} 
+                      trip={trip} 
+                      index={index} 
+                      profile={profile}
+                      isNormalFlow={trip.normal !== false}
+                      userOdometerValues={userOdometerValues}
+                      setUserOdometerValues={setUserOdometerValues}
+                      handleCancelTrip={handleCancelTrip}
+                      handleConfirmOdometer={handleConfirmOdometer}
+                      handleUpdateStatus={handleUpdateStatus}
+                    />
+                  ));
+                })()}
+              </div>
+            )
+          ) : activeTab === 'active' ? (
+            trips.filter(t => ['driver_started', 'in_progress', 'driver_ended'].includes(t.status)).length === 0 ? (
+              <div className="glass-card text-center py-10 text-[#A0A0A0] flex flex-col items-center justify-center gap-3">
+                <Car className="w-8 h-8 text-slate-600 animate-pulse" />
+                <p className="text-xs font-semibold text-slate-300">No active bookings right now.</p>
+                <p className="text-[11px] text-slate-500 max-w-[220px] leading-relaxed">Bookings that are currently on-road and in-progress will show up here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(() => {
+                  const activeTrips = trips.filter(t => ['driver_started', 'in_progress', 'driver_ended'].includes(t.status));
                   const sortedTrips = [...activeTrips].sort((a, b) => {
                     const dateA = a.requestedDate || '';
                     const dateB = b.requestedDate || '';
