@@ -26,9 +26,16 @@ const UserTripItem = ({
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   
   const isAllocatedOrLater = ['allocated', 'driver_started', 'in_progress', 'driver_ended', 'completed'].includes(trip.status);
-  const statusColor = trip.status === 'pending' ? 'text-yellow-500' : 'text-green-500';
-  const statusBgColor = trip.status === 'pending' ? 'bg-yellow-500' : 'bg-green-500';
-  const formattedStatus = trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ');
+  const isPendingOrAllocated = ['pending', 'allocated'].includes(trip.status);
+  const statusColor = isPendingOrAllocated ? 'text-yellow-500' : 'text-green-500';
+  const statusBgColor = isPendingOrAllocated ? 'bg-yellow-500' : 'bg-green-500';
+  
+  let formattedStatus = trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ');
+  if (trip.status === 'pending') {
+    formattedStatus = 'Pending Approval / Waiting for Approval';
+  } else if (trip.status === 'allocated') {
+    formattedStatus = 'Pending';
+  }
 
   // Nominated check
   const isNominated = trip.nominatedName && profile?.name && trip.nominatedName.toLowerCase().trim() === profile?.name.toLowerCase().trim();
@@ -67,7 +74,7 @@ const UserTripItem = ({
         {/* Header: Status and ID */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex gap-2 items-center">
-            <span className={`status-badge status-${trip.status}`}>
+            <span className={`status-badge ${['pending', 'allocated'].includes(trip.status) ? 'status-pending' : `status-${trip.status}`}`}>
               {['pending', 'allocated', 'driver_started', 'in_progress'].includes(trip.status) && (
                 <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>

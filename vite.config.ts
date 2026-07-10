@@ -14,9 +14,9 @@ export default defineConfig(({mode}) => {
       VitePWA({
         registerType: 'autoUpdate',
         devOptions: {
-          enabled: true
+          enabled: false
         },
-        injectRegister: 'script-defer',
+        injectRegister: null,
         manifestFilename: 'manifest.json',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}']
