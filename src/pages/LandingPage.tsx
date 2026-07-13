@@ -240,54 +240,12 @@ export default function LandingPage() {
         </>
       )}
 
-      {/* Floating Glass Settings Menu: Theme Toggle */}
-      <div className="absolute top-4 left-4 z-50">
-        <Button 
-          onClick={toggleTheme} 
-          className={`rounded-full flex items-center gap-2 shadow-lg px-4 py-2.5 text-xs font-semibold backdrop-blur transition-all active:scale-95 cursor-pointer ${
-            isLight 
-              ? 'bg-white border-2 border-[#0c1222] text-[#0c1222] shadow-[3px_3px_0px_#0c1222] hover:bg-slate-50' 
-              : 'bg-slate-900/40 hover:bg-slate-900/60 text-white border border-white/10'
-          }`}
-          id="landing-theme-toggle"
-        >
-          {isLight ? (
-            <>
-              <Moon className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span>Dark Mode</span>
-            </>
-          ) : (
-            <>
-              <Sun className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
-              <span>Sunlight Mode</span>
-            </>
-          )}
-        </Button>
-      </div>
-
-      {/* PWA Install Button */}
-      {!isStandalone && (
-        <div className="absolute top-4 right-4 z-50">
-          <Button 
-            onClick={() => setIsInstallOpen(true)} 
-            className={`rounded-full flex items-center gap-1.5 shadow-md active:scale-95 transition-all text-[10px] font-semibold px-3 py-1.5 font-sans cursor-pointer h-7 ${
-              isLight 
-                ? 'bg-blue-600 text-white hover:bg-blue-700 border-2 border-[#0c1222] shadow-[3px_3px_0px_#0c1222]' 
-                : 'bg-blue-600/90 hover:bg-blue-600 text-white border border-blue-500/30 backdrop-blur'
-            }`}
-          >
-            <Download size={11} />
-            <span>Install</span>
-          </Button>
-        </div>
-      )}
-
       {/* Primary Card Container */}
-      <div className="w-full max-w-md z-10 mx-4 flex flex-col gap-6">
+      <div className="w-full max-w-[360px] z-10 mx-4 flex flex-col gap-5">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className={`w-full rounded-[32px] p-9 relative overflow-hidden transition-all duration-500 ${
+          className={`w-full rounded-[28px] p-7.5 relative overflow-hidden transition-all duration-500 ${
             isLight 
               ? 'bg-white border-2 border-[#0c1222] shadow-[8px_8px_0px_#0c1222]' 
               : 'bg-[#0a1226]/55 border border-[#1e4cb0]/30 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,149,255,0.18)]'
@@ -429,12 +387,12 @@ export default function LandingPage() {
               {/* Sleek Custom Dark Translucent Capsule for the PIN digits */}
               <div 
                 onClick={handleContainerClick}
-                className={`relative rounded-2xl px-9 py-6.5 flex justify-between items-center w-full max-w-[310px] mx-auto cursor-pointer transition-all duration-300 ${
+                className={`relative rounded-2xl px-6 py-5 flex justify-between items-center w-full max-w-[270px] mx-auto cursor-pointer transition-all duration-300 ${
                   isLight 
                     ? 'bg-slate-100 border-2 border-[#0c1222] shadow-[3px_3px_0px_#0c1222]' 
                     : `bg-[#070b1a]/95 border ${
                         isFocused 
-                          ? 'border-orange-500/50 shadow-[0_0_25px_rgba(249,90,2,0.18)]' 
+                          ? 'border-orange-500/50 shadow-[0_0_20px_rgba(249,90,2,0.15)]' 
                           : 'border-white/10'
                       }`
                 }`}
@@ -448,14 +406,14 @@ export default function LandingPage() {
                     <motion.div
                       key={i}
                       animate={{
-                        scale: hasDigit ? [1, 1.4, 1.15] : 1,
+                        scale: hasDigit ? [1, 1.35, 1.1] : 1,
                         backgroundColor: hasDigit ? '#ffffff' : isLight ? 'rgba(12, 18, 34, 0.15)' : 'rgba(255, 255, 255, 0.08)',
                         boxShadow: !isLight && hasDigit 
-                          ? '0 0 14px #ffffff, 0 0 6px rgba(255, 255, 255, 0.8)'
+                          ? '0 0 12px #ffffff, 0 0 4px rgba(255, 255, 255, 0.8)'
                           : 'none',
                       }}
                       transition={{ type: 'spring', stiffness: 350, damping: 18 }}
-                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
                         !hasDigit && !isLight ? 'border border-white/5' : ''
                       }`}
                     />
@@ -499,10 +457,10 @@ export default function LandingPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoggingIn || pin.length < 6}
-              className={`relative w-full py-4.5 px-6 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
+              className={`relative w-full py-3.5 px-5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
                 isLight 
                   ? 'bg-orange-600 border-2 border-[#0c1222] text-white shadow-[4px_4px_0px_#0c1222] hover:bg-orange-700' 
-                  : 'bg-gradient-to-r from-orange-600 via-[#f95a02] to-amber-500 shadow-[0_4px_24px_rgba(249,90,2,0.45),0_0_12px_rgba(249,90,2,0.25),inset_0_1px_1px_rgba(255,255,255,0.25)] hover:shadow-[0_4px_32px_rgba(249,90,2,0.65)]'
+                  : 'bg-gradient-to-r from-orange-600 via-[#f95a02] to-amber-500 shadow-[0_4px_20px_rgba(249,90,2,0.4),0_0_10px_rgba(249,90,2,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_4px_28px_rgba(249,90,2,0.55)]'
               }`}
             >
               {/* Shimmer sweeping beam */}
@@ -512,12 +470,12 @@ export default function LandingPage() {
 
               {isLoggingIn ? (
                 <>
-                  <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                  <RefreshCw className="w-4 h-4 text-white animate-spin" />
                   <span>Authorizing Access...</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-4.5 h-4.5 text-white" />
+                  <Lock className="w-4 h-4 text-white" />
                   <span>Authorize Access</span>
                 </>
               )}
