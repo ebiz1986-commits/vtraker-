@@ -263,15 +263,17 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
 
   // States for hot-swapping and odometer bypass inside the card
   const [midDriverId, setMidDriverId] = useState(trip.driverId || '');
+  const [midVehicleId, setMidVehicleId] = useState(trip.vehicleId || '');
   const [midStartOdo, setMidStartOdo] = useState(trip.startOdometer !== undefined ? String(trip.startOdometer) : '');
   const [midEndOdo, setMidEndOdo] = useState(trip.endOdometer !== undefined ? String(trip.endOdometer) : '');
 
   // Keep internal inputs in sync if the database updates externally
   useEffect(() => {
     if (trip.driverId) setMidDriverId(trip.driverId);
+    if (trip.vehicleId) setMidVehicleId(trip.vehicleId);
     if (trip.startOdometer !== undefined) setMidStartOdo(String(trip.startOdometer));
     if (trip.endOdometer !== undefined) setMidEndOdo(String(trip.endOdometer));
-  }, [trip.driverId, trip.startOdometer, trip.endOdometer]);
+  }, [trip.driverId, trip.vehicleId, trip.startOdometer, trip.endOdometer]);
 
   const handleDriverMidSwap = async () => {
     if (!midDriverId) {
@@ -293,6 +295,29 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
         updatedAt: serverTimestamp()
       });
       toast.success(`Successfully reassigned driver to ${newD.name} inside active journey!`);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `trips/${trip.id}`);
+    }
+  };
+
+  const handleVehicleMidSwap = async () => {
+    if (!midVehicleId) {
+      toast.error("Please pick a vehicle to swap to.");
+      return;
+    }
+    try {
+      const newV = vehicles.find((v: any) => v.id === midVehicleId);
+      if (!newV) {
+        toast.error("Selected vehicle not registered.");
+        return;
+      }
+
+      await updateDoc(doc(db, 'trips', trip.id), {
+        vehicleId: midVehicleId,
+        vehicleName: `${newV.registrationNumber} (${newV.type})`,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`Successfully reassigned vehicle to ${newV.registrationNumber} (${newV.type}) inside active journey!`);
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `trips/${trip.id}`);
     }
@@ -574,7 +599,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 
                 {/* Hot driver selection swap */}
                 <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
@@ -599,6 +624,35 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                       onClick={handleDriverMidSwap}
                       disabled={!midDriverId || midDriverId === trip.driverId}
                       className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
+                    >
+                      Swap
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Hot vehicle selection swap */}
+                <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    Change Vehicle (Mid-Journey / On the go)
+                  </span>
+                  <div className="flex gap-2">
+                    <select
+                      value={midVehicleId}
+                      onChange={(e) => setMidVehicleId(e.target.value)}
+                      className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium font-sans"
+                    >
+                      <option value="">Select vehicle ...</option>
+                      {vehicles.map((v: any) => (
+                        <option key={v.id} value={v.id} className="font-sans">
+                          {v.registrationNumber} ({v.type})
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={handleVehicleMidSwap}
+                      disabled={!midVehicleId || midVehicleId === trip.vehicleId}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
                     >
                       Swap
                     </Button>

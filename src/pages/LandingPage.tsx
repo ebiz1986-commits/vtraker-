@@ -406,7 +406,7 @@ export default function LandingPage() {
                     <motion.div
                       key={i}
                       animate={{
-                        scale: hasDigit ? [1, 1.35, 1.1] : 1,
+                        scale: hasDigit ? 1.15 : 1,
                         backgroundColor: hasDigit ? '#ffffff' : isLight ? 'rgba(12, 18, 34, 0.15)' : 'rgba(255, 255, 255, 0.08)',
                         boxShadow: !isLight && hasDigit 
                           ? '0 0 12px #ffffff, 0 0 4px rgba(255, 255, 255, 0.8)'
