@@ -396,9 +396,9 @@ export default function LandingPage() {
               }`} />
               {!isLight && (
                 <>
-                  <div className="w-20 h-[3px] bg-gradient-to-r from-transparent via-[#f95a02] to-transparent absolute filter blur-[1px]" />
-                  <div className="absolute w-3 h-3 bg-amber-400 rounded-full animate-lens" />
-                  <div className="absolute w-6 h-0.5 bg-white rounded-full filter blur-[0.5px]" />
+                  <div className="w-20 h-[3px] bg-gradient-to-r from-transparent via-[#f95a02] to-transparent absolute filter blur-[1px] animate-flare-line" />
+                  <div className="absolute w-3 h-3 rounded-full animate-flare-dot" />
+                  <div className="absolute w-6 h-0.5 bg-white rounded-full filter blur-[0.5px] animate-flare-core" />
                 </>
               )}
             </div>
@@ -499,7 +499,7 @@ export default function LandingPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoggingIn || pin.length < 6}
-              className={`relative w-full py-4.5 px-6 rounded-2xl font-black text-base uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${
+              className={`relative w-full py-4.5 px-6 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
                 isLight 
                   ? 'bg-orange-600 border-2 border-[#0c1222] text-white shadow-[4px_4px_0px_#0c1222] hover:bg-orange-700' 
                   : 'bg-gradient-to-r from-orange-600 via-[#f95a02] to-amber-500 shadow-[0_4px_24px_rgba(249,90,2,0.45),0_0_12px_rgba(249,90,2,0.25),inset_0_1px_1px_rgba(255,255,255,0.25)] hover:shadow-[0_4px_32px_rgba(249,90,2,0.65)]'

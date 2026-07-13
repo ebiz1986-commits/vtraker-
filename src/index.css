@@ -423,6 +423,56 @@ body.light-theme .glass-card[class*="border-white/"] {
   animation: professional-fade-loop 4.5s infinite ease-in-out;
 }
 
+@keyframes flare-glow-line {
+  0%, 100% {
+    width: 60px;
+    opacity: 0.45;
+  }
+  50% {
+    width: 140px;
+    opacity: 1;
+  }
+}
+
+@keyframes flare-glow-dot {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.55;
+    background-color: #f95a02;
+    box-shadow: 0 0 4px rgba(249, 90, 2, 0.4);
+  }
+  50% {
+    transform: scale(1.85);
+    opacity: 1;
+    background-color: #ffb74d;
+    box-shadow: 0 0 15px 4px rgba(249, 90, 2, 0.95), 0 0 30px 8px rgba(255, 140, 0, 0.75);
+  }
+}
+
+@keyframes flare-glow-core {
+  0%, 100% {
+    transform: scaleX(0.85);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleX(2.5) scaleY(1.4);
+    opacity: 1;
+    filter: blur(0.2px) drop-shadow(0 0 3px rgba(255, 255, 255, 1));
+  }
+}
+
+.animate-flare-line {
+  animation: flare-glow-line 6s infinite ease-in-out;
+}
+
+.animate-flare-dot {
+  animation: flare-glow-dot 6s infinite ease-in-out;
+}
+
+.animate-flare-core {
+  animation: flare-glow-core 6s infinite ease-in-out;
+}
+
 
 
 
