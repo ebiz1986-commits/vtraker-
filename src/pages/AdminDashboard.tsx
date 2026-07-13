@@ -599,63 +599,66 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                {/* Hot driver selection swap */}
-                <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Change Driver (Mid-Journey / On the go)
-                  </span>
-                  <div className="flex gap-2">
-                    <select
-                      value={midDriverId}
-                      onChange={(e) => setMidDriverId(e.target.value)}
-                      className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 font-medium"
-                    >
-                      <option value="">Select driver ...</option>
-                      {drivers.map((d: any) => (
-                        <option key={d.userId || d.id} value={d.userId || d.id} className="font-sans">
-                          {d.name} {d.phone ? `(${d.phone})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      size="sm"
-                      onClick={handleDriverMidSwap}
-                      disabled={!midDriverId || midDriverId === trip.driverId}
-                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
-                    >
-                      Swap
-                    </Button>
+                {/* Hot driver & vehicle selection swap combined */}
+                <div className="space-y-3 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
+                  {/* Driver Swap Section */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Change Driver (Mid-Journey / On the go)
+                    </span>
+                    <div className="flex gap-2">
+                      <select
+                        value={midDriverId}
+                        onChange={(e) => setMidDriverId(e.target.value)}
+                        className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 font-medium"
+                      >
+                        <option value="">Select driver ...</option>
+                        {drivers.map((d: any) => (
+                          <option key={d.userId || d.id} value={d.userId || d.id} className="font-sans">
+                            {d.name} {d.phone ? `(${d.phone})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        size="sm"
+                        onClick={handleDriverMidSwap}
+                        disabled={!midDriverId || midDriverId === trip.driverId}
+                        className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
+                      >
+                        Swap
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Hot vehicle selection swap */}
-                <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Change Vehicle (Mid-Journey / On the go)
-                  </span>
-                  <div className="flex gap-2">
-                    <select
-                      value={midVehicleId}
-                      onChange={(e) => setMidVehicleId(e.target.value)}
-                      className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium font-sans"
-                    >
-                      <option value="">Select vehicle ...</option>
-                      {vehicles.map((v: any) => (
-                        <option key={v.id} value={v.id} className="font-sans">
-                          {v.registrationNumber} ({v.type})
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      size="sm"
-                      onClick={handleVehicleMidSwap}
-                      disabled={!midVehicleId || midVehicleId === trip.vehicleId}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
-                    >
-                      Swap
-                    </Button>
+                  {/* Vehicle Swap Section */}
+                  <div className="space-y-1 pt-1 border-t border-white/5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Change Vehicle (Mid-Journey / On the go)
+                    </span>
+                    <div className="flex gap-2">
+                      <select
+                        value={midVehicleId}
+                        onChange={(e) => setMidVehicleId(e.target.value)}
+                        className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-2 text-xs py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium font-sans"
+                      >
+                        <option value="">Select vehicle ...</option>
+                        {vehicles.map((v: any) => (
+                          <option key={v.id} value={v.id} className="font-sans">
+                            {v.registrationNumber} ({v.type})
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        size="sm"
+                        onClick={handleVehicleMidSwap}
+                        disabled={!midVehicleId || midVehicleId === trip.vehicleId}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold font-mono px-3 py-1.5 h-auto rounded transition-colors font-sans"
+                      >
+                        Swap
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
