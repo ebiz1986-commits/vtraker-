@@ -65,6 +65,7 @@
         "dropoffTime": { "type": "integer" },
         "nominatedUserId": { "type": "string" },
         "nominatedName": { "type": "string" },
+        "adminStatusUpdate": { "type": "string" },
         "createdAt": { "type": "integer" },
         "updatedAt": { "type": "integer" }
       },
