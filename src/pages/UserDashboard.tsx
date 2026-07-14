@@ -128,6 +128,19 @@ const UserTripItem = ({
             <Car className="w-6 h-6 text-slate-300" />
           </div>
         </div>
+
+        {trip.adminStatusUpdate && (
+          <div className="mb-4 text-xs bg-amber-500/10 border border-amber-500/25 px-3 py-2.5 rounded-xl text-amber-300 flex items-start gap-2.5 font-sans shadow-md backdrop-blur-sm animate-fadeIn">
+            <span className="relative flex h-2 w-2 shrink-0 mt-1">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[10px] uppercase tracking-widest text-amber-500 mb-0.5">Admin Dispatch Update</span>
+              <span className="font-semibold text-slate-100 leading-normal">"{trip.adminStatusUpdate}"</span>
+            </div>
+          </div>
+        )}
         
         {/* Horizontal Line Break */}
         <div className="h-px bg-white/5 w-full mb-4"></div>

@@ -37,6 +37,29 @@ const AdminPendingTripItem = ({
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
 
+  const [adminStatusUpdate, setAdminStatusUpdate] = useState(trip.adminStatusUpdate || '');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  useEffect(() => {
+    setAdminStatusUpdate(trip.adminStatusUpdate || '');
+  }, [trip.adminStatusUpdate]);
+
+  const handleSaveAdminStatus = async () => {
+    setUpdatingStatus(true);
+    try {
+      await updateDoc(doc(db, 'trips', trip.id), {
+        adminStatusUpdate: adminStatusUpdate.trim() || null,
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Live status update sent to user successfully!");
+    } catch (err) {
+      toast.error("Failed to update status message.");
+      console.error(err);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   useEffect(() => {
     if (allocatingTrip === trip.id) setExpanded(true);
   }, [allocatingTrip, trip.id]);
@@ -222,6 +245,82 @@ const AdminPendingTripItem = ({
                   }}
                   className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-705 cursor-pointer"
                 />
+              </div>
+            </div>
+
+            {/* Live Status Updates to User */}
+            <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl mb-4 max-w-lg space-y-3 font-sans">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <p className="text-sm font-semibold text-slate-100">Live Status Update (Visible to User)</p>
+              </div>
+              <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                Update the user with live queue details or dispatch notes (e.g. 'Waiting for driver to return', 'Processing request').
+              </p>
+              
+              <div className="flex gap-2">
+                <input 
+                  type="text"
+                  value={adminStatusUpdate}
+                  onChange={(e) => setAdminStatusUpdate(e.target.value)}
+                  placeholder="e.g. Waiting for driver to return..."
+                  className="flex-1 bg-[#16213e] border border-[#2c3e66] text-white rounded px-3 text-xs py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleSaveAdminStatus}
+                  disabled={updatingStatus || adminStatusUpdate === (trip.adminStatusUpdate || '')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 h-auto rounded transition-colors font-sans"
+                >
+                  {updatingStatus ? 'Saving...' : 'Update'}
+                </Button>
+                {(trip.adminStatusUpdate || adminStatusUpdate) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      setAdminStatusUpdate('');
+                      try {
+                        await updateDoc(doc(db, 'trips', trip.id), {
+                          adminStatusUpdate: null,
+                          updatedAt: serverTimestamp()
+                        });
+                        toast.success("Live status cleared!");
+                      } catch (err) {
+                        toast.error("Failed to clear live status.");
+                      }
+                    }}
+                    className="text-slate-400 hover:text-red-400 hover:bg-red-950/20 text-xs px-2 h-auto rounded transition-colors font-sans border border-slate-800"
+                    title="Clear status update"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              {/* Quick Suggestions */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <span className="text-[10px] text-slate-500 font-semibold uppercase block w-full">Quick Suggestions:</span>
+                {[
+                  'Waiting for driver to return',
+                  'Awaiting vehicle availability',
+                  'Processing request',
+                  'Under review',
+                  'On hold for schedule optimization',
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setAdminStatusUpdate(suggestion)}
+                    className={`text-[10px] px-2 py-1 rounded border transition-all font-sans cursor-pointer ${
+                      adminStatusUpdate === suggestion
+                        ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold'
+                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
               </div>
             </div>
 
