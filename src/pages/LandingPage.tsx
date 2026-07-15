@@ -145,7 +145,7 @@ export default function LandingPage() {
 
   return (
     <div className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden transition-all duration-500 font-sans select-none ${
-      isLight ? 'bg-slate-50' : 'bg-gradient-to-br from-[#0b1230] via-[#080d22] to-[#040612]'
+      isLight ? 'bg-slate-50' : 'bg-gradient-to-tr from-[#0a1128] via-[#0e1736] to-[#050814]'
     }`}>
       {/* Embedded High-Performance CSS Animations */}
       <style>{`
@@ -194,22 +194,6 @@ export default function LandingPage() {
           />
         )}
       </AnimatePresence>
-
-      {/* Floating Theme Toggle floating gracefully in top corner */}
-      <div className="absolute top-4 right-4 z-50">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className={`p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center shadow-md active:scale-95 ${
-            isLight 
-              ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-100' 
-              : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
-          }`}
-          title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
-        >
-          {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
-        </button>
-      </div>
 
       {/* Tech Grid Background & Beautiful Glowing Orbs */}
       {!isLight ? (
@@ -309,10 +293,10 @@ export default function LandingPage() {
           className={`w-full rounded-[28px] p-8 relative overflow-hidden transition-all duration-500 ${
             isLight 
               ? 'bg-white border-2 border-[#0c1222] shadow-[8px_8px_0px_#0c1222]' 
-              : 'bg-[#121c3d]/90 border border-blue-500/35 backdrop-blur-md'
+              : 'bg-gradient-to-b from-[#152352]/95 to-[#0c1330]/98 border border-blue-500/40 backdrop-blur-xl'
           }`}
           style={!isLight ? {
-            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 50px rgba(59, 130, 246, 0.15), inset 0 0 1px 1px rgba(255, 255, 255, 0.12)'
+            boxShadow: '0 30px 70px -10px rgba(0, 0, 0, 0.75), 0 0 50px rgba(59, 130, 246, 0.2), inset 0 0 1px 1px rgba(255, 255, 255, 0.15)'
           } : undefined}
         >
           {/* Subtle top ambient glowing flare for dark mode card border */}
