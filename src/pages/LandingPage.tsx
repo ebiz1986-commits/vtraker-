@@ -144,8 +144,8 @@ export default function LandingPage() {
   }
 
   return (
-    <div className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden transition-colors duration-500 font-sans select-none ${
-      isLight ? 'bg-slate-50' : 'bg-[#050814]'
+    <div className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden transition-all duration-500 font-sans select-none ${
+      isLight ? 'bg-slate-50' : 'bg-gradient-to-br from-[#0b1230] via-[#080d22] to-[#040612]'
     }`}>
       {/* Embedded High-Performance CSS Animations */}
       <style>{`
@@ -195,11 +195,27 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Tech Grid Background (Hidden or subtle in sunlight mode) */}
-      {!isLight && (
+      {/* Floating Theme Toggle floating gracefully in top corner */}
+      <div className="absolute top-4 right-4 z-50">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={`p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center shadow-md active:scale-95 ${
+            isLight 
+              ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-100' 
+              : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+          }`}
+          title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
+        </button>
+      </div>
+
+      {/* Tech Grid Background & Beautiful Glowing Orbs */}
+      {!isLight ? (
         <>
           <div 
-            className="absolute inset-0 opacity-[0.08] pointer-events-none"
+            className="absolute inset-0 opacity-[0.06] pointer-events-none"
             style={{
               backgroundImage: `
                 linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px),
@@ -208,6 +224,46 @@ export default function LandingPage() {
               backgroundSize: '40px 40px',
             }}
           />
+          {/* Dynamic Floating Orbs for extra premium depth */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <motion.div
+              animate={{
+                x: [0, 40, -20, 0],
+                y: [0, -50, 30, 0],
+              }}
+              transition={{
+                duration: 15,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute top-[10%] left-[20%] w-[350px] h-[350px] bg-blue-600/15 rounded-full filter blur-[100px]"
+            />
+            <motion.div
+              animate={{
+                x: [0, -30, 50, 0],
+                y: [0, 40, -40, 0],
+              }}
+              transition={{
+                duration: 18,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2
+              }}
+              className="absolute bottom-[15%] right-[15%] w-[400px] h-[400px] bg-orange-500/10 rounded-full filter blur-[120px]"
+            />
+            <motion.div
+              animate={{
+                scale: [1, 1.15, 0.9, 1],
+              }}
+              transition={{
+                duration: 12,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] bg-cyan-400/10 rounded-full filter blur-[80px]"
+            />
+          </div>
+
           {/* Constellation overlay tracking nodes */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {[...Array(8)].map((_, i) => (
@@ -235,35 +291,40 @@ export default function LandingPage() {
           </div>
 
           {/* Core Radial Color Glow Spotlights */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-cyan-500/5 blur-[80px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 blur-[130px] rounded-full pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-orange-500/10 blur-[80px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
         </>
+      ) : (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[10%] left-[10%] w-[300px] h-[300px] bg-blue-100/40 rounded-full filter blur-[80px]" />
+          <div className="absolute bottom-[10%] right-[10%] w-[350px] h-[350px] bg-orange-50/50 rounded-full filter blur-[100px]" />
+        </div>
       )}
 
       {/* Primary Card Container */}
-      <div className="w-full max-w-[360px] z-10 mx-4 flex flex-col gap-5">
+      <div className="w-full max-w-[370px] z-10 mx-4 flex flex-col gap-5">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className={`w-full rounded-[28px] p-7.5 relative overflow-hidden transition-all duration-500 ${
+          className={`w-full rounded-[28px] p-8 relative overflow-hidden transition-all duration-500 ${
             isLight 
               ? 'bg-white border-2 border-[#0c1222] shadow-[8px_8px_0px_#0c1222]' 
-              : 'bg-[#0a1226]/55 border border-[#1e4cb0]/30 backdrop-blur-3xl shadow-[0_0_80px_rgba(0,149,255,0.18)]'
+              : 'bg-[#121c3d]/90 border border-blue-500/35 backdrop-blur-md'
           }`}
           style={!isLight ? {
-            boxShadow: '0 0 80px rgba(0, 149, 255, 0.15), inset 0 0 1px 1px rgba(255, 255, 255, 0.08)'
+            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 50px rgba(59, 130, 246, 0.15), inset 0 0 1px 1px rgba(255, 255, 255, 0.12)'
           } : undefined}
         >
           {/* Subtle top ambient glowing flare for dark mode card border */}
           {!isLight && (
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[3px] bg-gradient-to-r from-transparent via-[#FF8C00]/40 to-transparent blur-[0.5px]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[3px] bg-gradient-to-r from-transparent via-[#f95a02]/60 to-transparent blur-[0.5px]" />
           )}
 
           {/* Form Content */}
           <form onSubmit={handlePinLogin} className="flex flex-col gap-7 relative z-10">
             {/* Logo Area & Brand Header */}
             <div className="flex flex-col items-center justify-center gap-2.5 select-none text-center">
-              {/* Three Overlapping Solid Gradient Diamonds from the second image */}
+              {/* Three Overlapping Solid Gradient Diamonds */}
               <div className="flex items-center justify-center mb-1">
                 <svg viewBox="0 0 160 80" className="w-44 h-22 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
@@ -339,7 +400,7 @@ export default function LandingPage() {
                 }`}>
                   SANKEN OVERSEAS
                 </h1>
-                <p className={`text-[9px] tracking-[0.32em] uppercase font-black mt-2.5 font-mono ${
+                <p className={`text-[9.5px] tracking-[0.32em] uppercase font-black mt-2.5 font-mono ${
                   isLight ? 'text-amber-700' : 'text-[#f95a02] animate-pulse'
                 }`}>
                   VEHICLE TRACKING & DISPATCH SYSTEM
@@ -384,37 +445,50 @@ export default function LandingPage() {
                 ENTER 6-DIGIT PIN
               </div>
               
-              {/* Sleek Custom Dark Translucent Capsule for the PIN digits */}
+              {/* Sleek Custom Translucent Capsule for the PIN digits */}
               <div 
                 onClick={handleContainerClick}
-                className={`relative rounded-2xl px-6 py-5 flex justify-between items-center w-full max-w-[270px] mx-auto cursor-pointer transition-all duration-300 ${
+                className={`relative rounded-2xl px-6 py-5 flex justify-between items-center w-full max-w-[280px] mx-auto cursor-pointer transition-all duration-300 ${
                   isLight 
                     ? 'bg-slate-100 border-2 border-[#0c1222] shadow-[3px_3px_0px_#0c1222]' 
-                    : `bg-[#070b1a]/95 border ${
+                    : `bg-[#1a2652]/70 backdrop-blur-md border ${
                         isFocused 
-                          ? 'border-orange-500/50 shadow-[0_0_20px_rgba(249,90,2,0.15)]' 
-                          : 'border-white/10'
+                          ? 'border-[#f95a02]/80 shadow-[0_0_25px_rgba(249,90,2,0.3)]' 
+                          : 'border-white/15'
                       }`
                 }`}
                 style={!isLight ? {
-                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.55), 0 0 10px rgba(0,149,255,0.02)'
+                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.35), 0 0 10px rgba(0,149,255,0.01)'
                 } : undefined}
               >
                 {Array.from({ length: 6 }).map((_, i) => {
                   const hasDigit = pin.length > i;
+                  const isActive = pin.length === i && isFocused;
                   return (
                     <motion.div
                       key={i}
                       animate={{
-                        scale: hasDigit ? 1.15 : 1,
-                        backgroundColor: hasDigit ? '#ffffff' : isLight ? 'rgba(12, 18, 34, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                        scale: hasDigit ? 1.25 : isActive ? 1.15 : 1,
+                        backgroundColor: hasDigit 
+                          ? '#ffffff' 
+                          : isActive 
+                            ? '#f95a02' 
+                            : isLight 
+                              ? 'rgba(12, 18, 34, 0.12)' 
+                              : 'rgba(255, 255, 255, 0.08)',
                         boxShadow: !isLight && hasDigit 
-                          ? '0 0 12px #ffffff, 0 0 4px rgba(255, 255, 255, 0.8)'
-                          : 'none',
+                          ? '0 0 14px #ffffff, 0 0 6px rgba(255, 255, 255, 0.8)'
+                          : !isLight && isActive
+                            ? '0 0 12px rgba(249,90,2,0.8), 0 0 4px rgba(249,90,2,0.6)'
+                            : 'none',
                       }}
-                      transition={{ type: 'spring', stiffness: 350, damping: 18 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                       className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
-                        !hasDigit && !isLight ? 'border border-white/5' : ''
+                        !hasDigit && !isLight 
+                          ? isActive 
+                            ? 'border border-orange-500/50' 
+                            : 'border border-white/10' 
+                          : ''
                       }`}
                     />
                   );
