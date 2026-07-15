@@ -286,11 +286,11 @@ export default function LandingPage() {
       )}
 
       {/* Primary Card Container */}
-      <div className="w-full max-w-[370px] z-10 mx-4 flex flex-col gap-5">
+      <div className="w-[calc(100%-24px)] min-[370px]:w-full max-w-[370px] z-10 mx-auto flex flex-col gap-4 min-[375px]:gap-5">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className={`w-full rounded-[28px] p-8 relative overflow-hidden transition-all duration-500 ${
+          className={`w-full rounded-[24px] min-[375px]:rounded-[28px] p-5 min-[375px]:p-6 min-[410px]:p-8 relative overflow-hidden transition-all duration-500 ${
             isLight 
               ? 'bg-white border-2 border-[#0c1222] shadow-[8px_8px_0px_#0c1222]' 
               : 'bg-gradient-to-b from-[#152352]/95 to-[#0c1330]/98 border border-blue-500/40 backdrop-blur-xl'
@@ -301,16 +301,16 @@ export default function LandingPage() {
         >
           {/* Subtle top ambient glowing flare for dark mode card border */}
           {!isLight && (
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[3px] bg-gradient-to-r from-transparent via-[#f95a02]/60 to-transparent blur-[0.5px]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[160px] min-[375px]:w-[200px] h-[3px] bg-gradient-to-r from-transparent via-[#f95a02]/60 to-transparent blur-[0.5px]" />
           )}
 
           {/* Form Content */}
-          <form onSubmit={handlePinLogin} className="flex flex-col gap-7 relative z-10">
+          <form onSubmit={handlePinLogin} className="flex flex-col gap-5 min-[375px]:gap-6 min-[410px]:gap-7 relative z-10">
             {/* Logo Area & Brand Header */}
-            <div className="flex flex-col items-center justify-center gap-2.5 select-none text-center">
+            <div className="flex flex-col items-center justify-center gap-1.5 min-[375px]:gap-2.5 select-none text-center">
               {/* Three Overlapping Solid Gradient Diamonds */}
-              <div className="flex items-center justify-center mb-1">
-                <svg viewBox="0 0 160 80" className="w-44 h-22 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="flex items-center justify-center mb-0.5">
+                <svg viewBox="0 0 160 80" className="w-32 h-16 min-[350px]:w-36 min-[350px]:h-18 min-[400px]:w-44 min-[400px]:h-22 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     {/* Diamond 1: deeper blue to sky blue */}
                     <linearGradient id="solidGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -379,12 +379,12 @@ export default function LandingPage() {
 
               {/* Company Title */}
               <div className="flex flex-col items-center">
-                <h1 className={`font-sans font-extrabold tracking-[0.16em] text-2xl uppercase leading-none ${
+                <h1 className={`font-sans font-extrabold tracking-[0.14em] min-[375px]:tracking-[0.16em] text-xl min-[375px]:text-2xl uppercase leading-none ${
                   isLight ? 'text-[#0c1222]' : 'text-white'
                 }`}>
                   SANKEN OVERSEAS
                 </h1>
-                <p className={`text-[9.5px] tracking-[0.32em] uppercase font-black mt-2.5 font-mono ${
+                <p className={`text-[8.5px] min-[375px]:text-[9.5px] tracking-[0.25em] min-[375px]:tracking-[0.32em] uppercase font-black mt-2 min-[375px]:mt-2.5 font-mono ${
                   isLight ? 'text-amber-700' : 'text-[#f95a02] animate-pulse'
                 }`}>
                   VEHICLE TRACKING & DISPATCH SYSTEM
@@ -393,7 +393,7 @@ export default function LandingPage() {
             </div>
 
             {/* Glowing Divider Line with Centered Lens Flare */}
-            <div className="relative w-full py-2.5 flex items-center justify-center">
+            <div className="relative w-full py-1.5 min-[375px]:py-2 min-[410px]:py-2.5 flex items-center justify-center">
               <div className={`absolute left-0 right-0 h-[1px] ${
                 isLight ? 'bg-[#0c1222]' : 'bg-gradient-to-r from-transparent via-[#f95a02]/45 to-transparent'
               }`} />
@@ -422,8 +422,8 @@ export default function LandingPage() {
             )}
 
             {/* Input PIN Section */}
-            <div className="space-y-4">
-              <div className={`text-center text-[10px] font-black tracking-[0.22em] uppercase font-sans ${
+            <div className="space-y-3 min-[375px]:space-y-4">
+              <div className={`text-center text-[9px] min-[375px]:text-[10px] font-black tracking-[0.2em] min-[375px]:tracking-[0.22em] uppercase font-sans ${
                 isLight ? 'text-slate-700' : 'text-slate-400'
               }`}>
                 ENTER 6-DIGIT PIN
@@ -432,7 +432,7 @@ export default function LandingPage() {
               {/* Sleek Custom Translucent Capsule for the PIN digits */}
               <div 
                 onClick={handleContainerClick}
-                className={`relative rounded-2xl px-6 py-5 flex justify-between items-center w-full max-w-[280px] mx-auto cursor-pointer transition-all duration-300 ${
+                className={`relative rounded-2xl px-4 py-4 min-[375px]:px-5 min-[375px]:py-4.5 min-[410px]:px-6 min-[410px]:py-5 flex justify-between items-center w-full max-w-[280px] mx-auto cursor-pointer transition-all duration-300 ${
                   isLight 
                     ? 'bg-slate-100 border-2 border-[#0c1222] shadow-[3px_3px_0px_#0c1222]' 
                     : `bg-[#1a2652]/70 backdrop-blur-md border ${
@@ -467,7 +467,7 @@ export default function LandingPage() {
                             : 'none',
                       }}
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
+                      className={`w-2.5 h-2.5 min-[375px]:w-3 min-[375px]:h-3 min-[410px]:w-3.5 min-[410px]:h-3.5 rounded-full transition-all duration-300 ${
                         !hasDigit && !isLight 
                           ? isActive 
                             ? 'border border-orange-500/50' 
@@ -502,10 +502,10 @@ export default function LandingPage() {
             </div>
 
             {/* Secure Authentication Indicator */}
-            <div className={`flex items-center justify-center gap-2 select-none text-[9.5px] font-black tracking-[0.2em] uppercase ${
+            <div className={`flex items-center justify-center gap-2 select-none text-[8.5px] min-[375px]:text-[9.5px] font-black tracking-[0.2em] uppercase ${
               isLight ? 'text-slate-600' : 'text-slate-500'
             }`}>
-              <ShieldCheck className={`w-4 h-4 ${isLight ? 'text-blue-700' : 'text-cyan-500/80 animate-pulse'}`} />
+              <ShieldCheck className={`w-3.5 h-3.5 min-[375px]:w-4 min-[375px]:h-4 ${isLight ? 'text-blue-700' : 'text-cyan-500/80 animate-pulse'}`} />
               <span>SECURE AUTHENTICATION</span>
             </div>
 
@@ -515,7 +515,7 @@ export default function LandingPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoggingIn || pin.length < 6}
-              className={`relative w-full py-3.5 px-5 rounded-xl font-black text-xs sm:text-sm uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
+              className={`relative w-full py-3 min-[375px]:py-3.5 px-5 rounded-xl font-black text-[11px] min-[375px]:text-xs sm:text-sm uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
                 isLight 
                   ? 'bg-orange-600 border-2 border-[#0c1222] text-white shadow-[4px_4px_0px_#0c1222] hover:bg-orange-700' 
                   : 'bg-gradient-to-r from-orange-600 via-[#f95a02] to-amber-500 shadow-[0_4px_20px_rgba(249,90,2,0.4),0_0_10px_rgba(249,90,2,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_4px_28px_rgba(249,90,2,0.55)]'
@@ -528,12 +528,12 @@ export default function LandingPage() {
 
               {isLoggingIn ? (
                 <>
-                  <RefreshCw className="w-4 h-4 text-white animate-spin" />
+                  <RefreshCw className="w-3.5 h-3.5 text-white animate-spin" />
                   <span>Authorizing Access...</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-4 h-4 text-white" />
+                  <Lock className="w-3.5 h-3.5 text-white" />
                   <span>Authorize Access</span>
                 </>
               )}
@@ -541,8 +541,8 @@ export default function LandingPage() {
           </form>
 
           {/* Privacy GPS Notice disclaimer banner */}
-          <div className="mt-6 text-center select-none relative z-10">
-            <p className={`text-[10px] font-bold px-4 leading-normal ${
+          <div className="mt-4 min-[375px]:mt-6 text-center select-none relative z-10">
+            <p className={`text-[9.5px] min-[375px]:text-[10px] font-bold px-2 min-[375px]:px-4 leading-normal ${
               isLight ? 'text-slate-700' : 'text-amber-500/85'
             }`}>
               ⚠️ This app is not using your GPS location, or any other personal information.
@@ -550,7 +550,7 @@ export default function LandingPage() {
           </div>
 
           {/* Copyright Branding footer */}
-          <div className={`text-center text-[9px] font-black tracking-wider uppercase select-none mt-6 pt-4 border-t relative z-10 ${
+          <div className={`text-center text-[8.5px] min-[375px]:text-[9px] font-black tracking-wider uppercase select-none mt-4 min-[375px]:mt-6 pt-3.5 min-[375px]:pt-4 border-t relative z-10 ${
             isLight ? 'text-slate-500 border-slate-200' : 'text-slate-600 border-white/5'
           }`}>
             Copyright © {new Date().getFullYear()} <span className="font-bold">@SKOADMIN</span>. All Rights Reserved.
