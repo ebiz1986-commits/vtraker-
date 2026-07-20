@@ -144,9 +144,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden transition-all duration-500 font-sans select-none ${
-      isLight ? 'bg-slate-50' : 'bg-gradient-to-tr from-[#0a1128] via-[#0e1736] to-[#050814]'
-    }`}>
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#040612] font-sans select-none">
       {/* Embedded High-Performance CSS Animations */}
       <style>{`
         @keyframes shimmer-sweep {
@@ -165,20 +163,54 @@ export default function LandingPage() {
           animation: subtle-lens-pulse 3s infinite ease-in-out;
         }
 
-        @keyframes card-glare-rotate {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(360deg); }
+        @keyframes gold-glow-pulse {
+          0%, 100% {
+            box-shadow: 0 4px 20px rgba(223, 149, 20, 0.45), 0 0 12px rgba(255, 215, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+          }
+          50% {
+            box-shadow: 0 4px 35px rgba(223, 149, 20, 0.85), 0 0 25px rgba(255, 215, 0, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+          }
         }
-        .animate-glare {
-          animation: card-glare-rotate 12s infinite linear;
+        .animate-gold-glow {
+          animation: gold-glow-pulse 2s infinite ease-in-out;
         }
 
-        @keyframes alert-glow {
-          0%, 100% { opacity: 0.35; }
-          50% { opacity: 0.7; }
+        @keyframes border-glow-move {
+          0% {
+            stroke-dashoffset: 0;
+          }
+          100% {
+            stroke-dashoffset: -1200;
+          }
         }
-        .animate-warning-flash {
-          animation: alert-glow 2s infinite ease-in-out;
+        @keyframes border-glow-flash {
+          0%, 100% {
+            opacity: 0.4;
+            filter: drop-shadow(0 0 2px rgba(223, 149, 20, 0.5));
+          }
+          50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 24px rgba(223, 149, 20, 0.7));
+          }
+        }
+        .animate-border-glow-run {
+          animation: border-glow-move 10s linear infinite, border-glow-flash 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes orb-zoom-glow {
+          0%, 100% {
+            transform: scale(0.9);
+            box-shadow: 0 0 10px rgba(223, 149, 20, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+            filter: brightness(0.9);
+          }
+          50% {
+            transform: scale(1.85);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 1), 0 0 45px rgba(223, 149, 20, 0.95), 0 0 65px rgba(255, 255, 255, 0.85);
+            filter: brightness(1.4);
+          }
+        }
+        .animate-orb-glow-pulse {
+          animation: orb-zoom-glow 3.5s infinite ease-in-out;
         }
       `}</style>
 
@@ -195,290 +227,256 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Tech Grid Background & Beautiful Glowing Orbs */}
-      {!isLight ? (
-        <>
-          <div 
-            className="absolute inset-0 opacity-[0.06] pointer-events-none"
+      {/* Luxury Background Tech Grid & Map Vector Nodes */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Fine Indigo Grid */}
+        <div 
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(99, 102, 241, 0.3) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(99, 102, 241, 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+          }}
+        />
+
+        {/* Global Dispatch coordinate text */}
+        <div className="absolute top-6 left-6 font-mono text-[9px] text-slate-500/50 tracking-widest hidden md:block">
+          <div>SYS_NODE: SKO_SYS_ACTIVE</div>
+          <div>LOC_LAT: 6.9271° N</div>
+          <div>LOC_LON: 79.8612° E</div>
+        </div>
+
+        {/* Dynamic Floating Ambient Luxury Orbs */}
+        <motion.div
+          animate={{
+            x: [0, 40, -20, 0],
+            y: [0, -50, 30, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-[15%] left-[10%] w-[380px] h-[380px] bg-blue-600/10 rounded-full filter blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, -30, 50, 0],
+            y: [0, 40, -40, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+          className="absolute bottom-[10%] right-[10%] w-[420px] h-[420px] bg-[#df9514]/5 rounded-full filter blur-[140px]"
+        />
+
+        {/* Left Map Continent Vector Group */}
+        <svg className="absolute left-[2%] lg:left-[5%] top-[25%] w-[260px] h-[260px] opacity-[0.12] hidden md:block" viewBox="0 0 200 200" fill="none">
+          <circle cx="40" cy="50" r="2" fill="#3b82f6" />
+          <circle cx="50" cy="45" r="1.5" fill="#3b82f6" />
+          <circle cx="60" cy="55" r="2.5" fill="#3b82f6" />
+          <circle cx="70" cy="65" r="2" fill="#3b82f6" />
+          <circle cx="55" cy="70" r="3" fill="#3b82f6" />
+          <circle cx="80" cy="80" r="1.5" fill="#3b82f6" />
+          <circle cx="90" cy="75" r="2.5" fill="#3b82f6" />
+          <circle cx="100" cy="90" r="2" fill="#3b82f6" />
+          <circle cx="110" cy="110" r="3" fill="#3b82f6" />
+          <circle cx="120" cy="100" r="1.5" fill="#3b82f6" />
+          <path d="M40 50 L60 55 L70 65 L90 75 L110 110" stroke="rgba(59, 130, 246, 0.25)" strokeWidth="0.75" strokeDasharray="3 3"/>
+          <path d="M50 45 L60 55 L55 70 L100 90 L120 100" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="0.75" strokeDasharray="2 2"/>
+        </svg>
+
+        {/* Right Map Continent Vector Group */}
+        <svg className="absolute right-[2%] lg:right-[5%] top-[35%] w-[260px] h-[260px] opacity-[0.12] hidden md:block" viewBox="0 0 200 200" fill="none">
+          <circle cx="160" cy="60" r="2" fill="#3b82f6" />
+          <circle cx="150" cy="75" r="2.5" fill="#3b82f6" />
+          <circle cx="140" cy="90" r="1.5" fill="#3b82f6" />
+          <circle cx="130" cy="80" r="3" fill="#3b82f6" />
+          <circle cx="120" cy="110" r="2" fill="#3b82f6" />
+          <circle cx="110" cy="125" r="1.5" fill="#3b82f6" />
+          <circle cx="100" cy="140" r="2.5" fill="#3b82f6" />
+          <circle cx="90" cy="150" r="2" fill="#3b82f6" />
+          <path d="M160 60 L150 75 L130 80 L120 110 L100 140" stroke="rgba(59, 130, 246, 0.25)" strokeWidth="0.75" strokeDasharray="3 3"/>
+          <path d="M150 75 L140 90 L120 110 L110 125 L90 150" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="0.75" strokeDasharray="2 2"/>
+        </svg>
+
+        {/* Central Ambient Glow Spotlights */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#df9514]/5 blur-[90px] rounded-full pointer-events-none" />
+      </div>
+
+      {/* Primary Card Container - Sized according to executive mockup layout */}
+      <div className="w-[calc(100%-32px)] min-[370px]:w-full max-w-[430px] z-10 mx-auto relative group">
+        {/* Dynamic Running Gold Border Glow */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible" xmlns="http://www.w3.org/2000/svg">
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            rx="40"
+            ry="40"
+            fill="none"
+            stroke="url(#cardRunningBorderGrad)"
+            strokeWidth="3"
+            className="animate-border-glow-run"
             style={{
-              backgroundImage: `
-                linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 40px',
+              strokeDasharray: '150 450',
             }}
           />
-          {/* Dynamic Floating Orbs for extra premium depth */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <motion.div
-              animate={{
-                x: [0, 40, -20, 0],
-                y: [0, -50, 30, 0],
-              }}
-              transition={{
-                duration: 15,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="absolute top-[10%] left-[20%] w-[350px] h-[350px] bg-blue-600/15 rounded-full filter blur-[100px]"
-            />
-            <motion.div
-              animate={{
-                x: [0, -30, 50, 0],
-                y: [0, 40, -40, 0],
-              }}
-              transition={{
-                duration: 18,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 2
-              }}
-              className="absolute bottom-[15%] right-[15%] w-[400px] h-[400px] bg-orange-500/10 rounded-full filter blur-[120px]"
-            />
-            <motion.div
-              animate={{
-                scale: [1, 1.15, 0.9, 1],
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] bg-cyan-400/10 rounded-full filter blur-[80px]"
-            />
-          </div>
+          <defs>
+            <linearGradient id="cardRunningBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#df9514" />
+              <stop offset="30%" stopColor="#ffd700" />
+              <stop offset="70%" stopColor="#a36306" />
+              <stop offset="100%" stopColor="#df9514" />
+            </linearGradient>
+          </defs>
+        </svg>
 
-          {/* Constellation overlay tracking nodes */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-cyan-400 rounded-full"
-                style={{
-                  left: `${10 + i * 12}%`,
-                  top: `${15 + (i % 3) * 25}%`,
-                  opacity: 0.15,
-                  filter: 'blur(1px)',
-                }}
-                animate={{
-                  opacity: [0.08, 0.35, 0.08],
-                  scale: [1, 1.5, 1],
-                }}
-                transition={{
-                  duration: 4 + i,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: i * 0.4,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Core Radial Color Glow Spotlights */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 blur-[130px] rounded-full pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-orange-500/10 blur-[80px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-        </>
-      ) : (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[10%] left-[10%] w-[300px] h-[300px] bg-blue-100/40 rounded-full filter blur-[80px]" />
-          <div className="absolute bottom-[10%] right-[10%] w-[350px] h-[350px] bg-orange-50/50 rounded-full filter blur-[100px]" />
-        </div>
-      )}
-
-      {/* Primary Card Container */}
-      <div className="w-[calc(100%-24px)] min-[370px]:w-full max-w-[370px] z-10 mx-auto flex flex-col gap-4 min-[375px]:gap-5">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className={`w-full rounded-[24px] min-[375px]:rounded-[28px] p-5 min-[375px]:p-6 min-[410px]:p-8 relative overflow-hidden transition-all duration-500 ${
-            isLight 
-              ? 'bg-white border-2 border-[#0c1222] shadow-[8px_8px_0px_#0c1222]' 
-              : 'bg-gradient-to-b from-[#152352]/95 to-[#0c1330]/98 border border-blue-500/40 backdrop-blur-xl'
-          }`}
-          style={!isLight ? {
-            boxShadow: '0 30px 70px -10px rgba(0, 0, 0, 0.75), 0 0 50px rgba(59, 130, 246, 0.2), inset 0 0 1px 1px rgba(255, 255, 255, 0.15)'
-          } : undefined}
+          className="w-full rounded-[40px] p-6 min-[410px]:p-10 relative overflow-hidden bg-[#060a17]/92 border border-amber-500/20 backdrop-blur-2xl"
+          style={{
+            boxShadow: '0 30px 70px -10px rgba(0, 0, 0, 0.9), 0 0 50px rgba(223, 149, 20, 0.12), inset 0 0 1px 1px rgba(255, 255, 255, 0.12)'
+          }}
         >
-          {/* Subtle top ambient glowing flare for dark mode card border */}
-          {!isLight && (
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[160px] min-[375px]:w-[200px] h-[3px] bg-gradient-to-r from-transparent via-[#f95a02]/60 to-transparent blur-[0.5px]" />
-          )}
+          {/* Top Edge Ambient Light Gleam */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent shadow-[0_0_12px_rgba(255,215,0,0.8)]" />
+
+          {/* Bottom Edge Ambient Light Gleam */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[180px] h-[2.5px] bg-gradient-to-r from-transparent via-[#df9514] to-transparent shadow-[0_0_12px_rgba(223,149,20,0.6)]" />
 
           {/* Form Content */}
-          <form onSubmit={handlePinLogin} className="flex flex-col gap-5 min-[375px]:gap-6 min-[410px]:gap-7 relative z-10">
+          <form onSubmit={handlePinLogin} className="flex flex-col gap-6 min-[410px]:gap-7 relative z-10">
             {/* Logo Area & Brand Header */}
             <div className="flex flex-col items-center justify-center gap-1.5 min-[375px]:gap-2.5 select-none text-center">
-              {/* Three Overlapping Solid Gradient Diamonds */}
+              {/* Three Overlapping Glossy Blue Diamonds */}
               <div className="flex items-center justify-center mb-0.5">
-                <svg viewBox="0 0 160 80" className="w-32 h-16 min-[350px]:w-36 min-[350px]:h-18 min-[400px]:w-44 min-[400px]:h-22 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 160 90" className="w-36 h-20 min-[400px]:w-44 min-[400px]:h-24 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    {/* Diamond 1: deeper blue to sky blue */}
-                    <linearGradient id="solidGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="diamondGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#1e5cb3" />
                       <stop offset="100%" stopColor="#3d8cf0" />
                     </linearGradient>
-                    {/* Diamond 2: bright blue to light blue */}
-                    <linearGradient id="solidGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="diamondGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#2572e0" />
                       <stop offset="100%" stopColor="#5ea5ff" />
                     </linearGradient>
-                    {/* Diamond 3: light cyan blue to soft sky blue */}
-                    <linearGradient id="solidGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="diamondGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#3b8cf3" />
                       <stop offset="100%" stopColor="#8cc1ff" />
                     </linearGradient>
-                    <filter id="diamondGlow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="1.5" result="blur" />
-                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    <filter id="diamondDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000000" floodOpacity="0.45" />
                     </filter>
                   </defs>
 
                   {/* Left Diamond */}
-                  <g transform="translate(45, 40) rotate(45)">
+                  <g transform="translate(48, 45) rotate(45)" filter="url(#diamondDropShadow)">
                     <rect 
-                      x="-19" 
-                      y="-19" 
-                      width="38" 
-                      height="38" 
-                      rx="4" 
-                      fill="url(#solidGrad1)" 
-                      opacity="0.88"
-                      filter="url(#diamondGlow)"
+                      x="-22" 
+                      y="-22" 
+                      width="44" 
+                      height="44" 
+                      rx="6" 
+                      fill="url(#diamondGrad1)" 
                     />
                   </g>
                   
                   {/* Middle Diamond */}
-                  <g transform="translate(73, 40) rotate(45)">
+                  <g transform="translate(80, 45) rotate(45)" filter="url(#diamondDropShadow)">
                     <rect 
-                      x="-19" 
-                      y="-19" 
-                      width="38" 
-                      height="38" 
-                      rx="4" 
-                      fill="url(#solidGrad2)" 
-                      opacity="0.92"
-                      filter="url(#diamondGlow)"
+                      x="-22" 
+                      y="-22" 
+                      width="44" 
+                      height="44" 
+                      rx="6" 
+                      fill="url(#diamondGrad2)" 
                     />
                   </g>
                   
                   {/* Right Diamond */}
-                  <g transform="translate(101, 40) rotate(45)">
+                  <g transform="translate(112, 45) rotate(45)" filter="url(#diamondDropShadow)">
                     <rect 
-                      x="-19" 
-                      y="-19" 
-                      width="38" 
-                      height="38" 
-                      rx="4" 
-                      fill="url(#solidGrad3)" 
-                      opacity="0.96"
-                      filter="url(#diamondGlow)"
+                      x="-22" 
+                      y="-22" 
+                      width="44" 
+                      height="44" 
+                      rx="6" 
+                      fill="url(#diamondGrad3)" 
                     />
                   </g>
                 </svg>
               </div>
 
-              {/* Company Title */}
+              {/* Company Title & Subtitle */}
               <div className="flex flex-col items-center">
-                <h1 className={`font-sans font-extrabold tracking-[0.14em] min-[375px]:tracking-[0.16em] text-xl min-[375px]:text-2xl uppercase leading-none ${
-                  isLight ? 'text-[#0c1222]' : 'text-white'
-                }`}>
+                <h1 className="font-sans font-extrabold tracking-[0.14em] text-2xl min-[410px]:text-3xl text-white uppercase leading-none">
                   SANKEN OVERSEAS
                 </h1>
-                <p className={`text-[8.5px] min-[375px]:text-[9.5px] tracking-[0.25em] min-[375px]:tracking-[0.32em] uppercase font-black mt-2 min-[375px]:mt-2.5 font-mono ${
-                  isLight ? 'text-amber-700' : 'text-[#f95a02] animate-pulse'
-                }`}>
+                <p className="text-[10px] min-[410px]:text-[11px] tracking-[0.24em] font-black uppercase text-[#df9a28] mt-3 font-mono text-center">
                   VEHICLE TRACKING & DISPATCH SYSTEM
                 </p>
               </div>
             </div>
 
-            {/* Glowing Divider Line with Centered Lens Flare */}
-            <div className="relative w-full py-1.5 min-[375px]:py-2 min-[410px]:py-2.5 flex items-center justify-center">
-              <div className={`absolute left-0 right-0 h-[1px] ${
-                isLight ? 'bg-[#0c1222]' : 'bg-gradient-to-r from-transparent via-[#f95a02]/45 to-transparent'
-              }`} />
-              {!isLight && (
-                <>
-                  <div className="w-20 h-[3px] bg-gradient-to-r from-transparent via-[#f95a02] to-transparent absolute filter blur-[1px] animate-flare-line" />
-                  <div className="absolute w-3 h-3 rounded-full animate-flare-dot" />
-                  <div className="absolute w-6 h-0.5 bg-white rounded-full filter blur-[0.5px] animate-flare-core" />
-                </>
-              )}
+            {/* Glowing Divider Line with Centered Gold Lens Flare Orb */}
+            <div className="relative w-full py-2 flex items-center justify-center">
+              <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#df9514]/35 to-transparent" />
+              <div className="absolute w-2.5 h-2.5 rounded-full bg-[#df9514] border border-[#ffe3a1] animate-orb-glow-pulse" />
             </div>
 
-            {/* Error Message */}
+            {/* Form Error Notification Banner */}
             {loginError && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-3 text-xs rounded-xl text-center font-bold border ${
-                  isLight 
-                    ? 'text-red-700 bg-red-100 border-red-400' 
-                    : 'text-red-400 bg-red-900/15 border-red-900/30'
-                }`}
+                className="p-3.5 text-xs rounded-xl text-center font-bold border border-red-500/30 text-red-300 bg-red-950/40 backdrop-blur-md"
               >
                 {loginError}
               </motion.div>
             )}
 
-            {/* Input PIN Section */}
-            <div className="space-y-3 min-[375px]:space-y-4">
-              <div className={`text-center text-[9px] min-[375px]:text-[10px] font-black tracking-[0.2em] min-[375px]:tracking-[0.22em] uppercase font-sans ${
-                isLight ? 'text-slate-700' : 'text-slate-400'
-              }`}>
+            {/* Input PIN Entry Block */}
+            <div className="space-y-4">
+              <div className="text-center text-[11px] font-bold tracking-[0.22em] uppercase font-sans text-slate-300">
                 ENTER 6-DIGIT PIN
               </div>
               
-              {/* Sleek Custom Translucent Capsule for the PIN digits */}
+              {/* Gold Gilded Capsule Container */}
               <div 
                 onClick={handleContainerClick}
-                className={`relative rounded-2xl px-4 py-4 min-[375px]:px-5 min-[375px]:py-4.5 min-[410px]:px-6 min-[410px]:py-5 flex justify-between items-center w-full max-w-[280px] mx-auto cursor-pointer transition-all duration-300 ${
-                  isLight 
-                    ? 'bg-slate-100 border-2 border-[#0c1222] shadow-[3px_3px_0px_#0c1222]' 
-                    : `bg-[#1a2652]/70 backdrop-blur-md border ${
-                        isFocused 
-                          ? 'border-[#f95a02]/80 shadow-[0_0_25px_rgba(249,90,2,0.3)]' 
-                          : 'border-white/15'
-                      }`
+                className={`relative rounded-[24px] px-8 py-5.5 flex justify-between items-center w-full max-w-[310px] mx-auto cursor-pointer transition-all duration-300 bg-[#040715]/90 border border-[#df9514]/40 ${
+                  isFocused 
+                    ? 'border-[#df9514] shadow-[0_0_20px_rgba(223,149,20,0.22)]' 
+                    : ''
                 }`}
-                style={!isLight ? {
-                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.35), 0 0 10px rgba(0,149,255,0.01)'
-                } : undefined}
+                style={{
+                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.45)'
+                }}
               >
                 {Array.from({ length: 6 }).map((_, i) => {
                   const hasDigit = pin.length > i;
-                  const isActive = pin.length === i && isFocused;
                   return (
-                    <motion.div
+                    <div
                       key={i}
-                      animate={{
-                        scale: hasDigit ? 1.25 : isActive ? 1.15 : 1,
-                        backgroundColor: hasDigit 
-                          ? '#ffffff' 
-                          : isActive 
-                            ? '#f95a02' 
-                            : isLight 
-                              ? 'rgba(12, 18, 34, 0.12)' 
-                              : 'rgba(255, 255, 255, 0.08)',
-                        boxShadow: !isLight && hasDigit 
-                          ? '0 0 14px #ffffff, 0 0 6px rgba(255, 255, 255, 0.8)'
-                          : !isLight && isActive
-                            ? '0 0 12px rgba(249,90,2,0.8), 0 0 4px rgba(249,90,2,0.6)'
-                            : 'none',
-                      }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                      className={`w-2.5 h-2.5 min-[375px]:w-3 min-[375px]:h-3 min-[410px]:w-3.5 min-[410px]:h-3.5 rounded-full transition-all duration-300 ${
-                        !hasDigit && !isLight 
-                          ? isActive 
-                            ? 'border border-orange-500/50' 
-                            : 'border border-white/10' 
-                          : ''
+                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 flex items-center justify-center ${
+                        hasDigit 
+                          ? 'bg-gradient-to-b from-[#ffdfa1] via-[#df9514] to-[#a36306] shadow-[0_0_12px_#df9514]' 
+                          : 'border-2 border-[#df9514]/65 bg-transparent'
                       }`}
                     />
                   );
                 })}
                 
-                {/* Fully transparent hidden input overlaid natively */}
+                {/* Fully hidden HTML input laid transparently on top */}
                 <input
                   ref={inputRef}
                   type="password"
@@ -501,59 +499,54 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Secure Authentication Indicator */}
-            <div className={`flex items-center justify-center gap-2 select-none text-[8.5px] min-[375px]:text-[9.5px] font-black tracking-[0.2em] uppercase ${
-              isLight ? 'text-slate-600' : 'text-slate-500'
-            }`}>
-              <ShieldCheck className={`w-3.5 h-3.5 min-[375px]:w-4 min-[375px]:h-4 ${isLight ? 'text-blue-700' : 'text-cyan-500/80 animate-pulse'}`} />
+            {/* Secure Authentication Status Banner */}
+            <div className="flex items-center justify-center gap-2 select-none text-[10px] font-bold tracking-[0.22em] text-slate-500 uppercase">
+              <ShieldCheck className="w-5 h-5 text-cyan-400 filter drop-shadow-[0_0_6px_rgba(34,211,238,0.6)] stroke-[2]" />
               <span>SECURE AUTHENTICATION</span>
             </div>
 
-            {/* Authorize Access Lock Button */}
+            {/* Gilded Metallic Authorization Button */}
             <motion.button
               whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.985 }}
               type="submit"
               disabled={isLoggingIn || pin.length < 6}
-              className={`relative w-full py-3 min-[375px]:py-3.5 px-5 rounded-xl font-black text-[11px] min-[375px]:text-xs sm:text-sm uppercase tracking-widest text-white transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap ${
-                isLight 
-                  ? 'bg-orange-600 border-2 border-[#0c1222] text-white shadow-[4px_4px_0px_#0c1222] hover:bg-orange-700' 
-                  : 'bg-gradient-to-r from-orange-600 via-[#f95a02] to-amber-500 shadow-[0_4px_20px_rgba(249,90,2,0.4),0_0_10px_rgba(249,90,2,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:shadow-[0_4px_28px_rgba(249,90,2,0.55)]'
-              }`}
+              className="relative w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-[0.16em] text-[#1a0f02] transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap bg-gradient-to-b from-[#ffd166] via-[#df9514] to-[#ad6c09] border border-[#ffe5a3]/50 animate-gold-glow"
             >
-              {/* Shimmer sweeping beam */}
-              {!isLight && (
-                <div className="absolute inset-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:animate-shimmer" />
-              )}
+              {/* Gold specular highlight beam sweep on hover */}
+              <div className="absolute inset-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12 -translate-x-full group-hover:animate-shimmer" />
 
               {isLoggingIn ? (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5 text-white animate-spin" />
+                  <RefreshCw className="w-4 h-4 text-[#1a0f02] animate-spin" />
                   <span>Authorizing Access...</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-3.5 h-3.5 text-white" />
-                  <span>Authorize Access</span>
+                  <Lock className="w-4.5 h-4.5 text-[#1a0f02] stroke-[2.5]" />
+                  <span>AUTHORIZE ACCESS</span>
                 </>
               )}
             </motion.button>
           </form>
 
-          {/* Privacy GPS Notice disclaimer banner */}
-          <div className="mt-4 min-[375px]:mt-6 text-center select-none relative z-10">
-            <p className={`text-[9.5px] min-[375px]:text-[10px] font-bold px-2 min-[375px]:px-4 leading-normal ${
-              isLight ? 'text-slate-700' : 'text-amber-500/85'
-            }`}>
-              ⚠️ This app is not using your GPS location, or any other personal information.
+          {/* Privacy GPS Disclaimer bar */}
+          <div className="mt-6 text-center select-none relative z-10 px-2">
+            <p className="text-[11px] font-semibold text-[#df9a28] flex items-center justify-center gap-1.5 leading-relaxed max-w-[325px] mx-auto">
+              <span>⚠️</span>
+              <span>This app is not using your GPS location, or any other personal information.</span>
             </p>
           </div>
 
-          {/* Copyright Branding footer */}
-          <div className={`text-center text-[8.5px] min-[375px]:text-[9px] font-black tracking-wider uppercase select-none mt-4 min-[375px]:mt-6 pt-3.5 min-[375px]:pt-4 border-t relative z-10 ${
-            isLight ? 'text-slate-500 border-slate-200' : 'text-slate-600 border-white/5'
-          }`}>
-            Copyright © {new Date().getFullYear()} <span className="font-bold">@SKOADMIN</span>. All Rights Reserved.
+          {/* Bottom Divider */}
+          <div className="relative w-full py-4 flex items-center justify-center">
+            <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#df9514]/25 to-transparent" />
+            <div className="absolute w-1.5 h-1.5 rounded-full bg-[#df9514] shadow-[0_0_8px_#df9514]" />
+          </div>
+
+          {/* Copyright Branding Footer */}
+          <div className="text-center text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase select-none">
+            COPYRIGHT © {new Date().getFullYear()} @SKOADMIN. ALL RIGHTS RESERVED.
           </div>
         </motion.div>
       </div>
