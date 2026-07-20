@@ -144,7 +144,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#040612] font-sans select-none">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto bg-[#040612] font-sans select-none py-10 px-4">
       {/* Embedded High-Performance CSS Animations */}
       <style>{`
         @keyframes shimmer-sweep {
@@ -175,26 +175,18 @@ export default function LandingPage() {
           animation: gold-glow-pulse 2s infinite ease-in-out;
         }
 
-        @keyframes border-glow-move {
-          0% {
-            stroke-dashoffset: 0;
-          }
-          100% {
-            stroke-dashoffset: -1200;
-          }
-        }
-        @keyframes border-glow-flash {
+        @keyframes card-glow-pulse {
           0%, 100% {
-            opacity: 0.4;
-            filter: drop-shadow(0 0 2px rgba(223, 149, 20, 0.5));
+            border-color: rgba(223, 149, 20, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), 0 0 35px rgba(223, 149, 20, 0.12), inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
           }
           50% {
-            opacity: 1;
-            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 24px rgba(223, 149, 20, 0.7));
+            border-color: rgba(223, 149, 20, 0.45);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), 0 0 55px rgba(223, 149, 20, 0.32), inset 0 0 1px 2px rgba(255, 255, 255, 0.18);
           }
         }
-        .animate-border-glow-run {
-          animation: border-glow-move 10s linear infinite, border-glow-flash 3s ease-in-out infinite alternate;
+        .animate-card-glow {
+          animation: card-glow-pulse 4.5s infinite ease-in-out;
         }
 
         @keyframes orb-zoom-glow {
@@ -308,44 +300,12 @@ export default function LandingPage() {
         {/* Central Ambient Glow Spotlights */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#df9514]/5 blur-[90px] rounded-full pointer-events-none" />
-      </div>
-
-      {/* Primary Card Container - Sized according to executive mockup layout */}
-      <div className="w-[calc(100%-32px)] min-[370px]:w-full max-w-[430px] z-10 mx-auto relative group">
-        {/* Dynamic Running Gold Border Glow */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible" xmlns="http://www.w3.org/2000/svg">
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            rx="40"
-            ry="40"
-            fill="none"
-            stroke="url(#cardRunningBorderGrad)"
-            strokeWidth="3"
-            className="animate-border-glow-run"
-            style={{
-              strokeDasharray: '150 450',
-            }}
-          />
-          <defs>
-            <linearGradient id="cardRunningBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#df9514" />
-              <stop offset="30%" stopColor="#ffd700" />
-              <stop offset="70%" stopColor="#a36306" />
-              <stop offset="100%" stopColor="#df9514" />
-            </linearGradient>
-          </defs>
-        </svg>
-
+      </div>      {/* Primary Card Container - Sized according to executive mockup layout */}
+      <div className="w-full max-w-[420px] z-10 relative group">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className="w-full rounded-[40px] p-6 min-[410px]:p-10 relative overflow-hidden bg-[#060a17]/92 border border-amber-500/20 backdrop-blur-2xl"
-          style={{
-            boxShadow: '0 30px 70px -10px rgba(0, 0, 0, 0.9), 0 0 50px rgba(223, 149, 20, 0.12), inset 0 0 1px 1px rgba(255, 255, 255, 0.12)'
-          }}
+          className="w-full rounded-[32px] sm:rounded-[40px] p-5 min-[375px]:p-6 min-[410px]:p-10 relative overflow-hidden bg-[#060a17]/92 border backdrop-blur-2xl animate-card-glow"
         >
           {/* Top Edge Ambient Light Gleam */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent shadow-[0_0_12px_rgba(255,215,0,0.8)]" />
@@ -418,7 +378,7 @@ export default function LandingPage() {
 
               {/* Company Title & Subtitle */}
               <div className="flex flex-col items-center">
-                <h1 className="font-sans font-extrabold tracking-[0.14em] text-2xl min-[410px]:text-3xl text-white uppercase leading-none">
+                <h1 className="font-sans font-extrabold tracking-[0.08em] min-[360px]:tracking-[0.14em] text-[1.35rem] min-[360px]:text-2xl min-[410px]:text-3xl text-white uppercase leading-none text-center">
                   SANKEN OVERSEAS
                 </h1>
                 <p className="text-[10px] min-[410px]:text-[11px] tracking-[0.24em] font-black uppercase text-[#df9a28] mt-3 font-mono text-center">
