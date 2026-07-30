@@ -5,17 +5,18 @@ import { useTheme } from '../contexts/ThemeContext';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/Button';
-import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass, LogOut } from 'lucide-react';
+import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass, LogOut, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { InstallPWA } from './InstallPWA';
 import { SankenLogo } from './SankenLogo';
 
 export default function Layout({ children, title }: { children: React.ReactNode, title: string }) {
   const { profile } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, testSound } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isInstallOpen, setIsInstallOpen] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -110,7 +111,15 @@ export default function Layout({ children, title }: { children: React.ReactNode,
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button 
+                      onClick={testSound} 
+                      className="p-1 px-2 rounded text-[11px] font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                      title="Test loud sound alert"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span>Test Sound 🔊</span>
+                    </button>
                     {notifications.length > 0 && (
                       <>
                         <button 
