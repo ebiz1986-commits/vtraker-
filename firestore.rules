@@ -107,6 +107,7 @@ service cloud.firestore {
           && (!('passengerCount' in data) || (data.passengerCount is number))
           && (!('passengerName' in data) || (data.passengerName is string && data.passengerName.size() <= 100))
           && (!('passengerDepartment' in data) || (data.passengerDepartment is string && data.passengerDepartment.size() <= 100))
+          && (!('passengerPhone' in data) || data.passengerPhone == null || (data.passengerPhone is string && data.passengerPhone.size() <= 50))
           && (!('jointPassengers' in data) || (data.jointPassengers is list && data.jointPassengers.size() <= 20))
           && (!('vehicleId' in data) || (data.vehicleId is string && data.vehicleId.size() <= 128))
           && (!('driverId' in data) || (data.driverId is string && data.driverId.size() <= 128))
@@ -133,6 +134,9 @@ service cloud.firestore {
           && (!('nominatedUserId' in data) || data.nominatedUserId == null || (data.nominatedUserId is string && data.nominatedUserId.size() <= 128))
           && (!('nominatedName' in data) || data.nominatedName == null || (data.nominatedName is string && data.nominatedName.size() <= 100))
           && (!('adminStatusUpdate' in data) || data.adminStatusUpdate == null || (data.adminStatusUpdate is string && data.adminStatusUpdate.size() <= 500))
+          && (!('smsUid' in data) || data.smsUid == null || (data.smsUid is string && data.smsUid.size() <= 128))
+          && (!('smsSentAt' in data) || data.smsSentAt == null || (data.smsSentAt is timestamp))
+          && (!('smsError' in data) || data.smsError == null || (data.smsError is string && data.smsError.size() <= 1000))
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
       }
@@ -160,14 +164,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
         && incoming().keys().hasAll(['userId', 'status', 'pickupAddress', 'pickupLat', 'pickupLng', 'dropoffLat', 'dropoffLng', 'pickupTime', 'createdAt', 'updatedAt']) 
-        && incoming().keys().size() <= 35
+        && incoming().keys().size() <= 45
         && incoming().userId == request.auth.uid
         && incoming().status == 'pending'
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
         
        allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'adminStatusUpdate'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'adminStatusUpdate', 'smsUid', 'smsSentAt', 'smsError', 'passengerPhone'])) ||
         (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime', 'driverEndedTime', 'startOdometer', 'endOdometer', 'currentOdometer', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'expectedEndOdometer', 'pickupTime', 'dropoffTime'])) ||
         (isParticipant(existing()) && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
         (isParticipant(existing()) && existing().status == 'allocated' && existing().driverHasSmartphone == false && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime']) && incoming().status == 'driver_started') ||
