@@ -366,8 +366,10 @@ export default function UserDashboard() {
   const [tempProfileDept, setTempProfileDept] = useState('');
   const [tempProfilePhone, setTempProfilePhone] = useState('');
 
-  // Mobile phone prompt modal state (shows if profile has no phone saved)
+  // Mandatory profile prompt modal state (shows if profile has no phone or missing/pin-like name)
   const [showPhonePromptModal, setShowPhonePromptModal] = useState(false);
+  const [promptName, setPromptName] = useState('');
+  const [promptDept, setPromptDept] = useState('');
   const [promptPhone, setPromptPhone] = useState('');
   const [savingPromptPhone, setSavingPromptPhone] = useState(false);
 
@@ -377,33 +379,50 @@ export default function UserDashboard() {
       setTempProfileDept(profile.department || '');
       setTempProfilePhone(profile.phone || '');
 
-      // Trigger prompt popup if user has no telephone number saved
-      if (!profile.phone || profile.phone.trim() === '') {
+      const isNameMissingOrPin = !profile.name || profile.name.trim() === '' || isPinLikeName(profile.name || '');
+      const isPhoneMissing = !profile.phone || profile.phone.trim() === '';
+
+      setPromptName(isNameMissingOrPin ? '' : (profile.name || ''));
+      setPromptDept(profile.department || '');
+      setPromptPhone(profile.phone || '');
+
+      // Trigger mandatory prompt popup if name or telephone number is missing
+      if (isNameMissingOrPin || isPhoneMissing) {
         setShowPhonePromptModal(true);
       } else {
         setShowPhonePromptModal(false);
       }
     }
-  }, [profile?.phone, profile?.userId]);
+  }, [profile?.name, profile?.phone, profile?.userId]);
 
   const handleSavePromptPhone = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const isNameMissingOrPin = !profile?.name || profile.name.trim() === '' || isPinLikeName(profile.name || '');
+
+    if (isNameMissingOrPin && (!promptName.trim() || isPinLikeName(promptName.trim()))) {
+      toast.error("Please enter your real full name (not a credential code).");
+      return;
+    }
+
     if (!promptPhone.trim()) {
       toast.error("Please enter a valid mobile phone number.");
       return;
     }
+
     if (!profile?.userId) return;
     setSavingPromptPhone(true);
     try {
       const userDocRef = doc(db, 'users', profile.userId);
       await updateDoc(userDocRef, {
+        name: promptName.trim() || profile.name || '',
+        department: promptDept.trim() || profile.department || '',
         phone: promptPhone.trim()
       });
-      toast.success("Mobile phone saved! You will receive SMS alerts for allocated trips.");
+      toast.success("Profile details saved successfully!");
       setShowPhonePromptModal(false);
     } catch (err: any) {
-      console.error("Failed to save mobile phone:", err);
-      toast.error("Failed to save mobile phone number.");
+      console.error("Failed to save profile details:", err);
+      toast.error("Failed to save profile details.");
     } finally {
       setSavingPromptPhone(false);
     }
@@ -1313,7 +1332,7 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Mandatory Popup Modal asking for mobile telephone number if not yet saved */}
+      {/* Mandatory Popup Modal asking for profile details if missing */}
       {showPhonePromptModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <motion.div
@@ -1327,28 +1346,64 @@ export default function UserDashboard() {
                 <Smartphone className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-100">Mobile Phone Number Required</h3>
-                <p className="text-xs text-blue-400 font-semibold">For Automatic Trip SMS Notifications</p>
+                <h3 className="text-base font-bold text-slate-100">
+                  {(!profile?.name || profile.name.trim() === '' || isPinLikeName(profile.name || ''))
+                    ? "Profile Details Required" 
+                    : "Mobile Phone Required"}
+                </h3>
+                <p className="text-xs text-blue-400 font-semibold">
+                  For Trip Booking & Automatic SMS Alerts
+                </p>
               </div>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Please enter your mobile phone number to continue. When an administrator allocates a vehicle and driver for your trip request, an instant SMS confirmation will be sent directly to your phone.
+              Please complete your profile information below. Drivers and administrators require your real full name and mobile number to assign vehicles and send instant SMS confirmations.
             </p>
 
-            <form onSubmit={handleSavePromptPhone} className="space-y-4">
+            <form onSubmit={handleSavePromptPhone} className="space-y-3.5">
+              {(!profile?.name || profile.name.trim() === '' || isPinLikeName(profile.name || '')) && (
+                <div>
+                  <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                    Full Passenger Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={promptName}
+                    onChange={(e) => setPromptName(e.target.value)}
+                    placeholder="e.g. John Perera"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
-                  Mobile Number <span className="text-red-400">*</span>
+                  Department / Division
+                </label>
+                <input
+                  type="text"
+                  value={promptDept}
+                  onChange={(e) => setPromptDept(e.target.value)}
+                  placeholder="e.g. Finance / Operations"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                  Mobile Phone Number <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="tel"
-                  autoFocus
                   required
+                  autoFocus={Boolean(profile?.name && !isPinLikeName(profile?.name))}
                   value={promptPhone}
                   onChange={(e) => setPromptPhone(e.target.value)}
                   placeholder="e.g. 0771234567 or +94771234567"
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-blue-500 font-medium"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
                   Supported format: 077XXXXXXX or +9477XXXXXXX
@@ -1358,7 +1413,11 @@ export default function UserDashboard() {
               <div className="flex items-center justify-end pt-2 border-t border-slate-800">
                 <button
                   type="submit"
-                  disabled={savingPromptPhone || !promptPhone.trim()}
+                  disabled={
+                    savingPromptPhone || 
+                    !promptPhone.trim() || 
+                    ((!profile?.name || isPinLikeName(profile?.name || '')) && !promptName.trim())
+                  }
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {savingPromptPhone ? (
@@ -1366,7 +1425,7 @@ export default function UserDashboard() {
                   ) : (
                     <Megaphone className="w-4 h-4" />
                   )}
-                  Save Phone & Continue
+                  Save Profile & Continue
                 </button>
               </div>
             </form>
