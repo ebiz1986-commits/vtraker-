@@ -2917,6 +2917,25 @@ export default function AdminDashboard() {
       return acc;
     }, 0);
 
+    // Past 30 Days calculations for Travel Records
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const last30Trips = trips.filter(t => {
+      const tripTime = t.createdAt?.toMillis?.() || (t.requestedDate ? new Date(t.requestedDate).getTime() : 0);
+      return tripTime >= thirtyDaysAgo;
+    });
+
+    const last30TotalRecords = last30Trips.length;
+    const last30CompletedCount = last30Trips.filter(t => t.status === 'completed').length;
+    const last30ActiveCount = last30Trips.filter(t => ['in_progress', 'driver_started', 'driver_ended', 'allocated'].includes(t.status)).length;
+    const last30PendingCount = last30Trips.filter(t => t.status === 'pending').length;
+
+    const last30KM = last30Trips.reduce((acc, t) => {
+      if (typeof t.startOdometer === 'number' && typeof t.endOdometer === 'number' && t.endOdometer >= t.startOdometer) {
+        return acc + (t.endOdometer - t.startOdometer);
+      }
+      return acc;
+    }, 0);
+
     const filteredKM = sortedTrips.reduce((acc, t) => {
       if (typeof t.startOdometer === 'number' && typeof t.endOdometer === 'number' && t.endOdometer >= t.startOdometer) {
         return acc + (t.endOdometer - t.startOdometer);
@@ -2928,50 +2947,82 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         {/* Top Overview Cards Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-blue-500/20 shadow-lg relative overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Travel Records</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Travel Records</p>
                 <p className="text-xl sm:text-2xl font-black text-white">{totalRecords}</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-blue-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                    {last30TotalRecords}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-emerald-500/20 shadow-lg relative overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Completed Trips</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed Trips</p>
                 <p className="text-xl sm:text-2xl font-black text-emerald-400">{completedCount}</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-emerald-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    {last30CompletedCount}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-amber-500/20 shadow-lg relative overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
                 <Gauge className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Mileage (KM)</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Mileage (KM)</p>
                 <p className="text-xl sm:text-2xl font-black text-amber-300">{totalKM.toLocaleString()} KM</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-amber-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    {last30KM.toLocaleString()} KM
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-sky-500/20 shadow-lg relative overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
                 <Clock3 className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active & Pending</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active & Pending</p>
                 <p className="text-xl sm:text-2xl font-black text-sky-300">{activeCount + pendingCount}</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-sky-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                    {last30ActiveCount + last30PendingCount}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
