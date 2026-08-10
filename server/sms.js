@@ -3,7 +3,7 @@ const API = "https://app.text.lk/api/v3/sms/send";
 // Booking message formatted for the USER (passenger)
 export function bookingMsg(b) {
   const driverInfo = b.driverName ? `, Driver ${b.driverName}${b.driverPhone ? ` (${b.driverPhone})` : ''}` : '';
-  return `Booking ${b.refNo}: Dear ${b.passenger}, your trip ${b.from} to ${b.to} on ${b.date} ${b.time} is allocated. Vehicle ${b.vehicleNo}${driverInfo}. -Sanken Admin`;
+  return `Dear ${b.passenger}, your trip ${b.from} to ${b.to} on ${b.date} ${b.time} is allocated. Vehicle ${b.vehicleNo}${driverInfo}. -Sanken Admin`;
 }
 
 export function toLK(raw) {

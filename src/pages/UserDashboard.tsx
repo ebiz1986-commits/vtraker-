@@ -8,7 +8,7 @@ import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, upd
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert, Phone, Smartphone } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert, Phone, Smartphone, Megaphone, Clock3 } from 'lucide-react';
 import { TripItemSkeleton } from '../components/ui/Skeleton';
 
 const UserTripItem = ({ 
@@ -366,13 +366,48 @@ export default function UserDashboard() {
   const [tempProfileDept, setTempProfileDept] = useState('');
   const [tempProfilePhone, setTempProfilePhone] = useState('');
 
+  // Mobile phone prompt modal state (shows if profile has no phone saved)
+  const [showPhonePromptModal, setShowPhonePromptModal] = useState(false);
+  const [promptPhone, setPromptPhone] = useState('');
+  const [savingPromptPhone, setSavingPromptPhone] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setTempProfileName(profile.name || '');
       setTempProfileDept(profile.department || '');
       setTempProfilePhone(profile.phone || '');
+
+      // Trigger prompt popup if user has no telephone number saved
+      if (!profile.phone || profile.phone.trim() === '') {
+        setShowPhonePromptModal(true);
+      } else {
+        setShowPhonePromptModal(false);
+      }
     }
-  }, [profile]);
+  }, [profile?.phone, profile?.userId]);
+
+  const handleSavePromptPhone = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!promptPhone.trim()) {
+      toast.error("Please enter a valid mobile phone number.");
+      return;
+    }
+    if (!profile?.userId) return;
+    setSavingPromptPhone(true);
+    try {
+      const userDocRef = doc(db, 'users', profile.userId);
+      await updateDoc(userDocRef, {
+        phone: promptPhone.trim()
+      });
+      toast.success("Mobile phone saved! You will receive SMS alerts for allocated trips.");
+      setShowPhonePromptModal(false);
+    } catch (err: any) {
+      console.error("Failed to save mobile phone:", err);
+      toast.error("Failed to save mobile phone number.");
+    } finally {
+      setSavingPromptPhone(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!tempProfileName.trim()) {
@@ -1277,6 +1312,84 @@ export default function UserDashboard() {
           )}
         </div>
       </div>
+
+      {/* Popup Modal asking for mobile telephone number if not yet saved */}
+      {showPhonePromptModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-[#0f172a] border border-blue-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 text-left relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4">
+              <button
+                onClick={() => setShowPhonePromptModal(false)}
+                className="text-slate-400 hover:text-slate-200 transition-colors p-1"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 pr-8">
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 shrink-0">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-100">Add Mobile Phone Number</h3>
+                <p className="text-xs text-blue-400 font-semibold">For Automatic Trip SMS Notifications</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Please enter your mobile phone number. When an administrator allocates a vehicle and driver for your trip request, an instant SMS confirmation will be sent directly to your phone.
+            </p>
+
+            <form onSubmit={handleSavePromptPhone} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  autoFocus
+                  required
+                  value={promptPhone}
+                  onChange={(e) => setPromptPhone(e.target.value)}
+                  placeholder="e.g. 0771234567 or +94771234567"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Supported format: 077XXXXXXX or +9477XXXXXXX
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowPhonePromptModal(false)}
+                  className="px-3.5 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Remind Me Later
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPromptPhone || !promptPhone.trim()}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {savingPromptPhone ? (
+                    <Clock3 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Megaphone className="w-4 h-4" />
+                  )}
+                  Save & Enable SMS
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </Layout>
   );
 }
