@@ -10,7 +10,7 @@ import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from 'sonner';
 
-import { ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Megaphone, ArrowRight, MapPin, Clock, Users, Edit, Check, X, Fuel, TrendingUp, PlusCircle, History, Gauge, Droplet, Settings, DollarSign, Calendar, Trash2, Compass, Download, ShieldAlert, FileText, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Megaphone, ArrowRight, MapPin, Clock, Users, Edit, Check, X, Fuel, TrendingUp, PlusCircle, History, Gauge, Droplet, Settings, DollarSign, Calendar, Trash2, Compass, Download, ShieldAlert, FileText, AlertTriangle, ShieldCheck, Activity, FileSpreadsheet, Search, Filter, ArrowUpDown, CheckCircle2, XCircle, Clock3, Navigation, FileDown, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { TripItemSkeleton, LiveDriverItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
@@ -993,8 +993,15 @@ export default function AdminDashboard() {
   
   const initialLoadRef = useRef(true);
 
-  // Active view tab state ('dispatch' | 'fuel' | 'compliance')
-  const [activeTab, setActiveTab] = useState<'dispatch' | 'fuel' | 'compliance'>('dispatch');
+  // Active view tab state ('dispatch' | 'travel_records' | 'fuel' | 'compliance')
+  const [activeTab, setActiveTab] = useState<'dispatch' | 'travel_records' | 'fuel' | 'compliance'>('dispatch');
+
+  // Travel Records filter states
+  const [travelSearchTerm, setTravelSearchTerm] = useState('');
+  const [travelStatusFilter, setTravelStatusFilter] = useState<string>('all');
+  const [travelDateFilter, setTravelDateFilter] = useState<string>('all'); // 'all' | '7' | '30' | '90'
+  const [travelTypeFilter, setTravelTypeFilter] = useState<string>('all');
+  const [selectedTravelRecord, setSelectedTravelRecord] = useState<any | null>(null);
 
   // Fuel states
   const [fuelRecords, setFuelRecords] = useState<any[]>([]);
@@ -2129,55 +2136,64 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleExportCSV = (days: number = 30) => {
-    const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
-    const recentTrips = trips.filter(t => {
-      const tripTime = t.createdAt?.toMillis?.() || (t.requestedDate ? new Date(t.requestedDate).getTime() : Date.now());
-      return (Date.now() - tripTime) <= days * 24 * 60 * 60 * 1000;
-    });
-    
-    if (recentTrips.length === 0) {
-      alert(`No trips found in the last ${days} days.`);
+  const handleExportCSV = (days: number = 30, customList?: any[]) => {
+    let sourceTrips = customList || trips;
+    if (!customList && days > 0) {
+      sourceTrips = trips.filter(t => {
+        const tripTime = t.createdAt?.toMillis?.() || (t.requestedDate ? new Date(t.requestedDate).getTime() : Date.now());
+        return (Date.now() - tripTime) <= days * 24 * 60 * 60 * 1000;
+      });
+    }
+
+    if (sourceTrips.length === 0) {
+      toast.error(days > 0 ? `No travel records found in the last ${days} days.` : "No travel records available to export.");
       return;
     }
 
     const headers = [
-      'Trip ID', 'Status', 'Date', 'Requested Date', 'Type', 'User Name', 'User Email', 'Driver Name', 
-      'Vehicle ID', 'Pickup Address', 'Dropoff Address', 'Return Locations', 'Requested Start', 
-      'Passengers', 'Remarks', 'Start ODO', 'End ODO', 'KM Traveled'
+      'Trip ID', 'Status', 'Date Logged', 'Requested Date', 'Requested Time', 'Type', 
+      'Passenger Name', 'User Email', 'Driver Name', 'Vehicle Reg', 'Vehicle Name', 
+      'Pickup Address', 'Dropoff Address', 'Return Locations', 'Passengers Count', 
+      'Joint Passengers', 'Start ODO (KM)', 'End ODO (KM)', 'Total Distance (KM)', 'Purpose / Remarks'
     ];
     
     let csvContent = headers.join(',') + '\n';
     
-    recentTrips.forEach(trip => {
+    sourceTrips.forEach(trip => {
       const user = allUsers.find(u => (u.userId || u.id) === trip.userId) || {};
       const driver = allUsers.find(d => (d.userId || d.id) === trip.driverId) || {};
       const vehicle = vehicles.find(v => v.id === trip.vehicleId) || {};
       
       const tripDate = trip.createdAt ? new Date(trip.createdAt?.toMillis?.() || Date.now()).toLocaleString().replace(/,/g, '') : '';
-      const startOdo = trip.startOdometer || '';
-      const endOdo = trip.endOdometer || '';
+      const startOdo = typeof trip.startOdometer === 'number' ? trip.startOdometer : '';
+      const endOdo = typeof trip.endOdometer === 'number' ? trip.endOdometer : '';
       const kmTraveled = (typeof startOdo === 'number' && typeof endOdo === 'number') ? (endOdo - startOdo) : '';
       
+      const jointNames = Array.isArray(trip.jointPassengers) 
+        ? trip.jointPassengers.map((jp: any) => jp.name || jp.passengerName).filter(Boolean).join('; ')
+        : '';
+
       const row = [
-        trip.id,
-        trip.status,
-        tripDate,
+        `"${trip.id || ''}"`,
+        `"${trip.status || ''}"`,
+        `"${tripDate}"`,
         `"${trip.requestedDate || ''}"`,
+        `"${trip.requestedStartTime || ''}"`,
         `"${(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}"`,
         `"${user.name || trip.passengerName || ''}"`,
         `"${user.email || ''}"`,
         `"${driver.name || trip.driverName || ''}"`,
         `"${vehicle.registrationNumber || ''}"`,
+        `"${vehicle.name || trip.vehicleName || ''}"`,
         `"${(trip.pickupAddress || '').replace(/"/g, '""')}"`,
         `"${(trip.dropoffAddress || '').replace(/"/g, '""')}"`,
         `"${(trip.returnLocations || '').replace(/"/g, '""')}"`,
-        `"${trip.requestedStartTime || ''}"`,
         trip.passengerCount || 1,
-        `"${(trip.remarks || '').replace(/"/g, '""')}"`,
+        `"${jointNames.replace(/"/g, '""')}"`,
         startOdo,
         endOdo,
-        kmTraveled
+        kmTraveled,
+        `"${(trip.remarks || '').replace(/"/g, '""')}"`
       ];
       csvContent += row.join(',') + '\n';
     });
@@ -2186,10 +2202,12 @@ export default function AdminDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Trips_${days}_Days_${new Date().toISOString().slice(0, 10)}.csv`);
+    const label = customList ? 'Filtered' : (days > 0 ? `${days}_Days` : 'All_Records');
+    link.setAttribute('download', `Sanken_Travel_Records_${label}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success(`Exported ${sourceTrips.length} travel records to CSV successfully!`);
   };
 
   const computedDrivers = drivers.map(d => {
@@ -2340,6 +2358,19 @@ export default function AdminDashboard() {
     const totalFuelCost = fuelRecords.reduce((acc, r) => acc + Number(r.cost || 0), 0);
     const totalFuelEntries = fuelRecords.length;
 
+    // Past 30 Days calculations
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const last30FuelRecords = fuelRecords.filter(r => {
+      const t = typeof r.timestamp === 'number' && r.timestamp > 0 
+        ? r.timestamp 
+        : (r.date ? new Date(r.date).getTime() : 0);
+      return t >= thirtyDaysAgo;
+    });
+
+    const last30FuelLiters = last30FuelRecords.reduce((acc, r) => acc + Number(r.liters || 0), 0);
+    const last30FuelCost = last30FuelRecords.reduce((acc, r) => acc + Number(r.cost || 0), 0);
+    const last30FuelEntries = last30FuelRecords.length;
+
     // 2. Compute per-vehicle stats
     const vehicleStats = vehicles.map(v => {
       const records = fuelRecords
@@ -2367,6 +2398,19 @@ export default function AdminDashboard() {
 
       const lastRecord = records.length > 0 ? records[records.length - 1] : null;
 
+      // Calculate past 30 days vehicle stats
+      const v30Records = last30FuelRecords
+        .filter(r => r.vehicleId === v.id)
+        .sort((a, b) => a.timestamp - b.timestamp);
+      const last30Liters = v30Records.reduce((acc, r) => acc + Number(r.liters || 0), 0);
+      const last30Count = v30Records.length;
+      let last30AvgConsumption = 0;
+      if (last30Count >= 2) {
+        const d30 = v30Records[last30Count - 1].odometer - v30Records[0].odometer;
+        const fc30 = v30Records.slice(1).reduce((acc, r) => acc + Number(r.liters || 0), 0);
+        if (fc30 > 0 && d30 > 0) last30AvgConsumption = d30 / fc30;
+      }
+
       return {
         ...v,
         totalLiters,
@@ -2374,6 +2418,9 @@ export default function AdminDashboard() {
         count,
         distance,
         avgConsumption,
+        last30Liters,
+        last30Count,
+        last30AvgConsumption,
         lastOdometer: lastRecord ? lastRecord.odometer : null,
         lastTimestamp: lastRecord ? lastRecord.timestamp : null
       };
@@ -2391,58 +2438,95 @@ export default function AdminDashboard() {
       ? [...activeStats].sort((a, b) => b.avgConsumption - a.avgConsumption)[0] 
       : null;
 
+    const active30Stats = vehicleStats.filter(s => s.last30Count >= 2);
+    const best30Vehicle = active30Stats.length > 0
+      ? [...active30Stats].sort((a, b) => b.last30AvgConsumption - a.last30AvgConsumption)[0]
+      : null;
+
     return (
       <div className="space-y-6">
         {/* KPI Top Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-orange-500/10 bg-[#0d1425]/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-400">
+          <Card className="border-orange-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20 shrink-0">
                 <Droplet className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Fuel Logged</p>
-                <p className="text-xl font-mono font-bold text-slate-100">{totalFuelLiters.toLocaleString(undefined, { maximumFractionDigits: 1 })} L</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Fuel Logged</p>
+                <p className="text-xl font-mono font-black text-slate-100">{totalFuelLiters.toLocaleString(undefined, { maximumFractionDigits: 1 })} L</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-orange-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+                    {last30FuelLiters.toLocaleString(undefined, { maximumFractionDigits: 1 })} L
+                  </span>
+                </div>
               </div>
             </div>
           </Card>
           
-          <Card className="border-emerald-500/10 bg-[#0d1425]/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+          <Card className="border-emerald-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                 <DollarSign className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fuel Cost Investment</p>
-                <p className="text-xl font-mono font-bold text-slate-100">LKR {totalFuelCost.toLocaleString()}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fuel Cost Investment</p>
+                <p className="text-xl font-mono font-black text-slate-100">LKR {totalFuelCost.toLocaleString()}</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-emerald-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    LKR {last30FuelCost.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </Card>
 
-          <Card className="border-sky-500/10 bg-[#0d1425]/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400">
+          <Card className="border-sky-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
                 <History className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fuel Transactions</p>
-                <p className="text-xl font-mono font-bold text-slate-100">{totalFuelEntries} Logs</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fuel Transactions</p>
+                <p className="text-xl font-mono font-black text-slate-100">{totalFuelEntries} Logs</p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-sky-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                    {last30FuelEntries} Logs
+                  </span>
+                </div>
               </div>
             </div>
           </Card>
 
-          <Card className="border-purple-500/10 bg-[#0d1425]/40 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400">
+          <Card className="border-purple-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
                 <Gauge className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Most Fuel Efficient</p>
-                <p className="text-sm font-bold text-slate-100 truncate max-w-[150px]">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Most Fuel Efficient</p>
+                <p className="text-sm font-bold text-slate-100 truncate">
                   {bestVehicle 
                     ? `${bestVehicle.registrationNumber} (${bestVehicle.avgConsumption.toFixed(1)} km/L)` 
                     : 'Awaiting logs...'}
                 </p>
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 flex items-center gap-1 font-medium">
+                    <Calendar className="w-3 h-3 text-purple-400" /> Past 30 Days:
+                  </span>
+                  <span className="font-mono font-extrabold text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 truncate max-w-[110px]">
+                    {best30Vehicle ? `${best30Vehicle.registrationNumber} (${best30Vehicle.last30AvgConsumption.toFixed(1)})` : 'N/A'}
+                  </span>
+                </div>
               </div>
             </div>
           </Card>
@@ -2650,16 +2734,27 @@ export default function AdminDashboard() {
                             <p className="font-bold text-slate-100">{v.registrationNumber}</p>
                             <p className="text-[10px] text-slate-500 capitalize">{v.type}</p>
                           </td>
-                          <td className="py-3 px-2 text-center font-mono text-slate-300">{v.count}</td>
-                          <td className="py-3 px-2 text-right font-mono text-slate-300">{v.totalLiters.toFixed(1)} L</td>
+                          <td className="py-3 px-2 text-center font-mono text-slate-300">
+                            <div>{v.count}</div>
+                            <div className="text-[10px] text-slate-500 font-normal">30d: {v.last30Count}</div>
+                          </td>
+                          <td className="py-3 px-2 text-right font-mono text-slate-300">
+                            <div>{v.totalLiters.toFixed(1)} L</div>
+                            <div className="text-[10px] text-slate-500 font-normal">30d: {v.last30Liters.toFixed(1)} L</div>
+                          </td>
                           <td className="py-3 px-2 text-right font-mono text-slate-300">
                             {v.count >= 2 ? `${v.distance.toLocaleString()} km` : '-'}
                           </td>
                           <td className="py-3 px-3 text-right font-mono font-bold text-orange-400">
                             {v.count >= 2 ? (
-                              <span className="bg-orange-500/10 border border-orange-500/15 px-2 py-0.5 rounded text-[11px]">
-                                {v.avgConsumption.toFixed(2)} km/L
-                              </span>
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="bg-orange-500/10 border border-orange-500/15 px-2 py-0.5 rounded text-[11px]">
+                                  {v.avgConsumption.toFixed(2)} km/L
+                                </span>
+                                <span className="text-[10px] text-amber-400/80 font-normal">
+                                  30d: {v.last30Count >= 2 ? `${v.last30AvgConsumption.toFixed(2)} km/L` : 'N/A'}
+                                </span>
+                              </div>
                             ) : (
                               <span className="text-slate-500 font-normal italic">Needs {2 - v.count} more log{v.count === 1 ? '' : 's'}</span>
                             )}
@@ -2746,6 +2841,544 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  const renderTravelRecords = () => {
+    // Filter trips based on travelSearchTerm, travelStatusFilter, travelDateFilter, travelTypeFilter
+    const filteredTrips = trips.filter(trip => {
+      // 1. Search filter
+      if (travelSearchTerm.trim()) {
+        const term = travelSearchTerm.toLowerCase().trim();
+        const passenger = (trip.passengerName || '').toLowerCase();
+        const driver = (trip.driverName || '').toLowerCase();
+        const pickup = (trip.pickupAddress || '').toLowerCase();
+        const dropoff = (trip.dropoffAddress || '').toLowerCase();
+        const returnLoc = (trip.returnLocations || '').toLowerCase();
+        const remarks = (trip.remarks || '').toLowerCase();
+        const tripId = (trip.id || '').toLowerCase();
+        const vehicle = (trip.vehicleName || '').toLowerCase();
+        
+        const matches = passenger.includes(term) ||
+          driver.includes(term) ||
+          pickup.includes(term) ||
+          dropoff.includes(term) ||
+          returnLoc.includes(term) ||
+          remarks.includes(term) ||
+          tripId.includes(term) ||
+          vehicle.includes(term);
+
+        if (!matches) return false;
+      }
+
+      // 2. Status filter
+      if (travelStatusFilter !== 'all') {
+        if (trip.status !== travelStatusFilter) return false;
+      }
+
+      // 3. Date filter
+      if (travelDateFilter !== 'all') {
+        const days = parseInt(travelDateFilter, 10);
+        if (!isNaN(days) && days > 0) {
+          const tripTime = trip.createdAt?.toMillis?.() || (trip.requestedDate ? new Date(trip.requestedDate).getTime() : Date.now());
+          const diffDays = (Date.now() - tripTime) / (1000 * 60 * 60 * 24);
+          if (diffDays > days) return false;
+        }
+      }
+
+      // 4. Type filter
+      if (travelTypeFilter !== 'all') {
+        if (travelTypeFilter === 'dropoff' && trip.tripType && trip.tripType !== 'dropoff') return false;
+        if (travelTypeFilter === 'return' && trip.tripType !== 'return') return false;
+        if (travelTypeFilter === 'coupling' && !trip.isJointTrip) return false;
+      }
+
+      return true;
+    });
+
+    // Sort by latest created date first
+    const sortedTrips = [...filteredTrips].sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || (a.requestedDate ? new Date(a.requestedDate).getTime() : 0);
+      const timeB = b.createdAt?.toMillis?.() || (b.requestedDate ? new Date(b.requestedDate).getTime() : 0);
+      return timeB - timeA;
+    });
+
+    // Summary calculations
+    const totalRecords = trips.length;
+    const completedCount = trips.filter(t => t.status === 'completed').length;
+    const activeCount = trips.filter(t => ['in_progress', 'driver_started', 'driver_ended', 'allocated'].includes(t.status)).length;
+    const pendingCount = trips.filter(t => t.status === 'pending').length;
+
+    const totalKM = trips.reduce((acc, t) => {
+      if (typeof t.startOdometer === 'number' && typeof t.endOdometer === 'number' && t.endOdometer >= t.startOdometer) {
+        return acc + (t.endOdometer - t.startOdometer);
+      }
+      return acc;
+    }, 0);
+
+    const filteredKM = sortedTrips.reduce((acc, t) => {
+      if (typeof t.startOdometer === 'number' && typeof t.endOdometer === 'number' && t.endOdometer >= t.startOdometer) {
+        return acc + (t.endOdometer - t.startOdometer);
+      }
+      return acc;
+    }, 0);
+
+    return (
+      <div className="space-y-6">
+        {/* Top Overview Cards Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Travel Records</p>
+                <p className="text-xl sm:text-2xl font-black text-white">{totalRecords}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Completed Trips</p>
+                <p className="text-xl sm:text-2xl font-black text-emerald-400">{completedCount}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Gauge className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Mileage (KM)</p>
+                <p className="text-xl sm:text-2xl font-black text-amber-300">{totalKM.toLocaleString()} KM</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-slate-800/80 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                <Clock3 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active & Pending</p>
+                <p className="text-xl sm:text-2xl font-black text-sky-300">{activeCount + pendingCount}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick CSV Export Banner - Styled matching Reports & Actions */}
+        <Card className="border border-emerald-500/30 bg-gradient-to-r from-[#06121e] via-[#09182a] to-[#06121e]">
+          <CardHeader className="pb-2 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div>
+              <CardTitle className="text-lg font-black text-white flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                <span>Travel Record Export & Reports Center</span>
+              </CardTitle>
+              <p className="text-xs text-slate-400 mt-1">Download complete travel logs and distance records directly in CSV format for official reporting.</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button 
+                onClick={() => handleExportCSV(7)} 
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 shadow-lg shadow-emerald-950/50 flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileDown className="w-4 h-4" />
+                Export 7-Day Travel Record (CSV)
+              </Button>
+
+              <Button 
+                onClick={() => handleExportCSV(30)} 
+                className="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-3.5 py-2 shadow-lg shadow-teal-950/50 flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileDown className="w-4 h-4" />
+                Export 30-Day Travel Record (CSV)
+              </Button>
+
+              <Button 
+                onClick={() => handleExportCSV(0)} 
+                className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-2 shadow-lg shadow-sky-950/50 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                Export All Records ({trips.length})
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Filters and Search Bar */}
+        <Card>
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
+              {/* Search Bar */}
+              <div className="md:col-span-5 relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search passenger, driver, vehicle, address or remarks..."
+                  value={travelSearchTerm}
+                  onChange={(e) => setTravelSearchTerm(e.target.value)}
+                  className="w-full bg-[#0a0f1d] border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+                {travelSearchTerm && (
+                  <button 
+                    onClick={() => setTravelSearchTerm('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="md:col-span-3">
+                <select
+                  value={travelStatusFilter}
+                  onChange={(e) => setTravelStatusFilter(e.target.value)}
+                  className="w-full bg-[#0a0f1d] border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="completed">Completed ✅</option>
+                  <option value="in_progress">In Progress 🚀</option>
+                  <option value="allocated">Allocated 🚕</option>
+                  <option value="driver_started">Driver Arrived 📍</option>
+                  <option value="driver_ended">Driver Ended 🏁</option>
+                  <option value="pending">Pending Request ⏳</option>
+                  <option value="cancelled">Cancelled ❌</option>
+                </select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="md:col-span-2">
+                <select
+                  value={travelDateFilter}
+                  onChange={(e) => setTravelDateFilter(e.target.value)}
+                  className="w-full bg-[#0a0f1d] border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last 90 Days</option>
+                </select>
+              </div>
+
+              {/* Export Filtered Results Button */}
+              <div className="md:col-span-2">
+                <Button
+                  onClick={() => handleExportCSV(0, sortedTrips)}
+                  variant="outline"
+                  className="w-full border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 text-xs font-bold py-2 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Filtered ({sortedTrips.length})</span>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Travel Records Master Table */}
+        <Card className="overflow-hidden border border-slate-800/80">
+          <CardHeader className="flex flex-row items-center justify-between py-3.5 bg-[#0a0f1d]">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span>All Travel Records Log</span>
+              </CardTitle>
+              <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                {sortedTrips.length} Records
+              </span>
+            </div>
+
+            {filteredKM > 0 && (
+              <span className="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+                Filtered Distance: {filteredKM.toLocaleString()} KM
+              </span>
+            )}
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {sortedTrips.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 space-y-3">
+                <FileSpreadsheet className="w-12 h-12 mx-auto text-slate-600 opacity-60" />
+                <p className="text-sm font-medium">No travel records match your search criteria.</p>
+                <button
+                  onClick={() => {
+                    setTravelSearchTerm('');
+                    setTravelStatusFilter('all');
+                    setTravelDateFilter('all');
+                    setTravelTypeFilter('all');
+                  }}
+                  className="text-xs font-bold text-emerald-400 hover:underline cursor-pointer"
+                >
+                  Reset Search & Filters
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm text-slate-200">
+                  <thead className="bg-[#0e1626] text-slate-400 text-[11px] uppercase font-mono border-b border-slate-800">
+                    <tr>
+                      <th className="py-3 px-3">Date & Time</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 px-3">Passenger</th>
+                      <th className="py-3 px-3">Driver & Vehicle</th>
+                      <th className="py-3 px-3">Route (Pickup → Dropoff)</th>
+                      <th className="py-3 px-3 text-center">Odometer (KM)</th>
+                      <th className="py-3 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-sans">
+                    {sortedTrips.map((t) => {
+                      const user = allUsers.find(u => (u.userId || u.id) === t.userId) || {};
+                      const driver = allUsers.find(d => (d.userId || d.id) === t.driverId) || {};
+                      const vehicle = vehicles.find(v => v.id === t.vehicleId) || {};
+
+                      const tripDateStr = t.requestedDate 
+                        ? `${t.requestedDate} ${t.requestedStartTime || ''}`
+                        : (t.createdAt?.toMillis ? new Date(t.createdAt.toMillis()).toLocaleString() : 'N/A');
+
+                      const startOdo = typeof t.startOdometer === 'number' ? t.startOdometer : null;
+                      const endOdo = typeof t.endOdometer === 'number' ? t.endOdometer : null;
+                      const distKM = (startOdo !== null && endOdo !== null && endOdo >= startOdo) ? (endOdo - startOdo) : null;
+
+                      // Status Badge Styling
+                      let statusBadge = (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                          {t.status}
+                        </span>
+                      );
+
+                      if (t.status === 'completed') {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-fit">
+                            <CheckCircle2 className="w-3 h-3" /> Completed
+                          </span>
+                        );
+                      } else if (t.status === 'in_progress' || t.status === 'driver_started') {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 w-fit animate-pulse">
+                            <Clock3 className="w-3 h-3 text-amber-400" /> {t.status === 'driver_started' ? 'At Pickup' : 'In Progress'}
+                          </span>
+                        );
+                      } else if (t.status === 'allocated') {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 w-fit">
+                            Allocated
+                          </span>
+                        );
+                      } else if (t.status === 'pending') {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 flex items-center gap-1 w-fit">
+                            Pending
+                          </span>
+                        );
+                      } else if (t.status === 'cancelled') {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1 w-fit">
+                            Cancelled
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3.5 px-3">
+                            <div className="font-semibold text-slate-100">{tripDateStr}</div>
+                            <div className="text-[10px] font-mono text-slate-500 flex items-center gap-1 mt-0.5">
+                              <span>ID: {t.id.slice(0, 8)}...</span>
+                              {t.tripType === 'return' && (
+                                <span className="bg-purple-500/20 text-purple-300 px-1.5 rounded text-[9px] font-bold">Round Trip</span>
+                              )}
+                              {t.isJointTrip && (
+                                <span className="bg-orange-500/20 text-orange-300 px-1.5 rounded text-[9px] font-bold">Joint</span>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-3">
+                            {statusBadge}
+                          </td>
+
+                          <td className="py-3.5 px-3">
+                            <div className="font-bold text-white">{t.passengerName || user.name || 'N/A'}</div>
+                            {user.department && (
+                              <div className="text-[10px] text-slate-400 font-mono">{user.department}</div>
+                            )}
+                            {Array.isArray(t.jointPassengers) && t.jointPassengers.length > 0 && (
+                              <div className="text-[10px] text-amber-400 font-medium mt-0.5">
+                                +{t.jointPassengers.length} Joint Passenger(s)
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-3">
+                            <div className="font-semibold text-slate-200">{t.driverName || driver.name || 'Unassigned'}</div>
+                            <div className="text-[11px] text-emerald-400 font-mono">
+                              {vehicle.registrationNumber || t.vehicleName || 'No Vehicle'}
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-3 max-w-xs">
+                            <div className="truncate text-slate-200" title={t.pickupAddress}>
+                              <span className="text-slate-400 font-semibold">From:</span> {t.pickupAddress}
+                            </div>
+                            <div className="truncate text-slate-300" title={t.tripType === 'return' ? t.returnLocations : t.dropoffAddress}>
+                              <span className="text-slate-400 font-semibold">To:</span> {t.tripType === 'return' ? t.returnLocations : t.dropoffAddress}
+                            </div>
+                            {t.remarks && (
+                              <div className="text-[10px] text-slate-400 italic truncate mt-0.5" title={t.remarks}>
+                                "{t.remarks}"
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-3 text-center font-mono">
+                            {distKM !== null ? (
+                              <div className="inline-block px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold">
+                                {distKM} KM
+                                <div className="text-[9px] text-slate-400 font-normal">
+                                  {startOdo} → {endOdo}
+                                </div>
+                              </div>
+                            ) : startOdo !== null ? (
+                              <div className="text-[11px] text-slate-400">
+                                Start: <span className="text-slate-200 font-bold">{startOdo} KM</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-600">-</span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-3 text-right">
+                            <button
+                              onClick={() => setSelectedTravelRecord(t)}
+                              className="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                              title="View Record Details"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-sky-400" />
+                              <span>View</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Selected Record Modal View */}
+        {selectedTravelRecord && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="bg-[#0e1626] border border-slate-700 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl p-6 space-y-4 text-white animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                    <span>Travel Record Details</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">ID: {selectedTravelRecord.id}</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedTravelRecord(null)}
+                  className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs sm:text-sm">
+                <div className="grid grid-cols-2 gap-3 bg-[#0a0f1d] p-3 rounded-xl border border-slate-800">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Passenger</span>
+                    <span className="font-bold text-white">{selectedTravelRecord.passengerName || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Status</span>
+                    <span className="font-extrabold text-amber-400 capitalize">{selectedTravelRecord.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Driver</span>
+                    <span className="font-semibold text-slate-200">{selectedTravelRecord.driverName || 'Unassigned'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Vehicle</span>
+                    <span className="font-semibold text-emerald-400">{selectedTravelRecord.vehicleName || 'Unassigned'}</span>
+                  </div>
+                </div>
+
+                <div className="bg-[#0a0f1d] p-3 rounded-xl border border-slate-800 space-y-2">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Pickup Location</span>
+                    <span className="font-medium text-slate-100">{selectedTravelRecord.pickupAddress}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Destination / Return Locations</span>
+                    <span className="font-medium text-slate-100">
+                      {selectedTravelRecord.tripType === 'return' ? selectedTravelRecord.returnLocations : selectedTravelRecord.dropoffAddress}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 bg-[#0a0f1d] p-3 rounded-xl border border-slate-800 text-center font-mono">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase block">Start ODO</span>
+                    <span className="font-bold text-white">{selectedTravelRecord.startOdometer ?? '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase block">End ODO</span>
+                    <span className="font-bold text-white">{selectedTravelRecord.endOdometer ?? '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase block">Distance</span>
+                    <span className="font-extrabold text-amber-300">
+                      {(typeof selectedTravelRecord.startOdometer === 'number' && typeof selectedTravelRecord.endOdometer === 'number')
+                        ? `${selectedTravelRecord.endOdometer - selectedTravelRecord.startOdometer} KM`
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedTravelRecord.remarks && (
+                  <div className="bg-[#0a0f1d] p-3 rounded-xl border border-slate-800">
+                    <span className="text-slate-400 text-[10px] uppercase font-mono block">Remarks / Purpose</span>
+                    <p className="text-slate-300 italic mt-0.5">{selectedTravelRecord.remarks}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <Button
+                  onClick={() => handleExportCSV(0, [selectedTravelRecord])}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export This Record (CSV)</span>
+                </Button>
+                <Button
+                  onClick={() => setSelectedTravelRecord(null)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -3580,10 +4213,10 @@ export default function AdminDashboard() {
       {renderNewsBar()}
 
       {/* Dynamic Segmented Navigation Tabs */}
-      <div className="flex border-b border-white/5 mb-6 gap-6 relative z-10">
+      <div className="flex border-b border-white/5 mb-6 gap-6 relative z-10 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('dispatch')}
-          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
             activeTab === 'dispatch' 
               ? 'border-sky-500 text-sky-400 font-extrabold' 
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
@@ -3593,8 +4226,19 @@ export default function AdminDashboard() {
           Dispatch Board
         </button>
         <button 
+          onClick={() => setActiveTab('travel_records')}
+          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+            activeTab === 'travel_records' 
+              ? 'border-emerald-500 text-emerald-400 font-extrabold' 
+              : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          Travel Records
+        </button>
+        <button 
           onClick={() => setActiveTab('fuel')}
-          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
             activeTab === 'fuel' 
               ? 'border-orange-500 text-orange-400 font-extrabold' 
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
@@ -3605,7 +4249,7 @@ export default function AdminDashboard() {
         </button>
         <button 
           onClick={() => setActiveTab('compliance')}
-          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
             activeTab === 'compliance' 
               ? 'border-rose-500 text-rose-450 font-extrabold' 
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
@@ -3625,11 +4269,9 @@ export default function AdminDashboard() {
               <CardTitle>Reports & Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button onClick={() => handleExportCSV(7)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-1">
-                Export 7-Day Travel Record (CSV)
-              </Button>
-              <Button onClick={() => handleExportCSV(30)} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
-                Export 30-Day Travel Record (CSV)
+              <Button onClick={() => handleExportCSV(0)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-1 flex items-center justify-center gap-2">
+                <Download className="w-4 h-4" />
+                <span>Download Travel Records (CSV)</span>
               </Button>
               <Button onClick={handleClearData} className="w-full bg-orange-600 hover:bg-orange-700 text-white" variant="destructive">
                 Reset Operations Data
@@ -4224,6 +4866,10 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
+      ) : activeTab === 'travel_records' ? (
+        <div className="animate-in fade-in duration-300">
+          {renderTravelRecords()}
+        </div>
       ) : activeTab === 'fuel' ? (
         <div className="animate-in fade-in duration-300">
           {renderFuelDashboard()}
