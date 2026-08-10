@@ -1586,6 +1586,51 @@ export default function AdminDashboard() {
         allocatedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+
+      // Send SMS notification to USER / PASSENGER if phone exists
+      const tripDoc = pendingTrips.find(t => t.id === tripId);
+      const passengerUser = allUsers.find(u => u.userId === tripDoc?.userId || u.id === tripDoc?.userId);
+      const userPhone = tripDoc?.passengerPhone || tripDoc?.phone || passengerUser?.phone || passengerUser?.mobile;
+
+      if (userPhone) {
+        try {
+          const smsRes = await fetch("/api/sms/send-booking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: userPhone,
+              booking: {
+                refNo: tripId.slice(0, 8).toUpperCase(),
+                passenger: tripDoc?.passengerName || passengerUser?.name || "Passenger",
+                from: tripDoc?.pickupAddress || "Pickup",
+                to: tripDoc?.dropoffAddress || tripDoc?.returnLocations || "Destination",
+                date: tripDoc?.requestedDate || "",
+                time: tripDoc?.requestedStartTime || "",
+                vehicleNo: vehicle?.registrationNumber || "Vehicle",
+                driverName: driver?.name || "Driver",
+                driverPhone: driver?.phone || ""
+              }
+            })
+          });
+          const smsData = await smsRes.json();
+          if (smsData.ok) {
+            await updateDoc(doc(db, 'trips', tripId), {
+              smsUid: smsData.smsUid || null,
+              smsSentAt: serverTimestamp()
+            });
+          } else {
+            await updateDoc(doc(db, 'trips', tripId), {
+              smsError: smsData.error || 'SMS failed'
+            });
+          }
+        } catch (err: any) {
+          console.error("SMS failed:", err?.message || err);
+          await updateDoc(doc(db, 'trips', tripId), {
+            smsError: err?.message || 'SMS request error'
+          });
+        }
+      }
+
       toast.success('Trip assigned to driver');
       setAllocatingTrip(null);
       setSelectedDriver('');

@@ -2,11 +2,46 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
+// @ts-ignore
+import { sendSms, bookingMsg } from "./server/sms.js";
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const httpServer = http.createServer(app);
+
+  app.use(express.json());
+
+  // API endpoint for sending SMS for confirmed bookings to passenger/user
+  app.post("/api/sms/send-booking", async (req, res) => {
+    try {
+      const { phone, booking } = req.body;
+      const mobile = phone || booking?.passengerPhone || booking?.userPhone || booking?.phone;
+
+      if (!mobile) {
+        return res.status(400).json({ ok: false, error: "Passenger mobile number is required" });
+      }
+
+      const formattedBooking = {
+        refNo: booking?.refNo || booking?.id || "N/A",
+        passenger: booking?.passenger || booking?.passengerName || "Passenger",
+        from: booking?.from || booking?.pickupAddress || "Pickup",
+        to: booking?.to || booking?.dropoffAddress || booking?.returnLocations || "Destination",
+        date: booking?.date || booking?.requestedDate || "",
+        time: booking?.time || booking?.requestedStartTime || "",
+        vehicleNo: booking?.vehicleNo || booking?.vehicleName || "Vehicle",
+        driverName: booking?.driverName || "",
+        driverPhone: booking?.driverPhone || ""
+      };
+
+      const messageText = bookingMsg(formattedBooking);
+      const result = await sendSms(mobile, messageText);
+      return res.json({ ok: true, result, smsUid: result?.uid || null, smsSentAt: new Date() });
+    } catch (err: any) {
+      console.error("SMS failed:", err?.message || err);
+      return res.status(500).json({ ok: false, error: err?.message || "SMS sending failed" });
+    }
+  });
 
   // Determine if we are running in development mode (e.g. via dev script or typescript server directly)
   const isDev = process.env.NODE_ENV !== "production" && !process.argv.some(arg => arg.includes("server.cjs")) || process.argv.some(arg => arg.includes("server.ts"));

@@ -665,6 +665,7 @@ export default function UserDashboard() {
         userId: profile!.userId,
         passengerName: profile?.name?.trim() || profile?.email?.split('@')[0] || 'Unknown User',
         passengerDepartment: profile?.department || '',
+        passengerPhone: profile?.phone || '',
         status: 'pending',
         pickupAddress,
         tripType,
