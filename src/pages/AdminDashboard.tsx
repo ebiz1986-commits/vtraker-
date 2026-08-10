@@ -374,6 +374,58 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
     if (trip.endOdometer !== undefined) setMidEndOdo(String(trip.endOdometer));
   }, [trip.driverId, trip.vehicleId, trip.startOdometer, trip.endOdometer]);
 
+  const [sendingSms, setSendingSms] = useState(false);
+
+  const handleResendSms = async () => {
+    const userPhone = trip.passengerPhone || trip.phone || passengerUser?.phone || passengerUser?.mobile;
+    if (!userPhone) {
+      toast.error("Passenger has no phone number registered.");
+      return;
+    }
+    setSendingSms(true);
+    try {
+      const vehicleDoc = vehicles.find((v: any) => v.id === (midVehicleId || trip.vehicleId));
+      const currentDriver = drivers.find((d: any) => (d.userId || d.id) === (midDriverId || trip.driverId));
+      
+      const smsRes = await fetch("/api/sms/send-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: userPhone,
+          booking: {
+            refNo: trip.id.slice(0, 8).toUpperCase(),
+            passenger: trip.passengerName || passengerUser?.name || "Passenger",
+            from: trip.pickupAddress || "Pickup",
+            to: destination || "Destination",
+            date: trip.requestedDate || "",
+            time: trip.requestedStartTime || "",
+            vehicleNo: vehicleDoc?.registrationNumber || trip.vehicleName || "Vehicle",
+            driverName: currentDriver?.name || trip.driverName || "Driver",
+            driverPhone: currentDriver?.phone || trip.driverPhone || ""
+          }
+        })
+      });
+      const smsData = await smsRes.json();
+      if (smsData.ok) {
+        toast.success(`SMS sent to passenger (${userPhone})`);
+        await updateDoc(doc(db, 'trips', trip.id), {
+          smsUid: smsData.smsUid || null,
+          smsSentAt: serverTimestamp(),
+          smsError: null
+        });
+      } else {
+        toast.error(`SMS Error: ${smsData.error || 'Failed'}`);
+        await updateDoc(doc(db, 'trips', trip.id), {
+          smsError: smsData.error || 'SMS failed'
+        });
+      }
+    } catch (err: any) {
+      toast.error(`SMS error: ${err.message || err}`);
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
   const handleDriverMidSwap = async () => {
     if (!midDriverId) {
       toast.error("Please pick a driver to swap to.");
@@ -607,15 +659,49 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-4 mb-4">
               
               {/* Box 1: Trip & Passenger Details */}
-              <div className="bg-[#0f172a] border border-[#1e293b] p-3.5 rounded-lg shadow-inner">
-                <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1 font-sans">
-                  👤 Passenger Details
-                </h4>
-                <div className="space-y-1.5 text-xs text-slate-300 font-sans">
-                  <p><span className="text-slate-500 font-medium">Name:</span> <span className="text-slate-100 font-semibold">{trip.passengerName || passengerUser?.name || 'N/A'}</span></p>
-                  <p><span className="text-slate-500 font-medium">Department:</span> <span className="text-slate-100">{trip.passengerDepartment || passengerUser?.department || 'N/A'}</span></p>
-                  <p><span className="text-slate-500 font-medium font-sans">Contact:</span> <span className="text-blue-300 font-mono select-all font-semibold">{passengerUser?.phone || 'N/A'}</span></p>
-                  {trip.passengerCount && <p><span className="text-slate-500 font-medium font-sans font-sans">Group Size:</span> <span className="text-slate-100">{trip.passengerCount} pax</span></p>}
+              <div className="bg-[#0f172a] border border-[#1e293b] p-3.5 rounded-lg shadow-inner flex flex-col justify-between">
+                <div>
+                  <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1 font-sans">
+                    👤 Passenger Details
+                  </h4>
+                  <div className="space-y-1.5 text-xs text-slate-300 font-sans">
+                    <p><span className="text-slate-500 font-medium">Name:</span> <span className="text-slate-100 font-semibold">{trip.passengerName || passengerUser?.name || 'N/A'}</span></p>
+                    <p><span className="text-slate-500 font-medium">Department:</span> <span className="text-slate-100">{trip.passengerDepartment || passengerUser?.department || 'N/A'}</span></p>
+                    <p><span className="text-slate-500 font-medium font-sans">Contact:</span> <span className="text-blue-300 font-mono select-all font-semibold">{trip.passengerPhone || passengerUser?.phone || 'N/A'}</span></p>
+                    {trip.passengerCount && <p><span className="text-slate-500 font-medium font-sans">Group Size:</span> <span className="text-slate-100">{trip.passengerCount} pax</span></p>}
+                  </div>
+                </div>
+
+                <div className="pt-2.5 border-t border-slate-800/80 mt-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SMS Status</span>
+                    {trip.smsSentAt ? (
+                      <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                        Sent ({trip.smsUid ? `UID: ${trip.smsUid}` : 'OK'})
+                      </span>
+                    ) : trip.smsError ? (
+                      <span className="text-[10px] font-extrabold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded" title={String(trip.smsError)}>
+                        Failed
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                        Not Sent
+                      </span>
+                    )}
+                  </div>
+                  {trip.smsError && (
+                    <p className="text-[10px] text-red-400/90 bg-red-950/40 p-1.5 rounded border border-red-900/40 break-words">
+                      Error: {String(trip.smsError)}
+                    </p>
+                  )}
+                  <button
+                    onClick={handleResendSms}
+                    disabled={sendingSms}
+                    className="w-full py-1.5 px-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                  >
+                    {sendingSms ? <Clock3 className="w-3.5 h-3.5 animate-spin" /> : <Megaphone className="w-3.5 h-3.5" />}
+                    {trip.smsSentAt ? 'Resend SMS to Passenger' : 'Send SMS to Passenger'}
+                  </button>
                 </div>
               </div>
 
@@ -1083,6 +1169,54 @@ export default function AdminDashboard() {
 
   // Normal flow config state
   const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
+
+  // SMS Gateway Test State
+  const [testSmsPhone, setTestSmsPhone] = useState('');
+  const [testSmsMessage, setTestSmsMessage] = useState('Sanken Admin: Your booking confirmation test notification.');
+  const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+  const [testSmsResult, setTestSmsResult] = useState<any>(null);
+
+  const handleSendTestSms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testSmsPhone.trim()) {
+      toast.error("Please enter a mobile phone number.");
+      return;
+    }
+    setIsSendingTestSms(true);
+    setTestSmsResult(null);
+    try {
+      const res = await fetch("/api/sms/send-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: testSmsPhone,
+          booking: {
+            refNo: "TEST-" + Math.floor(1000 + Math.random() * 9000),
+            passenger: "Test Passenger",
+            from: "Sanken HQ",
+            to: "Site Office",
+            date: new Date().toISOString().split('T')[0],
+            time: "09:30 AM",
+            vehicleNo: "WP CAB-9999",
+            driverName: "Duty Driver",
+            driverPhone: "0771234567"
+          }
+        })
+      });
+      const data = await res.json();
+      setTestSmsResult(data);
+      if (data.ok) {
+        toast.success(`Test SMS sent successfully to ${testSmsPhone}!`);
+      } else {
+        toast.error(`SMS Failed: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      toast.error(`Request failed: ${err.message || err}`);
+      setTestSmsResult({ ok: false, error: err.message || 'Request failed' });
+    } finally {
+      setIsSendingTestSms(false);
+    }
+  };
 
   useEffect(() => {
     const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
@@ -4594,6 +4728,76 @@ export default function AdminDashboard() {
                     ))
                   )}
                 </ul>
+            </CardContent>
+          </Card>
+
+          {/* SMS Gateway (Text.lk) Testing Card */}
+          <Card className="border-blue-500/20 bg-[#0d1527]">
+            <CardHeader className="pb-3 border-b border-slate-800">
+              <CardTitle className="text-blue-400 flex items-center justify-between text-base font-bold">
+                <span className="flex items-center gap-2">
+                  <Megaphone className="w-5 h-5 text-blue-400" />
+                  SMS Gateway (Text.lk)
+                </span>
+                <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded font-mono font-bold">
+                  Passenger SMS Active
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-lg text-xs space-y-1.5">
+                <p className="font-bold text-slate-200">ℹ️ How Passenger SMS Works:</p>
+                <p className="text-slate-400 leading-relaxed">
+                  When an Admin allocates a vehicle and driver to a trip, an SMS confirmation is sent directly to the <strong className="text-blue-300">Passenger&apos;s Mobile Number</strong> via Text.lk.
+                </p>
+                <p className="text-slate-400 text-[11px]">
+                  Supports local formats: <code className="text-amber-300 bg-black/40 px-1 rounded">0771234567</code>, <code className="text-amber-300 bg-black/40 px-1 rounded">+94771234567</code>, or <code className="text-amber-300 bg-black/40 px-1 rounded">94771234567</code>.
+                </p>
+              </div>
+
+              <form onSubmit={handleSendTestSms} className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300">Test SMS Recipient Mobile Number</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 0771234567 or +94771234567"
+                    value={testSmsPhone}
+                    onChange={e => setTestSmsPhone(e.target.value)}
+                    className="w-full mt-1 p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSendingTestSms}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  {isSendingTestSms ? (
+                    <>
+                      <Clock3 className="w-4 h-4 animate-spin" />
+                      <span>Sending Test SMS via Text.lk...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Megaphone className="w-4 h-4" />
+                      <span>Send Test SMS to Passenger Mobile</span>
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {testSmsResult && (
+                <div className={`p-3 rounded-lg text-xs border font-mono ${testSmsResult.ok ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-300' : 'bg-red-950/40 border-red-800/80 text-red-300'}`}>
+                  <p className="font-bold mb-1 flex items-center gap-1.5">
+                    {testSmsResult.ok ? '✅ Test SMS Gateway Result: Success' : '❌ Test SMS Gateway Result: Error'}
+                  </p>
+                  <pre className="text-[10px] whitespace-pre-wrap overflow-x-auto bg-black/40 p-2 rounded border border-white/5 mt-1.5">
+                    {JSON.stringify(testSmsResult, null, 2)}
+                  </pre>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

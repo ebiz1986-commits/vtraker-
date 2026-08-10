@@ -8,7 +8,7 @@ import { collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, upd
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { sendPushNotification } from '../lib/utils';
-import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert } from 'lucide-react';
+import { ChevronDown, ArrowRight, MapPin, Clock, Car, Calendar, Crosshair, Users, Minus, Plus, Navigation, Edit, Check, X, ShieldAlert, Phone, Smartphone } from 'lucide-react';
 import { TripItemSkeleton } from '../components/ui/Skeleton';
 
 const UserTripItem = ({ 
@@ -364,11 +364,13 @@ export default function UserDashboard() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [tempProfileName, setTempProfileName] = useState('');
   const [tempProfileDept, setTempProfileDept] = useState('');
+  const [tempProfilePhone, setTempProfilePhone] = useState('');
 
   useEffect(() => {
     if (profile) {
       setTempProfileName(profile.name || '');
       setTempProfileDept(profile.department || '');
+      setTempProfilePhone(profile.phone || '');
     }
   }, [profile]);
 
@@ -381,7 +383,8 @@ export default function UserDashboard() {
       const userDocRef = doc(db, 'users', profile!.userId);
       await updateDoc(userDocRef, {
         name: tempProfileName.trim(),
-        department: tempProfileDept.trim()
+        department: tempProfileDept.trim(),
+        phone: tempProfilePhone.trim()
       });
       setIsEditingProfile(false);
       toast.success("Profile saved successfully!");
@@ -993,7 +996,7 @@ export default function UserDashboard() {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Name</label>
                       <input
@@ -1012,6 +1015,19 @@ export default function UserDashboard() {
                         onChange={(e) => setTempProfileDept(e.target.value)}
                         className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
                         placeholder="Your Department"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between">
+                        <span>Mobile (For SMS)</span>
+                        <span className="text-[9px] text-blue-400 font-normal">Text.lk</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={tempProfilePhone}
+                        onChange={(e) => setTempProfilePhone(e.target.value)}
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium font-mono"
+                        placeholder="e.g. 0771234567"
                       />
                     </div>
                   </div>
@@ -1044,7 +1060,7 @@ export default function UserDashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-baseline gap-2 flex-wrap">
                       <h3 className="text-lg font-bold text-slate-100">
                         {profile.name}
                       </h3>
@@ -1052,9 +1068,25 @@ export default function UserDashboard() {
                         <span className="text-xs text-slate-400 font-medium">({profile.department})</span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal">
+
+                    {profile.phone ? (
+                      <div className="flex items-center gap-2 text-xs text-blue-300 font-mono font-medium pt-0.5">
+                        <Smartphone className="w-3.5 h-3.5 text-blue-400" />
+                        <span>{profile.phone}</span>
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded font-sans">
+                          SMS Enabled
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium pt-0.5">
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>No mobile phone set. Click &apos;Edit Profile&apos; to add one for SMS alerts.</span>
+                      </div>
+                    )}
+
+                    <p className="text-[11px] text-slate-400 leading-normal pt-0.5">
                       {isPinLikeName(profile.name || '') 
-                        ? "Please click 'Edit Name' to set your real passenger name for drivers and admins."
+                        ? "Please click 'Edit Profile' to set your real passenger name & mobile number for SMS notifications."
                         : `Credential code: ${profile.email?.split('@')[0] || 'N/A'}`
                       }
                     </p>
@@ -1065,13 +1097,14 @@ export default function UserDashboard() {
                     onClick={() => {
                       setTempProfileName(profile.name || '');
                       setTempProfileDept(profile.department || '');
+                      setTempProfilePhone(profile.phone || '');
                       setIsEditingProfile(true);
                     }}
                     className={`text-xs gap-1.5 shrink-0 select-none py-1.5 px-3 rounded-lg border-white/10 text-slate-300 hover:text-white hover:bg-white/5 border ${
                       isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
                     }`}
                   >
-                    <Edit className="w-3.5 h-3.5" /> Edit Name
+                    <Edit className="w-3.5 h-3.5" /> Edit Profile
                   </Button>
                 </div>
               )}
