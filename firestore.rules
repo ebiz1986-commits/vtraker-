@@ -211,7 +211,9 @@ service cloud.firestore {
     
     match /settings/{settingsId} {
       function isValidSettings(data) {
-        return (!('normal' in data) || (data.normal is bool));
+        return (!('normal' in data) || (data.normal is bool))
+          && (!('smsSenderId' in data) || (data.smsSenderId is string && data.smsSenderId.size() <= 100))
+          && (!('smsApiKey' in data) || (data.smsApiKey is string && data.smsApiKey.size() <= 200));
       }
 
       allow read: if isSignedIn();

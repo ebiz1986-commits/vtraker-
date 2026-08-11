@@ -14,28 +14,37 @@ export function toLK(raw) {
   return null; // bad number
 }
 
-export async function sendSms(phone, text) {
-  if (process.env.TEXTLK_ENABLED !== "true") return null;
+export async function sendSms(phone, text, customSenderId, customApiKey) {
+  const apiKey = customApiKey || process.env.TEXTLK_API_KEY || "6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a";
+  const senderId = customSenderId || process.env.TEXTLK_SENDER_ID || "NotifyDEMO";
+
+  if (!apiKey) throw new Error("Text.lk API token is missing.");
 
   const recipient = toLK(phone);
-  if (!recipient) throw new Error("Invalid number: " + phone);
+  if (!recipient) throw new Error("Invalid mobile number: " + phone);
 
   const res = await fetch(API, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.TEXTLK_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       Accept: "application/json"
     },
     body: JSON.stringify({
       recipient,
-      sender_id: process.env.TEXTLK_SENDER_ID,
+      sender_id: senderId,
       type: "plain",
       message: text
     })
   });
 
   const data = await res.json();
-  if (data.status !== "success") throw new Error(data.message || "SMS failed");
-  return data.data; // uid, status, cost, sms_count
+  if (data.status !== "success" && !data.ok) {
+    const rawError = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : "SMS failed");
+    if (rawError.includes("not authorized") || rawError.includes("Sender ID")) {
+      throw new Error(`Sender ID "${senderId}" is not authorized on your Text.lk account. Please enter your registered Sender Name in Admin Settings.`);
+    }
+    throw new Error(rawError);
+  }
+  return data.data || data; // uid, status, cost, sms_count
 }

@@ -15,7 +15,7 @@ async function startServer() {
   // API endpoint for sending SMS for confirmed bookings to passenger/user
   app.post("/api/sms/send-booking", async (req, res) => {
     try {
-      const { phone, booking } = req.body;
+      const { phone, booking, senderId, apiKey } = req.body;
       const mobile = phone || booking?.passengerPhone || booking?.userPhone || booking?.phone;
 
       if (!mobile) {
@@ -35,7 +35,7 @@ async function startServer() {
       };
 
       const messageText = bookingMsg(formattedBooking);
-      const result = await sendSms(mobile, messageText);
+      const result = await sendSms(mobile, messageText, senderId, apiKey);
       return res.json({ ok: true, result, smsUid: result?.uid || null, smsSentAt: new Date() });
     } catch (err: any) {
       console.error("SMS failed:", err?.message || err);

@@ -1170,11 +1170,34 @@ export default function AdminDashboard() {
   // Normal flow config state
   const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
 
-  // SMS Gateway Test State
+  // SMS Gateway Configuration and Test State
+  const [smsSenderId, setSmsSenderId] = useState('NotifyDEMO');
+  const [smsApiKey, setSmsApiKey] = useState('6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a');
+  const [isSavingSmsSettings, setIsSavingSmsSettings] = useState(false);
   const [testSmsPhone, setTestSmsPhone] = useState('');
   const [testSmsMessage, setTestSmsMessage] = useState('Sanken Admin: Your booking confirmation test notification.');
   const [isSendingTestSms, setIsSendingTestSms] = useState(false);
   const [testSmsResult, setTestSmsResult] = useState<any>(null);
+
+  const handleSaveSmsSettings = async () => {
+    if (!smsSenderId.trim()) {
+      toast.error("Please enter a valid Text.lk Sender ID.");
+      return;
+    }
+    setIsSavingSmsSettings(true);
+    try {
+      await setDoc(doc(db, 'settings', 'system'), {
+        smsSenderId: smsSenderId.trim(),
+        smsApiKey: smsApiKey.trim()
+      }, { merge: true });
+      toast.success("SMS Gateway settings saved successfully!");
+    } catch (err: any) {
+      console.error("Failed to save SMS settings:", err);
+      toast.error("Failed to save SMS gateway settings.");
+    } finally {
+      setIsSavingSmsSettings(false);
+    }
+  };
 
   const handleSendTestSms = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1190,6 +1213,8 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: testSmsPhone,
+          senderId: smsSenderId,
+          apiKey: smsApiKey,
           booking: {
             refNo: "TEST-" + Math.floor(1000 + Math.random() * 9000),
             passenger: "Test Passenger",
@@ -1221,7 +1246,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     const unsubSettings = onSnapshot(doc(db, 'settings', 'system'), (snap) => {
       if (snap.exists()) {
-        setIsNormalFlow(snap.data().normal !== false);
+        const data = snap.data();
+        setIsNormalFlow(data.normal !== false);
+        if (data.smsSenderId) setSmsSenderId(data.smsSenderId);
+        if (data.smsApiKey) setSmsApiKey(data.smsApiKey);
       } else {
         setIsNormalFlow(true);
       }
@@ -1733,6 +1761,8 @@ export default function AdminDashboard() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               phone: userPhone,
+              senderId: smsSenderId,
+              apiKey: smsApiKey,
               booking: {
                 refNo: tripId.slice(0, 8).toUpperCase(),
                 passenger: tripDoc?.passengerName || passengerUser?.name || "Passenger",
@@ -4731,13 +4761,13 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* SMS Gateway (Text.lk) Testing Card */}
+          {/* SMS Gateway (Text.lk) Testing & Config Card */}
           <Card className="border-blue-500/20 bg-[#0d1527]">
             <CardHeader className="pb-3 border-b border-slate-800">
               <CardTitle className="text-blue-400 flex items-center justify-between text-base font-bold">
                 <span className="flex items-center gap-2">
                   <Megaphone className="w-5 h-5 text-blue-400" />
-                  SMS Gateway (Text.lk)
+                  SMS Gateway (Text.lk) Configuration
                 </span>
                 <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded font-mono font-bold">
                   Passenger SMS Active
@@ -4745,26 +4775,86 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
-              <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-lg text-xs space-y-1.5">
-                <p className="font-bold text-slate-200">ℹ️ How Passenger SMS Works:</p>
-                <p className="text-slate-400 leading-relaxed">
-                  When an Admin allocates a vehicle and driver to a trip, an SMS confirmation is sent directly to the <strong className="text-blue-300">Passenger&apos;s Mobile Number</strong> via Text.lk.
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs space-y-1 text-amber-200">
+                <p className="font-bold flex items-center gap-1 text-amber-300">
+                  <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+                  Important Text.lk Sender ID Instructions:
                 </p>
-                <p className="text-slate-400 text-[11px]">
-                  Supports local formats: <code className="text-amber-300 bg-black/40 px-1 rounded">0771234567</code>, <code className="text-amber-300 bg-black/40 px-1 rounded">+94771234567</code>, or <code className="text-amber-300 bg-black/40 px-1 rounded">94771234567</code>.
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  If Text.lk returns <code className="text-rose-300 bg-black/40 px-1 rounded">Sender ID is not authorized</code>, check your <strong>Text.lk Dashboard → Sender IDs (Masks)</strong> and copy your exact registered Sender Name (e.g. <code className="text-emerald-300 bg-black/40 px-1 rounded">NotifyDEMO</code>, <code className="text-emerald-300 bg-black/40 px-1 rounded">Text.lk</code>, or <code className="text-emerald-300 bg-black/40 px-1 rounded">SANKEN</code>) into the box below.
                 </p>
               </div>
 
-              <form onSubmit={handleSendTestSms} className="space-y-3">
+              {/* Gateway Settings Form */}
+              <div className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                  <span>Text.lk Credentials</span>
+                  <span className="text-[10px] text-blue-400 font-normal">Saved globally for trip alerts</span>
+                </h4>
+
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                      Text.lk Sender ID / Mask Name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. NotifyDEMO, Text.lk, or SANKEN"
+                      value={smsSenderId}
+                      onChange={e => setSmsSenderId(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Enter the exact Mask Name / Sender ID registered on your Text.lk account.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                      Text.lk API Token <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="6538|xckoN5D..."
+                      value={smsApiKey}
+                      onChange={e => setSmsApiKey(e.target.value)}
+                      className="w-full p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveSmsSettings}
+                    disabled={isSavingSmsSettings || !smsSenderId.trim()}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 mt-1 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    {isSavingSmsSettings ? (
+                      <Clock3 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    Save Text.lk Settings
+                  </Button>
+                </div>
+              </div>
+
+              {/* Test SMS Form */}
+              <form onSubmit={handleSendTestSms} className="space-y-3 pt-2 border-t border-slate-800">
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Test SMS Gateway
+                </h4>
                 <div>
-                  <label className="text-xs font-semibold text-slate-300">Test SMS Recipient Mobile Number</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Test Recipient Mobile Number</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. 0771234567 or +94771234567"
                     value={testSmsPhone}
                     onChange={e => setTestSmsPhone(e.target.value)}
-                    className="w-full mt-1 p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
+                    className="w-full p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -4782,7 +4872,7 @@ export default function AdminDashboard() {
                   ) : (
                     <>
                       <Megaphone className="w-4 h-4" />
-                      <span>Send Test SMS to Passenger Mobile</span>
+                      <span>Send Test SMS to Mobile</span>
                     </>
                   )}
                 </Button>
