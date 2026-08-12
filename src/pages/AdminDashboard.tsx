@@ -354,7 +354,7 @@ const AdminPendingTripItem = ({
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCancelTrip, allUsers, index = 0, vehicles = [] }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCancelTrip, allUsers, index = 0, vehicles = [], smsSenderId, smsApiKey }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
@@ -392,6 +392,8 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: userPhone,
+          senderId: smsSenderId,
+          apiKey: smsApiKey,
           booking: {
             refNo: trip.id.slice(0, 8).toUpperCase(),
             passenger: trip.passengerName || passengerUser?.name || "Passenger",
@@ -5099,6 +5101,8 @@ export default function AdminDashboard() {
                                   allUsers={allUsers}
                                   index={idx}
                                   vehicles={vehicles}
+                                  smsSenderId={smsSenderId}
+                                  smsApiKey={smsApiKey}
                                 />
                               ))}
                             </div>

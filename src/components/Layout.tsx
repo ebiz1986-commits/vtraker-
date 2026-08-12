@@ -5,15 +5,17 @@ import { useTheme } from '../contexts/ThemeContext';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/Button';
-import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass, LogOut, Volume2 } from 'lucide-react';
+import { Download, Menu, Bell, CheckCheck, Trash2, Inbox, Sun, Moon, Compass, LogOut, Volume2, Music, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { InstallPWA } from './InstallPWA';
 import { SankenLogo } from './SankenLogo';
+import { SOUND_PRESETS, SoundPreset } from '../lib/utils';
 
 export default function Layout({ children, title }: { children: React.ReactNode, title: string }) {
   const { profile } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, testSound } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, testSound, soundPreset, changeSoundPreset } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSoundSelector, setShowSoundSelector] = useState(false);
   const [isInstallOpen, setIsInstallOpen] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -113,12 +115,16 @@ export default function Layout({ children, title }: { children: React.ReactNode,
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button 
-                      onClick={testSound} 
-                      className="p-1 px-2 rounded text-[11px] font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 transition-all flex items-center gap-1 cursor-pointer"
-                      title="Test loud sound alert"
+                      onClick={() => setShowSoundSelector(!showSoundSelector)} 
+                      className={`p-1 px-2 rounded text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                        showSoundSelector 
+                          ? 'text-blue-300 bg-blue-500/30 border border-blue-500/50' 
+                          : 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30'
+                      }`}
+                      title="Change notification alert sound tone"
                     >
                       <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                      <span>Test Sound 🔊</span>
+                      <span>Sound Tone 🎵</span>
                     </button>
                     {notifications.length > 0 && (
                       <>
@@ -142,6 +148,68 @@ export default function Layout({ children, title }: { children: React.ReactNode,
                     )}
                   </div>
                 </div>
+
+                {/* Sound Selector Accordion Drawer */}
+                {showSoundSelector && (
+                  <div className="p-3 bg-[#0a0f1d] border-b border-blue-500/30 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1">
+                        <Music className="w-3.5 h-3.5 text-amber-400" />
+                        Select Alert Sound Tone:
+                      </span>
+                      <button
+                        onClick={() => testSound()}
+                        className="text-[10px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30"
+                      >
+                        Test Active Tone 🔊
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                      {SOUND_PRESETS.map((presetOption) => {
+                        const isSelected = soundPreset === presetOption.id;
+                        return (
+                          <div
+                            key={presetOption.id}
+                            onClick={() => changeSoundPreset(presetOption.id as SoundPreset)}
+                            className={`p-2 rounded-lg border text-left cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                              isSelected
+                                ? 'bg-blue-600/20 border-blue-500 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                                : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm shrink-0">{presetOption.icon}</span>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold leading-tight flex items-center gap-1.5">
+                                  <span>{presetOption.name}</span>
+                                  {isSelected && (
+                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 border border-blue-400/40">
+                                      Active
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-[10px] text-slate-400 truncate">{presetOption.desc}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                testSound(presetOption.id as SoundPreset);
+                              }}
+                              className="px-2 py-1 rounded bg-white/5 hover:bg-amber-500/20 text-amber-300 border border-white/10 hover:border-amber-500/30 text-[10px] font-bold shrink-0 transition-colors"
+                              title="Preview this sound"
+                            >
+                              Play ▶
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="max-h-[350px] overflow-y-auto divide-y divide-white/5">
                   {notifications.length === 0 ? (

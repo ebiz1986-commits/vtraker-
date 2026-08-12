@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { sendPushNotification, playNotificationSound } from '../lib/utils';
+import { sendPushNotification, playNotificationSound, getNotificationSoundPreset, setNotificationSoundPreset, SOUND_PRESETS, SoundPreset } from '../lib/utils';
 import { toast } from 'sonner';
-import { Volume2, BellRing, X, CheckCircle, AlertTriangle, Info, Check } from 'lucide-react';
+import { Volume2, BellRing, X, CheckCircle, AlertTriangle, Info, Check, Music } from 'lucide-react';
 
 export interface NotificationItem {
   id: string;
@@ -21,17 +21,21 @@ interface NotificationContextType {
   notifications: NotificationItem[];
   unreadCount: number;
   activeAlert: NotificationItem | null;
+  soundPreset: SoundPreset;
+  changeSoundPreset: (preset: SoundPreset) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
   dismissAlert: () => void;
-  testSound: () => void;
+  testSound: (customPreset?: SoundPreset) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
   unreadCount: 0,
   activeAlert: null,
+  soundPreset: 'dispatch_chime',
+  changeSoundPreset: () => {},
   markAsRead: () => {},
   markAllAsRead: () => {},
   clearAll: () => {},
@@ -416,6 +420,18 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     toast.success("Notification history cleared.");
   };
 
+  const [soundPreset, setSoundPreset] = useState<SoundPreset>(() => getNotificationSoundPreset());
+
+  const changeSoundPreset = (preset: SoundPreset) => {
+    setSoundPreset(preset);
+    setNotificationSoundPreset(preset);
+    playNotificationSound(preset);
+    const found = SOUND_PRESETS.find(p => p.id === preset);
+    toast.success(`Notification Sound updated to: ${found?.name || preset}`, {
+      description: "Sample sound played. This tone will be used for all new trip alerts."
+    });
+  };
+
   const dismissAlert = () => {
     if (activeAlert) {
       markAsRead(activeAlert.id);
@@ -423,17 +439,19 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     setActiveAlert(null);
   };
 
-  const testSound = () => {
-    playNotificationSound();
-    toast.success("🔊 Played loud alert chime test!", {
-      description: "Audio system is active and set to maximum volume."
+  const testSound = (customPreset?: SoundPreset) => {
+    const targetPreset = customPreset || soundPreset;
+    playNotificationSound(targetPreset);
+    const found = SOUND_PRESETS.find(p => p.id === targetPreset);
+    toast.success(`🔊 Played ${found?.name || 'Alert Tone'} test!`, {
+      description: "Audio alert preview active."
     });
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, activeAlert, markAsRead, markAllAsRead, clearAll, dismissAlert, testSound }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, activeAlert, soundPreset, changeSoundPreset, markAsRead, markAllAsRead, clearAll, dismissAlert, testSound }}>
       {children}
 
       {/* Loud Alert Pop-up Modal Banner Overlay */}

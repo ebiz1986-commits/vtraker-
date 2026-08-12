@@ -2,8 +2,24 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
+import fs from "fs";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 // @ts-ignore
 import { sendSms, bookingMsg } from "./server/sms.js";
+
+// Initialize Firebase for server-side settings lookup
+let serverDb: any = null;
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    const configData = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    const serverFbApp = initializeApp(configData, "server-fb-app");
+    serverDb = getFirestore(serverFbApp, configData.firestoreDatabaseId);
+  }
+} catch (err) {
+  console.warn("Notice: Server-side Firebase config not loaded:", err);
+}
 
 async function startServer() {
   const app = express();
@@ -22,6 +38,23 @@ async function startServer() {
         return res.status(400).json({ ok: false, error: "Passenger mobile number is required" });
       }
 
+      let activeSenderId = senderId;
+      let activeApiKey = apiKey;
+
+      // If senderId or apiKey was not provided in request body, fetch from Firestore settings/system
+      if ((!activeSenderId || !activeApiKey) && serverDb) {
+        try {
+          const sysSnap = await getDoc(doc(serverDb, "settings", "system"));
+          if (sysSnap.exists()) {
+            const sysData = sysSnap.data();
+            if (!activeSenderId && sysData.smsSenderId) activeSenderId = sysData.smsSenderId;
+            if (!activeApiKey && sysData.smsApiKey) activeApiKey = sysData.smsApiKey;
+          }
+        } catch (fErr) {
+          console.warn("Could not fetch system SMS config from Firestore:", fErr);
+        }
+      }
+
       const formattedBooking = {
         refNo: booking?.refNo || booking?.id || "N/A",
         passenger: booking?.passenger || booking?.passengerName || "Passenger",
@@ -35,7 +68,7 @@ async function startServer() {
       };
 
       const messageText = bookingMsg(formattedBooking);
-      const result = await sendSms(mobile, messageText, senderId, apiKey);
+      const result = await sendSms(mobile, messageText, activeSenderId, activeApiKey);
       return res.json({ ok: true, result, smsUid: result?.uid || null, smsSentAt: new Date() });
     } catch (err: any) {
       console.error("SMS failed:", err?.message || err);

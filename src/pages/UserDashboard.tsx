@@ -379,6 +379,7 @@ export default function UserDashboard() {
       setTempProfileDept(profile.department || '');
       setTempProfilePhone(profile.phone || '');
 
+      const isAdmin = profile.role === 'admin' || profile.email === 'ebiz1986@gmail.com';
       const isNameMissingOrPin = !profile.name || profile.name.trim() === '' || isPinLikeName(profile.name || '');
       const isPhoneMissing = !profile.phone || profile.phone.trim() === '';
 
@@ -386,14 +387,14 @@ export default function UserDashboard() {
       setPromptDept(profile.department || '');
       setPromptPhone(profile.phone || '');
 
-      // Trigger mandatory prompt popup if name or telephone number is missing
-      if (isNameMissingOrPin || isPhoneMissing) {
+      // Trigger mandatory prompt popup if name or telephone number is missing AND user is NOT an admin
+      if (!isAdmin && (isNameMissingOrPin || isPhoneMissing)) {
         setShowPhonePromptModal(true);
       } else {
         setShowPhonePromptModal(false);
       }
     }
-  }, [profile?.name, profile?.phone, profile?.userId]);
+  }, [profile?.name, profile?.phone, profile?.userId, profile?.role, profile?.email]);
 
   const handleSavePromptPhone = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -1332,8 +1333,8 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Mandatory Popup Modal asking for profile details if missing */}
-      {showPhonePromptModal && (
+      {/* Mandatory Popup Modal asking for profile details if missing (Exempt for Admins) */}
+      {showPhonePromptModal && profile?.role !== 'admin' && profile?.email !== 'ebiz1986@gmail.com' && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
