@@ -6,18 +6,30 @@
 export function clearBrowserCacheMemory() {
   console.log('[Cache Clear] Initiating cache and memory purge...');
 
-  // 1. Clear LocalStorage (preserving theme settings to avoid high-contrast flashing on loading)
+  // 1. Clear LocalStorage (preserving theme and notification sound settings)
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const theme = localStorage.getItem('sko-vbooking-theme');
-      localStorage.clear();
-      if (theme) {
-        localStorage.setItem('sko-vbooking-theme', theme);
+      const sound = localStorage.getItem('sanken_notification_sound');
+      const savedNotis: { [key: string]: string } = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sko_notifications_')) {
+          savedNotis[key] = localStorage.getItem(key) || '';
+        }
       }
-      console.log('[Cache Clear] LocalStorage cleared successfully.');
+
+      localStorage.clear();
+
+      if (theme) localStorage.setItem('sko-vbooking-theme', theme);
+      if (sound) localStorage.setItem('sanken_notification_sound', sound);
+      Object.entries(savedNotis).forEach(([k, v]) => {
+        if (v) localStorage.setItem(k, v);
+      });
+      console.log('[Cache Clear] LocalStorage cleared successfully (preserved preferences).');
     }
   } catch (e) {
-    console.warn('[Cache Clear] LocalStorage clear blocked or unvailable:', e);
+    console.warn('[Cache Clear] LocalStorage clear blocked or unavailable:', e);
   }
 
   // 2. Clear SessionStorage

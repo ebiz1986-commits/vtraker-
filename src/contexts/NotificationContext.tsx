@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { sendPushNotification, playNotificationSound, getNotificationSoundPreset, setNotificationSoundPreset, SOUND_PRESETS, SoundPreset } from '../lib/utils';
 import { toast } from 'sonner';
 import { Volume2, BellRing, X, CheckCircle, AlertTriangle, Info, Check, Music } from 'lucide-react';
@@ -422,7 +422,18 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
   const [soundPreset, setSoundPreset] = useState<SoundPreset>(() => getNotificationSoundPreset());
 
-  const changeSoundPreset = (preset: SoundPreset) => {
+  // Sync soundPreset from user profile when available
+  useEffect(() => {
+    if ((profile as any)?.notificationSound) {
+      const saved = (profile as any).notificationSound as SoundPreset;
+      if (SOUND_PRESETS.some(p => p.id === saved)) {
+        setSoundPreset(saved);
+        setNotificationSoundPreset(saved);
+      }
+    }
+  }, [profile]);
+
+  const changeSoundPreset = async (preset: SoundPreset) => {
     setSoundPreset(preset);
     setNotificationSoundPreset(preset);
     playNotificationSound(preset);
@@ -430,6 +441,16 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     toast.success(`Notification Sound updated to: ${found?.name || preset}`, {
       description: "Sample sound played. This tone will be used for all new trip alerts."
     });
+
+    if (profile?.userId) {
+      try {
+        await updateDoc(doc(db, 'users', profile.userId), {
+          notificationSound: preset
+        });
+      } catch (err) {
+        console.warn("Could not save notification sound to Firestore profile:", err);
+      }
+    }
   };
 
   const dismissAlert = () => {
