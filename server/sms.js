@@ -16,7 +16,7 @@ export function toLK(raw) {
 
 export async function sendSms(phone, text, customSenderId, customApiKey) {
   const apiKey = customApiKey || process.env.TEXTLK_API_KEY || "6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a";
-  const senderId = customSenderId || process.env.TEXTLK_SENDER_ID || "NotifyDEMO";
+  const senderId = customSenderId || process.env.TEXTLK_SENDER_ID || "SKO-VBOOK";
 
   if (!apiKey) throw new Error("Text.lk API token is missing.");
 

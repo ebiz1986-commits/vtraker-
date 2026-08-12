@@ -1173,7 +1173,7 @@ export default function AdminDashboard() {
   const [isNormalFlow, setIsNormalFlow] = useState<boolean>(true);
 
   // SMS Gateway Configuration and Test State
-  const [smsSenderId, setSmsSenderId] = useState('NotifyDEMO');
+  const [smsSenderId, setSmsSenderId] = useState('SKO-VBOOK');
   const [smsApiKey, setSmsApiKey] = useState('6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a');
   const [isSavingSmsSettings, setIsSavingSmsSettings] = useState(false);
   const [testSmsPhone, setTestSmsPhone] = useState('');
@@ -1250,7 +1250,11 @@ export default function AdminDashboard() {
       if (snap.exists()) {
         const data = snap.data();
         setIsNormalFlow(data.normal !== false);
-        if (data.smsSenderId) setSmsSenderId(data.smsSenderId);
+        if (data.smsSenderId && data.smsSenderId !== 'NotifyDEMO' && data.smsSenderId !== 'TextLKDemo') {
+          setSmsSenderId(data.smsSenderId);
+        } else {
+          setSmsSenderId('SKO-VBOOK');
+        }
         if (data.smsApiKey) setSmsApiKey(data.smsApiKey);
       } else {
         setIsNormalFlow(true);
@@ -4783,7 +4787,7 @@ export default function AdminDashboard() {
                   Important Text.lk Sender ID Instructions:
                 </p>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  If Text.lk returns <code className="text-rose-300 bg-black/40 px-1 rounded">Sender ID is not authorized</code>, check your <strong>Text.lk Dashboard → Sender IDs (Masks)</strong> and copy your exact registered Sender Name (e.g. <code className="text-emerald-300 bg-black/40 px-1 rounded">NotifyDEMO</code>, <code className="text-emerald-300 bg-black/40 px-1 rounded">Text.lk</code>, or <code className="text-emerald-300 bg-black/40 px-1 rounded">SANKEN</code>) into the box below.
+                  If Text.lk returns <code className="text-rose-300 bg-black/40 px-1 rounded">Sender ID is not authorized</code>, check your <strong>Text.lk Dashboard → Sender IDs (Masks)</strong> and copy your exact registered Sender Name (e.g. <code className="text-emerald-300 bg-black/40 px-1 rounded">SKO-VBOOK</code> or <code className="text-emerald-300 bg-black/40 px-1 rounded">SANKEN</code>) into the box below.
                 </p>
               </div>
 
@@ -4802,7 +4806,7 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. NotifyDEMO, Text.lk, or SANKEN"
+                      placeholder="e.g. SKO-VBOOK"
                       value={smsSenderId}
                       onChange={e => setSmsSenderId(e.target.value)}
                       className="w-full p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"

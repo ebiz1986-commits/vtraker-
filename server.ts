@@ -55,6 +55,10 @@ async function startServer() {
         }
       }
 
+      if (!activeSenderId || activeSenderId === "NotifyDEMO" || activeSenderId === "TextLKDemo") {
+        activeSenderId = "SKO-VBOOK";
+      }
+
       const formattedBooking = {
         refNo: booking?.refNo || booking?.id || "N/A",
         passenger: booking?.passenger || booking?.passengerName || "Passenger",
