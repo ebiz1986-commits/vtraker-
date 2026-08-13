@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
@@ -41,16 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (docSnap.exists()) {
             const profileData = docSnap.data() as UserProfile;
             setProfile(profileData);
-            
-            // Sync name with Firebase Auth's displayName for security rules token verification
-            if (profileData.name && profileData.name.trim() !== '' && currentUser.displayName !== profileData.name) {
-              updateProfile(currentUser, { displayName: profileData.name })
-                .then(() => currentUser.getIdToken(true))
-                .then(() => {
-                  console.log("Auth displayName and token successfully synced");
-                })
-                .catch((e) => console.error("Error syncing displayName with Auth:", e));
-            }
           } else {
             setProfile(null);
           }

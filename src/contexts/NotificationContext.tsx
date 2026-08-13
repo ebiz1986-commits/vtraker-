@@ -47,10 +47,22 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const { profile } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeAlert, setActiveAlert] = useState<NotificationItem | null>(null);
+  const [soundPreset, setSoundPreset] = useState<SoundPreset>(() => getNotificationSoundPreset());
   const prevTripStatuses = useRef<Record<string, string>>({});
   const prevAdminStatusUpdates = useRef<Record<string, string>>({});
   const initialLoadRef = useRef(true);
   const alertTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync soundPreset from user profile when available
+  useEffect(() => {
+    if ((profile as any)?.notificationSound) {
+      const saved = (profile as any).notificationSound as SoundPreset;
+      if (SOUND_PRESETS.some(p => p.id === saved)) {
+        setSoundPreset(saved);
+        setNotificationSoundPreset(saved);
+      }
+    }
+  }, [profile]);
 
   // Auto-dismiss active alert popup after 12 seconds
   useEffect(() => {
@@ -391,8 +403,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     saveNotifications((prev) => [fresh, ...prev].slice(0, 50));
     setActiveAlert(fresh);
 
-    // Play loud attention chime sound
-    playNotificationSound();
+    // Play loud attention chime sound with current active tone
+    playNotificationSound(soundPreset);
     sendPushNotification(fresh.title, { body: fresh.description });
 
     if (fresh.type === 'success') {
@@ -419,19 +431,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     saveNotifications([]);
     toast.success("Notification history cleared.");
   };
-
-  const [soundPreset, setSoundPreset] = useState<SoundPreset>(() => getNotificationSoundPreset());
-
-  // Sync soundPreset from user profile when available
-  useEffect(() => {
-    if ((profile as any)?.notificationSound) {
-      const saved = (profile as any).notificationSound as SoundPreset;
-      if (SOUND_PRESETS.some(p => p.id === saved)) {
-        setSoundPreset(saved);
-        setNotificationSoundPreset(saved);
-      }
-    }
-  }, [profile]);
 
   const changeSoundPreset = async (preset: SoundPreset) => {
     setSoundPreset(preset);
@@ -509,7 +508,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
                 <div className="mt-3.5 flex items-center gap-2">
                   <button
                     onClick={() => {
-                      playNotificationSound();
+                      playNotificationSound(soundPreset);
                     }}
                     className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                   >
