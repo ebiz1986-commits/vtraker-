@@ -755,8 +755,8 @@ export default function DriverDashboard() {
     });
     
     return unsubscribe;
-  }, [profile]);
-  
+  }, [profile?.userId]);
+
   const handleUpdateStatus = async (tripId: string, currentStatus: string) => {
     try {
       const updates: any = {

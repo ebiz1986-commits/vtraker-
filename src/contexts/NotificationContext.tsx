@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
+import { collection, query, where, or, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { sendPushNotification, playNotificationSound, getNotificationSoundPreset, setNotificationSoundPreset, SOUND_PRESETS, SoundPreset } from '../lib/utils';
 import { toast } from 'sonner';
 import { Volume2, BellRing, X, CheckCircle, AlertTriangle, Info, Check, Music } from 'lucide-react';
@@ -119,8 +119,33 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     prevTripStatuses.current = {};
     prevAdminStatusUpdates.current = {};
 
-    // Listen to all trips to guarantee real-time updates for Passengers, Nominees, Joint Passengers, Drivers, and Admins
-    const q = query(collection(db, 'trips'));
+    // Scope the listener to the trips this role can actually receive notifications about,
+    // instead of streaming the whole collection and filtering client-side.
+    // - admin: monitors the entire fleet (new bookings from any user) — full collection required and permitted by rules.
+    // - driver: only trips assigned to them.
+    // - user: only trips they own or are nominated on. The nominatedName branch is added only once the
+    //   auth token's displayName has synced, otherwise the OR query is rejected by the security rules.
+    let q;
+    if (profile.role === 'admin') {
+      q = query(collection(db, 'trips'));
+    } else if (profile.role === 'driver') {
+      q = query(collection(db, 'trips'), where('driverId', '==', profile.userId));
+    } else {
+      const nameToQuery = profile.name?.trim() || '';
+      const isTokenSynced = auth.currentUser?.displayName === nameToQuery;
+      q = (nameToQuery && isTokenSynced)
+        ? query(
+            collection(db, 'trips'),
+            or(
+              where('userId', '==', profile.userId),
+              where('nominatedName', '==', nameToQuery)
+            )
+          )
+        : query(
+            collection(db, 'trips'),
+            where('userId', '==', profile.userId)
+          );
+    }
 
     const isRelevant = (trip: any) => {
       if (profile.role === 'admin') return true;
@@ -390,7 +415,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile?.userId, profile?.role, profile?.name, auth.currentUser?.displayName]);
 
   const triggerNotification = (bullet: Omit<NotificationItem, 'id' | 'timestamp' | 'read'>) => {
     const fresh: NotificationItem = {

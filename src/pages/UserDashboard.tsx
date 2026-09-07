@@ -626,6 +626,8 @@ export default function UserDashboard() {
           where('userId', '==', profile.userId)
         );
     
+    let fallbackUnsub: (() => void) | null = null;
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!initialLoadRef.current) {
         snapshot.docChanges().forEach(change => {
@@ -681,7 +683,8 @@ export default function UserDashboard() {
           collection(db, 'trips'),
           where('userId', '==', profile.userId)
         );
-        onSnapshot(safeQ, (fallbackSnapshot) => {
+        if (fallbackUnsub) fallbackUnsub();
+        fallbackUnsub = onSnapshot(safeQ, (fallbackSnapshot) => {
           const tripsData = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
           tripsData.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
           setTrips(tripsData);
@@ -693,8 +696,11 @@ export default function UserDashboard() {
         handleFirestoreError(error, OperationType.GET, 'trips', false);
       }
     });
-    
-    return unsubscribe;
+
+    return () => {
+      unsubscribe();
+      if (fallbackUnsub) fallbackUnsub();
+    };
   }, [profile, auth.currentUser?.displayName]);
   
   const handleCreateTrip = async (e: React.FormEvent) => {

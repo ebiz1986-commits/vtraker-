@@ -413,12 +413,14 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
         await updateDoc(doc(db, 'trips', trip.id), {
           smsUid: smsData.smsUid || null,
           smsSentAt: serverTimestamp(),
-          smsError: null
+          smsError: null,
+          updatedAt: serverTimestamp()
         });
       } else {
         toast.error(`SMS Error: ${smsData.error || 'Failed'}`);
         await updateDoc(doc(db, 'trips', trip.id), {
-          smsError: smsData.error || 'SMS failed'
+          smsError: smsData.error || 'SMS failed',
+          updatedAt: serverTimestamp()
         });
       }
     } catch (err: any) {
@@ -1786,17 +1788,20 @@ export default function AdminDashboard() {
           if (smsData.ok) {
             await updateDoc(doc(db, 'trips', tripId), {
               smsUid: smsData.smsUid || null,
-              smsSentAt: serverTimestamp()
+              smsSentAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
             });
           } else {
             await updateDoc(doc(db, 'trips', tripId), {
-              smsError: smsData.error || 'SMS failed'
+              smsError: smsData.error || 'SMS failed',
+              updatedAt: serverTimestamp()
             });
           }
         } catch (err: any) {
           console.error("SMS failed:", err?.message || err);
           await updateDoc(doc(db, 'trips', tripId), {
-            smsError: err?.message || 'SMS request error'
+            smsError: err?.message || 'SMS request error',
+            updatedAt: serverTimestamp()
           });
         }
       }
