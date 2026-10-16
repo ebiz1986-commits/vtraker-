@@ -14,11 +14,11 @@ export function toLK(raw) {
   return null; // bad number
 }
 
-export async function sendSms(phone, text, customSenderId, customApiKey) {
-  const apiKey = customApiKey || process.env.TEXTLK_API_KEY || "6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a";
+export async function sendSms(phone, text, customSenderId) {
+  const apiKey = process.env.TEXTLK_API_KEY;
   const senderId = customSenderId || process.env.TEXTLK_SENDER_ID || "SKO-VBOOK";
 
-  if (!apiKey) throw new Error("Text.lk API token is missing.");
+  if (!apiKey) throw new Error("Text.lk API token is not configured on the server (TEXTLK_API_KEY).");
 
   const recipient = toLK(phone);
   if (!recipient) throw new Error("Invalid mobile number: " + phone);

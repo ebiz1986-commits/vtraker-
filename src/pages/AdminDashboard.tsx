@@ -3,8 +3,8 @@ import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, getDocs, deleteField } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -14,7 +14,13 @@ import { ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Megaphone, ArrowRi
 import { useAuth } from '../contexts/AuthContext';
 import { TripItemSkeleton, LiveDriverItemSkeleton, Skeleton } from '../components/ui/Skeleton';
 
-const AdminPendingTripItem = ({ 
+// SMS requests are authorized server-side by the signed-in admin's ID token
+const smsRequestHeaders = async () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${await auth.currentUser?.getIdToken()}`
+});
+
+const AdminPendingTripItem = ({
   trip, 
   allUsers, 
   isCouplingMode, 
@@ -354,7 +360,7 @@ const AdminPendingTripItem = ({
   );
 };
 
-const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCancelTrip, allUsers, index = 0, vehicles = [], smsSenderId, smsApiKey }: any) => {
+const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCancelTrip, allUsers, index = 0, vehicles = [], smsSenderId }: any) => {
   const [expanded, setExpanded] = useState(false);
   const destination = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
   const driver = drivers.find((d: any) => (d.userId || d.id) === trip.driverId);
@@ -389,11 +395,10 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
       
       const smsRes = await fetch("/api/sms/send-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await smsRequestHeaders(),
         body: JSON.stringify({
           phone: userPhone,
           senderId: smsSenderId,
-          apiKey: smsApiKey,
           booking: {
             refNo: trip.id.slice(0, 8).toUpperCase(),
             passenger: trip.passengerName || passengerUser?.name || "Passenger",
@@ -1176,7 +1181,6 @@ export default function AdminDashboard() {
 
   // SMS Gateway Configuration and Test State
   const [smsSenderId, setSmsSenderId] = useState('SKO-VBOOK');
-  const [smsApiKey, setSmsApiKey] = useState('6538|xckoN5DsrWIXkJZTDuN3Vdk6LDQgz3dBRbXBccXVda89337a');
   const [isSavingSmsSettings, setIsSavingSmsSettings] = useState(false);
   const [testSmsPhone, setTestSmsPhone] = useState('');
   const [testSmsMessage, setTestSmsMessage] = useState('Sanken Admin: Your booking confirmation test notification.');
@@ -1190,9 +1194,10 @@ export default function AdminDashboard() {
     }
     setIsSavingSmsSettings(true);
     try {
+      // The API key lives only in the server environment; clear any copy left in Firestore
       await setDoc(doc(db, 'settings', 'system'), {
         smsSenderId: smsSenderId.trim(),
-        smsApiKey: smsApiKey.trim()
+        smsApiKey: deleteField()
       }, { merge: true });
       toast.success("SMS Gateway settings saved successfully!");
     } catch (err: any) {
@@ -1214,11 +1219,10 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/sms/send-booking", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await smsRequestHeaders(),
         body: JSON.stringify({
           phone: testSmsPhone,
           senderId: smsSenderId,
-          apiKey: smsApiKey,
           booking: {
             refNo: "TEST-" + Math.floor(1000 + Math.random() * 9000),
             passenger: "Test Passenger",
@@ -1257,7 +1261,6 @@ export default function AdminDashboard() {
         } else {
           setSmsSenderId('SKO-VBOOK');
         }
-        if (data.smsApiKey) setSmsApiKey(data.smsApiKey);
       } else {
         setIsNormalFlow(true);
       }
@@ -1766,11 +1769,10 @@ export default function AdminDashboard() {
         try {
           const smsRes = await fetch("/api/sms/send-booking", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await smsRequestHeaders(),
             body: JSON.stringify({
               phone: userPhone,
               senderId: smsSenderId,
-              apiKey: smsApiKey,
               booking: {
                 refNo: tripId.slice(0, 8).toUpperCase(),
                 passenger: tripDoc?.passengerName || passengerUser?.name || "Passenger",
@@ -4821,20 +4823,6 @@ export default function AdminDashboard() {
                     </p>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                      Text.lk API Token <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="6538|xckoN5D..."
-                      value={smsApiKey}
-                      onChange={e => setSmsApiKey(e.target.value)}
-                      className="w-full p-2 text-xs border border-slate-700 rounded bg-[#0a0f1c] text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
                   <Button
                     type="button"
                     size="sm"
@@ -5111,7 +5099,6 @@ export default function AdminDashboard() {
                                   index={idx}
                                   vehicles={vehicles}
                                   smsSenderId={smsSenderId}
-                                  smsApiKey={smsApiKey}
                                 />
                               ))}
                             </div>
