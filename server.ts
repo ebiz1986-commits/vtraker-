@@ -3,22 +3,59 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import http from "http";
 import fs from "fs";
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
 // @ts-ignore
 import { sendSms, bookingMsg } from "./server/sms.js";
 
-// Initialize Firebase for server-side settings lookup
-let serverDb: any = null;
+// Firebase project details, used to verify callers and read their role
+let firebaseConfig: any = {};
 try {
-  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-  if (fs.existsSync(configPath)) {
-    const configData = JSON.parse(fs.readFileSync(configPath, "utf8"));
-    const serverFbApp = initializeApp(configData, "server-fb-app");
-    serverDb = getFirestore(serverFbApp, configData.firestoreDatabaseId);
-  }
+  firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
 } catch (err) {
-  console.warn("Notice: Server-side Firebase config not loaded:", err);
+  console.warn("Notice: Firebase config not loaded:", err);
+}
+
+// Returns the caller's uid if the Firebase ID token is valid, otherwise null
+async function verifyIdToken(idToken: string): Promise<string | null> {
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseConfig.apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken })
+  });
+  if (!res.ok) return null;
+  const data: any = await res.json();
+  return data.users?.[0]?.localId || null;
+}
+
+// Reads users/{uid} with the caller's own token, so Firestore rules decide what they can see
+async function getUserRole(idToken: string, uid: string): Promise<string | null> {
+  const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${firebaseConfig.firestoreDatabaseId}/documents/users/${uid}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${idToken}` } });
+  if (!res.ok) return null;
+  const data: any = await res.json();
+  return data.fields?.role?.stringValue || null;
+}
+
+// Only signed-in admins may trigger SMS sends
+async function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const header = req.headers.authorization || "";
+  const idToken = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!idToken) {
+    return res.status(401).json({ ok: false, error: "Sign in required" });
+  }
+  try {
+    const uid = await verifyIdToken(idToken);
+    if (!uid) {
+      return res.status(401).json({ ok: false, error: "Invalid or expired session" });
+    }
+    const role = await getUserRole(idToken, uid);
+    if (role !== "admin") {
+      return res.status(403).json({ ok: false, error: "Admin access required" });
+    }
+    next();
+  } catch (err: any) {
+    console.error("Admin check failed:", err?.message || err);
+    return res.status(500).json({ ok: false, error: "Could not verify access" });
+  }
 }
 
 async function startServer() {
@@ -28,10 +65,11 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API endpoint for sending SMS for confirmed bookings to passenger/user
-  app.post("/api/sms/send-booking", async (req, res) => {
+  // API endpoint for sending SMS for confirmed bookings to passenger/user (admins only).
+  // The Text.lk API key is read from the server environment (TEXTLK_API_KEY), never from the request.
+  app.post("/api/sms/send-booking", requireAdmin, async (req, res) => {
     try {
-      const { phone, booking, senderId, apiKey } = req.body;
+      const { phone, booking, senderId } = req.body;
       const mobile = phone || booking?.passengerPhone || booking?.userPhone || booking?.phone;
 
       if (!mobile) {
@@ -39,22 +77,6 @@ async function startServer() {
       }
 
       let activeSenderId = senderId;
-      let activeApiKey = apiKey;
-
-      // If senderId or apiKey was not provided in request body, fetch from Firestore settings/system
-      if ((!activeSenderId || !activeApiKey) && serverDb) {
-        try {
-          const sysSnap = await getDoc(doc(serverDb, "settings", "system"));
-          if (sysSnap.exists()) {
-            const sysData = sysSnap.data();
-            if (!activeSenderId && sysData.smsSenderId) activeSenderId = sysData.smsSenderId;
-            if (!activeApiKey && sysData.smsApiKey) activeApiKey = sysData.smsApiKey;
-          }
-        } catch (fErr) {
-          console.warn("Could not fetch system SMS config from Firestore:", fErr);
-        }
-      }
-
       if (!activeSenderId || activeSenderId === "NotifyDEMO" || activeSenderId === "TextLKDemo") {
         activeSenderId = "SKO-VBOOK";
       }
@@ -72,7 +94,7 @@ async function startServer() {
       };
 
       const messageText = bookingMsg(formattedBooking);
-      const result = await sendSms(mobile, messageText, activeSenderId, activeApiKey);
+      const result = await sendSms(mobile, messageText, activeSenderId);
       return res.json({ ok: true, result, smsUid: result?.uid || null, smsSentAt: new Date() });
     } catch (err: any) {
       console.error("SMS failed:", err?.message || err);
