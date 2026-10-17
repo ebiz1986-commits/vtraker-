@@ -189,6 +189,15 @@ export default function LandingPage() {
           className="absolute bottom-[8%] right-[8%] w-[420px] h-[420px] bg-blue-700/10 rounded-full blur-[150px]"
         />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[620px] bg-sky-600/[0.07] blur-[140px] rounded-full" />
+        {/* Faint brand monogram watermark */}
+        <img
+          src="/sanken-gen-mark.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[78%] max-w-[560px] opacity-[0.045]"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
       </div>
 
       {/* Card */}
