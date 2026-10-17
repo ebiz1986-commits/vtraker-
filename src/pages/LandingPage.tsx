@@ -195,8 +195,8 @@ export default function LandingPage() {
           alt=""
           aria-hidden="true"
           draggable={false}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[78%] max-w-[560px] opacity-[0.045]"
-          style={{ filter: 'brightness(0) invert(1)' }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[580px] opacity-[0.13]"
+          style={{ filter: 'brightness(0) saturate(100%) invert(68%) sepia(40%) saturate(900%) hue-rotate(175deg)' }}
         />
       </div>
 
