@@ -27,8 +27,8 @@ const UserTripItem = ({
   
   const isAllocatedOrLater = ['allocated', 'driver_started', 'in_progress', 'driver_ended', 'completed'].includes(trip.status);
   const isPendingOrAllocated = ['pending', 'allocated'].includes(trip.status);
-  const statusColor = isPendingOrAllocated ? 'text-yellow-500' : 'text-green-500';
-  const statusBgColor = isPendingOrAllocated ? 'bg-yellow-500' : 'bg-green-500';
+  const statusColor = isPendingOrAllocated ? 'text-sky-500' : 'text-green-500';
+  const statusBgColor = isPendingOrAllocated ? 'bg-sky-500' : 'bg-green-500';
   
   let formattedStatus = trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ');
   if (trip.status === 'pending') {
@@ -84,17 +84,17 @@ const UserTripItem = ({
               {formattedStatus}
             </span>
             {trip.isJointTrip && (
-              <span className="text-[10px] font-bold text-[#ff9900] bg-[#ff9900]/10 px-2 py-1 rounded-md uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-1 rounded-md uppercase tracking-wider border border-[#38bdf8]/20 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff9900] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff9900]"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#38bdf8]"></span>
                 </span>
                 JOINT
               </span>
             )}
             {trip.nominatedName && (
-              <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-500/20 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-1 rounded-md uppercase tracking-wider border border-sky-500/20 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-sky-500" />
                 Nominee trip
               </span>
             )}
@@ -118,7 +118,7 @@ const UserTripItem = ({
             </div>
             
             <div className="flex items-start gap-4 relative z-10">
-              <MapPin className="w-4 h-4 text-orange-500 -ml-0.5 shrink-0" />
+              <MapPin className="w-4 h-4 text-sky-500 -ml-0.5 shrink-0" />
               <p className="text-sm font-medium text-slate-200">
                 {destination}
               </p>
@@ -130,13 +130,13 @@ const UserTripItem = ({
         </div>
 
         {trip.adminStatusUpdate && (
-          <div className="mb-4 text-xs bg-amber-500/10 border border-amber-500/25 px-3 py-2.5 rounded-xl text-amber-300 flex items-start gap-2.5 font-sans shadow-md backdrop-blur-sm animate-fadeIn">
+          <div className="mb-4 text-xs bg-sky-500/10 border border-sky-500/25 px-3 py-2.5 rounded-xl text-sky-300 flex items-start gap-2.5 font-sans shadow-md backdrop-blur-sm animate-fadeIn">
             <span className="relative flex h-2 w-2 shrink-0 mt-1">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
             </span>
             <div className="flex flex-col">
-              <span className="font-extrabold text-[10px] uppercase tracking-widest text-amber-500 mb-0.5">Admin Dispatch Update</span>
+              <span className="font-extrabold text-[10px] uppercase tracking-widest text-sky-500 mb-0.5">Admin Dispatch Update</span>
               <span className="font-semibold text-slate-100 leading-normal">"{trip.adminStatusUpdate}"</span>
             </div>
           </div>
@@ -161,8 +161,8 @@ const UserTripItem = ({
           <ChevronDown className={`w-5 h-5 text-slate-500 transform transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
         </div>
         {isNominated && trip.passengerName && (
-          <div className="mt-3 text-[11px] text-slate-400 bg-amber-500/5 px-3 py-1.5 rounded-lg border border-amber-500/10 flex items-center gap-2 max-w-fit">
-            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+          <div className="mt-3 text-[11px] text-slate-400 bg-sky-500/5 px-3 py-1.5 rounded-lg border border-sky-500/10 flex items-center gap-2 max-w-fit">
+            <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" />
             <span>Booked for you by: <span className="text-slate-300 font-bold">{trip.passengerName}</span></span>
           </div>
         )}
@@ -174,17 +174,17 @@ const UserTripItem = ({
           <div className="bg-black/30 border border-white/5 p-4 rounded-xl mt-2">
             <div className="grid grid-cols-2 gap-4">
               {showJourneyProgress && (
-                <div className="col-span-2 p-3 bg-orange-500/5 border border-orange-500/20 rounded-xl space-y-2">
+                <div className="col-span-2 p-3 bg-sky-500/5 border border-sky-500/20 rounded-xl space-y-2">
                   <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span className="flex items-center gap-1.5 text-orange-400">
-                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                    <span className="flex items-center gap-1.5 text-sky-400">
+                      <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse"></span>
                       Journey Progress
                     </span>
                     <span className="text-slate-300 font-bold">{distanceCovered.toFixed(0)} KM covered / {totalEstimatedDist.toFixed(0)} KM expected</span>
                   </div>
                   <div className="relative w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div 
-                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(234,88,12,0.4)]"
+                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-sky-500 to-sky-500 rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(234,88,12,0.4)]"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -210,12 +210,12 @@ const UserTripItem = ({
 
             {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 1 && (
               <div className="mt-4 pt-4 border-t border-white/5">
-                <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wider mb-2">Traveling With</p>
+                <p className="text-[10px] font-semibold text-sky-500 uppercase tracking-wider mb-2">Traveling With</p>
                 <div className="grid gap-2">
                   {trip.jointPassengers.map((p: any, i: number) => {
                     const isMe = p.name === profile?.name;
                     return (
-                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded-lg border ${isMe ? 'bg-orange-500/10 border-orange-500/20 text-orange-300' : 'bg-white/5 border-white/10 text-slate-300'}`}>
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded-lg border ${isMe ? 'bg-sky-500/10 border-sky-500/20 text-sky-300' : 'bg-white/5 border-white/10 text-slate-300'}`}>
                         <span className="text-sm font-medium">{p.name || 'Unknown'} {isMe ? '(Me)' : ''}</span>
                         {p.department && <span className="text-[10px] tracking-wider uppercase font-semibold opacity-70">{p.department}</span>}
                       </div>
@@ -258,7 +258,7 @@ const UserTripItem = ({
             
             {trip.status === 'allocated' && trip.driverHasSmartphone === false && !isNormalFlow && (
               <Button 
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-orange-500/50 transition-all" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 h-auto whitespace-normal text-sm rounded-xl shadow-lg ring-1 ring-sky-500/50 transition-all" 
                 onClick={() => handleUpdateStatus(trip.id, trip.status)}
               >
                 Driver Arrived - Start Trip
@@ -267,18 +267,18 @@ const UserTripItem = ({
             
             {trip.status === 'driver_started' && (
               isNormalFlow ? (
-                <div className="text-base font-semibold text-orange-400 bg-orange-500/10 p-4 rounded-xl border border-orange-500/20 flex justify-center items-center gap-3 backdrop-blur-sm">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse animate-duration-1000"></span>
+                <div className="text-base font-semibold text-sky-400 bg-sky-500/10 p-4 rounded-xl border border-sky-500/20 flex justify-center items-center gap-3 backdrop-blur-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse animate-duration-1000"></span>
                   Driver Arrived
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
-                  <p className="font-bold text-orange-400 text-base flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                <div className="flex flex-col gap-3 p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
+                  <p className="font-bold text-sky-400 text-base flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
                     Driver Arrived
                   </p>
-                  <div className="text-orange-100">
-                    <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
+                  <div className="text-sky-100">
+                    <label className="text-sky-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">Start Odometer (KM)</label>
                     <input 
                       type="number" 
                       pattern="[0-9]*"
@@ -288,7 +288,7 @@ const UserTripItem = ({
                       value={userOdometerValues[trip.id] || ''} 
                       onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
                     />
-                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Start</Button>
+                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'start')} className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-blue-900/20 transition-all py-5">Confirm Start</Button>
                   </div>
                 </div>
               )
@@ -318,13 +318,13 @@ const UserTripItem = ({
                   Completed & Awaiting Receipt...
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
-                  <p className="font-bold text-orange-400 text-base flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                <div className="flex flex-col gap-3 p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl text-sm shadow-xl mt-2 backdrop-blur-sm">
+                  <p className="font-bold text-sky-400 text-base flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
                     Destination Reached
                   </p>
-                  <div className="text-orange-100">
-                    <label className="text-orange-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
+                  <div className="text-sky-100">
+                    <label className="text-sky-400/80 text-[10px] uppercase font-bold tracking-wider block mb-1.5">End Odometer (KM)</label>
                     <input 
                       type="number" 
                       pattern="[0-9]*"
@@ -334,7 +334,7 @@ const UserTripItem = ({
                       value={userOdometerValues[trip.id] || ''} 
                       onChange={(e) => setUserOdometerValues({...userOdometerValues, [trip.id]: e.target.value})} 
                     />
-                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-orange-600 hover:bg-orange-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all py-5">Confirm Drop-off</Button>
+                    <Button size="lg" onClick={() => handleConfirmOdometer(trip, 'end')} className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0 mt-3 font-semibold rounded-lg shadow-lg shadow-blue-900/20 transition-all py-5">Confirm Drop-off</Button>
                   </div>
                 </div>
               )
@@ -790,12 +790,12 @@ export default function UserDashboard() {
               <h2 className="text-2xl font-bold text-white mb-2">Book a Vehicle</h2>
               <p className="text-sm text-[#A0A0A0]">Fill in the details below to request your booking</p>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#ff8c00]/10 border border-[#ff8c00]/20 rounded-full shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#2563eb]/10 border border-[#2563eb]/20 rounded-full shrink-0">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff8c00] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff8c00]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2563eb] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2563eb]"></span>
               </span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#ff8c00]">Instant Allocator</span>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-[#2563eb]">Instant Allocator</span>
             </div>
           </div>
           
@@ -892,7 +892,7 @@ export default function UserDashboard() {
                    <button
                      type="button"
                      onClick={() => setQuickDateTime('now')}
-                     className="text-[10px] font-bold text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-0.5 rounded-lg border border-orange-500/20 transition-colors cursor-pointer"
+                     className="text-[10px] font-bold text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-2.5 py-0.5 rounded-lg border border-sky-500/20 transition-colors cursor-pointer"
                    >
                      Now
                    </button>
@@ -992,7 +992,7 @@ export default function UserDashboard() {
                   type="checkbox"
                   checked={nominatePerson}
                   onChange={(e) => setNominatePerson(e.target.checked)}
-                  className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-orange-500 focus:ring-offset-slate-900 cursor-pointer"
+                  className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900 cursor-pointer"
                 />
               </div>
 
@@ -1030,7 +1030,7 @@ export default function UserDashboard() {
           </form>
 
           <div className="text-center text-[10px] font-medium tracking-wider text-slate-500 select-none pt-5 mt-5 border-t border-white/5">
-            Copyright © {new Date().getFullYear()} <span className="font-bold">@SKOADMIN</span>. All Rights Reserved.
+            Copyright © {new Date().getFullYear()} <span className="font-bold">Sanken Gen</span>. All Rights Reserved.
           </div>
         </div>
         
@@ -1042,7 +1042,7 @@ export default function UserDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className={`p-4 rounded-2xl border ${
                 isPinLikeName(profile.name || '')
-                  ? 'border-orange-500/30 bg-orange-500/5'
+                  ? 'border-sky-500/30 bg-sky-500/5'
                   : 'border-white/10 bg-[#0f172a]/30'
               } backdrop-blur-md`}
             >
@@ -1064,7 +1064,7 @@ export default function UserDashboard() {
                         type="text"
                         value={tempProfileName}
                         onChange={(e) => setTempProfileName(e.target.value)}
-                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 font-medium"
                         placeholder="Your Name"
                       />
                     </div>
@@ -1074,7 +1074,7 @@ export default function UserDashboard() {
                         type="text"
                         value={tempProfileDept}
                         onChange={(e) => setTempProfileDept(e.target.value)}
-                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 font-medium"
                         placeholder="Your Department"
                       />
                     </div>
@@ -1087,7 +1087,7 @@ export default function UserDashboard() {
                         type="tel"
                         value={tempProfilePhone}
                         onChange={(e) => setTempProfilePhone(e.target.value)}
-                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium font-mono"
+                        className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 font-medium font-mono"
                         placeholder="e.g. 0771234567"
                       />
                     </div>
@@ -1104,7 +1104,7 @@ export default function UserDashboard() {
                     <Button 
                       size="sm" 
                       onClick={handleSaveProfile}
-                      className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
                     >
                       <Check className="w-3.5 h-3.5" /> Save Changes
                     </Button>
@@ -1116,7 +1116,7 @@ export default function UserDashboard() {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">My Profile</span>
                       {isPinLikeName(profile.name || '') && (
-                        <span className="flex items-center gap-1 text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/20">
+                        <span className="flex items-center gap-1 text-[10px] bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded font-bold border border-sky-500/20">
                           <ShieldAlert className="w-3 h-3" /> PIN Username Active
                         </span>
                       )}
@@ -1139,7 +1139,7 @@ export default function UserDashboard() {
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-sky-400 font-medium pt-0.5">
                         <Phone className="w-3.5 h-3.5" />
                         <span>No mobile phone set. Click &apos;Edit Profile&apos; to add one for SMS alerts.</span>
                       </div>
@@ -1162,7 +1162,7 @@ export default function UserDashboard() {
                       setIsEditingProfile(true);
                     }}
                     className={`text-xs gap-1.5 shrink-0 select-none py-1.5 px-3 rounded-lg border-white/10 text-slate-300 hover:text-white hover:bg-white/5 border ${
-                      isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
+                      isPinLikeName(profile.name || '') ? 'border-sky-500/30 text-sky-400 hover:bg-sky-500/10' : ''
                     }`}
                   >
                     <Edit className="w-3.5 h-3.5" /> Edit Profile
@@ -1184,7 +1184,7 @@ export default function UserDashboard() {
                 onClick={() => setActiveTab('pending')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'pending' 
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/15' 
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1195,7 +1195,7 @@ export default function UserDashboard() {
                 onClick={() => setActiveTab('active')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'active' 
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/15' 
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1206,7 +1206,7 @@ export default function UserDashboard() {
                 onClick={() => setActiveTab('past')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'past' 
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/15' 
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/15' 
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -1314,8 +1314,8 @@ export default function UserDashboard() {
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'cancelled' ? 'bg-red-500' : trip.forceCompleted ? 'bg-amber-500 animate-pulse' : 'bg-slate-500'}`} />
-                          <span className={`text-[10px] uppercase tracking-wider font-extrabold ${trip.status === 'cancelled' ? 'text-red-400' : trip.forceCompleted ? 'text-amber-400' : 'text-slate-400'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'cancelled' ? 'bg-red-500' : trip.forceCompleted ? 'bg-sky-500 animate-pulse' : 'bg-slate-500'}`} />
+                          <span className={`text-[10px] uppercase tracking-wider font-extrabold ${trip.status === 'cancelled' ? 'text-red-400' : trip.forceCompleted ? 'text-sky-400' : 'text-slate-400'}`}>
                             {trip.forceCompleted ? 'Force Completed' : trip.status.replace('_', ' ')}
                           </span>
                           <span className="text-[9px] font-mono text-slate-500 font-bold ml-1">SO-{new Date().getFullYear()}-{trip.id.substring(0, 4).toUpperCase()}</span>
@@ -1324,7 +1324,7 @@ export default function UserDashboard() {
                           {trip.pickupAddress} &rarr; {trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress}
                         </p>
                         {trip.endOdometer !== undefined && trip.startOdometer !== undefined && (
-                          <p className="text-[10px] text-orange-400/80 font-mono font-semibold mt-1">Mileage: {(Number(trip.endOdometer) - Number(trip.startOdometer))} KM ({trip.startOdometer} &rarr; {trip.endOdometer} KM)</p>
+                          <p className="text-[10px] text-sky-400/80 font-mono font-semibold mt-1">Mileage: {(Number(trip.endOdometer) - Number(trip.startOdometer))} KM ({trip.startOdometer} &rarr; {trip.endOdometer} KM)</p>
                         )}
                       </div>
                       <div className="text-right text-xs text-slate-400 self-start sm:self-center">
