@@ -1,6 +1,6 @@
 {
-  "name": "SKO VBooking",
-  "short_name": "VBooking",
+  "name": "Sanken Gen VBooking",
+  "short_name": "Sanken Gen",
   "description": "Premium Fleet Booking and Travel Record Management System",
   "start_url": "/",
   "id": "/index.html",
