@@ -98,7 +98,7 @@ const TripItem = ({
                 {getStatusLabelSinhala(trip.status)}
               </span>
               {trip.isJointTrip && (
-                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                <span className="text-xs font-medium text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#38bdf8]/20 flex items-center gap-1.5">
                   <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
@@ -130,7 +130,7 @@ const TripItem = ({
         <div className="flex flex-col gap-2">
            <div>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               මගියා (USER): <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-500/20 uppercase tracking-widest ml-2 inline-flex items-center">පත්කළ මගියා (Nominee): {trip.nominatedName}</span>}
+               මගියා (USER): <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded text-[10px] font-bold border border-sky-500/20 uppercase tracking-widest ml-2 inline-flex items-center">පත්කළ මගියා (Nominee): {trip.nominatedName}</span>}
              </span>
            </div>
            
@@ -173,7 +173,7 @@ const TripItem = ({
             )}
             {trip.isJointTrip && trip.jointPassengers && trip.jointPassengers.length > 0 ? (
               <div className="pt-3 mt-3 border-t border-slate-700/50">
-                <p className="text-xs font-semibold text-[#ff9900] uppercase tracking-wider mb-2">මගීන් (Passengers)</p>
+                <p className="text-xs font-semibold text-[#38bdf8] uppercase tracking-wider mb-2">මගීන් (Passengers)</p>
                 <div className="grid gap-1.5">
                   {trip.jointPassengers.map((p: any, i: number) => (
                     <div key={i} className={`flex justify-between bg-slate-800/80 px-2 py-2 rounded items-center border ${p.name === trip.passengerName ? 'border-blue-900/50' : 'border-slate-700'}`}>
@@ -189,7 +189,7 @@ const TripItem = ({
               <div className="pt-3 mt-3 border-t border-slate-700/50">
                 <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">{trip.nominatedName ? 'පත්කළ මගියා සහ අයදුම්කරු (Requester & Nominee)' : 'අයදුම්කරු (Requester)'}</p>
                 <div className="flex justify-between bg-slate-800/80 px-3 py-2 rounded items-center border border-slate-700">
-                  <span className="text-[11px] text-slate-400 font-medium">වෙන් කලේ (Booked By): </span><span className="text-sm font-medium text-slate-200 mr-2">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">නම් කරන ලද මගියා (Nominated):</span><span className="text-sm font-bold text-orange-400">{trip.nominatedName}</span></div>}
+                  <span className="text-[11px] text-slate-400 font-medium">වෙන් කලේ (Booked By): </span><span className="text-sm font-medium text-slate-200 mr-2">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <div className="mt-2 pt-2 border-t border-slate-700/50 flex justify-between items-center w-full"><span className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">නම් කරන ලද මගියා (Nominated):</span><span className="text-sm font-bold text-sky-400">{trip.nominatedName}</span></div>}
                   {trip.passengerDepartment && <span className="text-[10px] text-slate-400 uppercase tracking-widest bg-slate-900 px-1.5 py-0.5 rounded">{trip.passengerDepartment}</span>}
                 </div>
               </div>
@@ -232,10 +232,10 @@ const TripItem = ({
             {isNormalFlow ? (
               <div className="w-full space-y-3">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-blue-600/5 border border-sky-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400 font-semibold uppercase tracking-wider">ආරම්භක මීටරය (ස්වයංක්‍රීය)</span>
-                      <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
+                      <span className="font-mono text-sky-500 font-bold text-sm bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20">
                         {lastOdo !== undefined ? `${lastOdo} KM` : 'හඳුනාගනිමින්...'}
                       </span>
                     </div>
@@ -259,7 +259,7 @@ const TripItem = ({
                     </motion.div>
 
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
-                      <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      <Info className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       <span>අවසන් වරට සටහන් වූ වාහන මීටර කියවීමෙන් ගමන ස්වයංක්‍රීයව ආරම්භ වේ.</span>
                     </div>
                     
@@ -276,9 +276,9 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'driver_started' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
+                  <div className="p-4 w-full bg-blue-900/20 text-sky-500 border border-blue-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                       <span>ධාවනය වෙමින් පවතින තත්වයට මාරු වෙමින්...</span>
                     </div>
                     <Button 
@@ -305,9 +305,9 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'driver_ended' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
+                  <div className="p-4 w-full bg-blue-900/20 text-sky-500 border border-blue-900/50 rounded flex flex-col gap-2.5 text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                       <span>ගමන අවසන් කරමින්...</span>
                     </div>
                     <Button 
@@ -323,10 +323,10 @@ const TripItem = ({
             ) : (
               <div className="flex gap-3 w-full flex-col">
                 {trip.status === 'allocated' && (
-                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-orange-600/5 border border-orange-500/20 rounded-xl w-full">
+                  <div className="flex flex-col gap-3 p-3 sm:p-4 bg-blue-600/5 border border-sky-500/20 rounded-xl w-full">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400 font-semibold uppercase tracking-wider">ආරම්භක මීටරය (ස්වයංක්‍රීය)</span>
-                      <span className="font-mono text-amber-500 font-bold text-sm bg-orange-500/10 px-2.5 py-1 rounded border border-orange-500/20">
+                      <span className="font-mono text-sky-500 font-bold text-sm bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20">
                         {lastOdo !== undefined ? `${lastOdo} KM` : 'හඳුනාගනිමින්...'}
                       </span>
                     </div>
@@ -350,7 +350,7 @@ const TripItem = ({
                     </motion.div>
 
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 leading-normal">
-                      <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      <Info className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       <span>වාහනයේ මීටර අගය අනුව ගමන ස්වයංක්‍රීයව ආරම්භ වේ.</span>
                     </div>
                     
@@ -367,8 +367,8 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'driver_started' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  <div className="p-4 w-full bg-blue-900/20 text-sky-500 border border-blue-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                     මගියා විසින් ආරම්භක මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී...
                   </div>
                 )}
@@ -381,8 +381,8 @@ const TripItem = ({
                   </Button>
                 )}
                 {trip.status === 'driver_ended' && (
-                  <div className="p-4 w-full bg-amber-900/20 text-amber-500 border border-amber-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  <div className="p-4 w-full bg-blue-900/20 text-sky-500 border border-blue-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
                     මගියා විසින් අවසාන මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී...
                   </div>
                 )}
@@ -432,8 +432,8 @@ const TripItem = ({
             </div>
             <div className="h-px bg-slate-800 my-1"></div>
             <div className="flex justify-between items-center">
-              <span className="text-[#ff9900] font-bold uppercase tracking-wider text-[10px]">සුරකින ලද ආරම්භක මීටරය:</span>
-              <span className="font-mono text-[#ff9900] font-bold text-sm bg-[#ff9900]/10 px-2.5 py-1 rounded border border-[#ff9900]/25">{startOdometerVal} KM</span>
+              <span className="text-[#38bdf8] font-bold uppercase tracking-wider text-[10px]">සුරකින ලද ආරම්භක මීටරය:</span>
+              <span className="font-mono text-[#38bdf8] font-bold text-sm bg-[#38bdf8]/10 px-2.5 py-1 rounded border border-[#38bdf8]/25">{startOdometerVal} KM</span>
             </div>
           </div>
 
@@ -449,7 +449,7 @@ const TripItem = ({
                 endOdoError 
                   ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-red-300' 
                   : endOdoWarning 
-                  ? 'border-amber-500/85 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-amber-300' 
+                  ? 'border-sky-500/85 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sky-300' 
                   : 'border-slate-700/80 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
               }`}
               value={driverOdoValues[trip.id] !== undefined ? driverOdoValues[trip.id] : ''}
@@ -467,7 +467,7 @@ const TripItem = ({
               </span>
             )}
             {endOdoWarning && (
-              <span className="text-[11px] text-amber-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1 animate-pulse">
+              <span className="text-[11px] text-sky-400 font-semibold text-left flex items-center gap-1 leading-tight mt-1 animate-pulse">
                 <Info className="w-3.5 h-3.5 shrink-0" />
                 {endOdoWarning}
               </span>
@@ -790,7 +790,7 @@ export default function DriverDashboard() {
               animate={{ opacity: 1, scale: 1 }}
               className={`p-3.5 sm:p-4 rounded-xl border ${
                 isPinLikeName(profile.name || '')
-                  ? 'border-orange-500/30 bg-orange-500/5'
+                  ? 'border-sky-500/30 bg-sky-500/5'
                   : 'bg-[#111827] border-[#1e293b]'
               } shadow-xl backdrop-blur-md`}
             >
@@ -811,7 +811,7 @@ export default function DriverDashboard() {
                       type="text"
                       value={tempProfileName}
                       onChange={(e) => setTempProfileName(e.target.value)}
-                      className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-orange-500 font-medium"
+                      className="w-full mt-1.5 px-3.5 py-2.5 text-base bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 font-medium"
                       placeholder="උදා: Priyantha Jayasundara"
                       autoFocus
                     />
@@ -828,7 +828,7 @@ export default function DriverDashboard() {
                     <Button 
                       size="sm" 
                       onClick={handleSaveProfile}
-                      className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 gap-1.5 rounded-lg border-0"
                     >
                       <Check className="w-3.5 h-3.5" /> නම සුරකින්න (Save)
                     </Button>
@@ -841,8 +841,8 @@ export default function DriverDashboard() {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">රියදුරු ගිණුම (Driver Account)</span>
                         {isPinLikeName(profile.name || '') && (
-                          <span className="flex items-center gap-1 text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/20">
-                            <ShieldAlert className="w-3 h-3 text-orange-400" /> PIN අංකය
+                          <span className="flex items-center gap-1 text-[10px] bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded font-bold border border-sky-500/20">
+                            <ShieldAlert className="w-3 h-3 text-sky-400" /> PIN අංකය
                           </span>
                         )}
                       </div>
@@ -858,7 +858,7 @@ export default function DriverDashboard() {
                         setIsEditingProfile(true);
                       }}
                       className={`text-xs gap-1 py-1 px-2.5 rounded-lg border-white/10 text-slate-300 hover:text-white hover:bg-white/5 border ${
-                        isPinLikeName(profile.name || '') ? 'border-orange-500/30 text-orange-400 hover:bg-orange-500/10' : ''
+                        isPinLikeName(profile.name || '') ? 'border-sky-500/30 text-sky-400 hover:bg-sky-500/10' : ''
                       }`}
                     >
                       <Edit className="w-3.5 h-3.5" /> නම වෙනස් කරන්න
@@ -925,7 +925,7 @@ export default function DriverDashboard() {
                             onClick={() => hasOlderState && handleToggleDate(groupKey)}
                           >
                             <div className={`px-3 py-1.5 text-xs font-bold tracking-widest rounded flex items-center gap-2 transition-colors
-                              ${isToday ? 'bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/50 animate-pulse' : 
+                              ${isToday ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50 animate-pulse' : 
                                 isTomorrow ? 'bg-blue-900/20 text-blue-400 border border-blue-900/50' : 
                                 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700/80'}`}>
                               {isToday && <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />}
@@ -984,8 +984,8 @@ export default function DriverDashboard() {
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="bg-orange-500/10 text-orange-400 p-1.5 rounded-lg flex items-center justify-center">
-                    <Zap className="w-4 h-4 fill-current animate-pulse text-orange-400" />
+                  <div className="bg-sky-500/10 text-sky-400 p-1.5 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 fill-current animate-pulse text-sky-400" />
                   </div>
                   <div className="text-left">
                     <h4 className="text-sm font-bold text-slate-100">ක්ෂණික ගමන් පාලකය (Quick Controls)</h4>
@@ -1083,7 +1083,7 @@ export default function DriverDashboard() {
 
                         {trip.status === 'driver_started' && (
                           <div className="space-y-2 text-center py-1">
-                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">මගියා විසින් ආරම්භක මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ආරම්භ කිරීමට අවශ්‍ය නම්:</p>
+                            <p className="text-[11.5px] text-sky-400 font-medium leading-relaxed">මගියා විසින් ආරම්භක මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ආරම්භ කිරීමට අවශ්‍ය නම්:</p>
                             <Button
                               size="sm"
                               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs"
@@ -1100,8 +1100,8 @@ export default function DriverDashboard() {
                         {trip.status === 'in_progress' && (
                           <div className="space-y-3">
                             <div className="flex justify-between items-center text-xs bg-slate-900/60 p-2 rounded-lg border border-slate-800 pb-2">
-                              <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wider">සුරකින ලද ආරම්භක මීටරය</span>
-                              <span className="font-mono text-amber-400 font-bold text-xs">{trip.startOdometer || 0} KM</span>
+                              <span className="text-sky-400 text-[10px] font-bold uppercase tracking-wider">සුරකින ලද ආරම්භක මීටරය</span>
+                              <span className="font-mono text-sky-400 font-bold text-xs">{trip.startOdometer || 0} KM</span>
                             </div>
 
                             <div className="space-y-2">
@@ -1142,7 +1142,7 @@ export default function DriverDashboard() {
 
                         {trip.status === 'driver_ended' && (
                           <div className="space-y-2 text-center py-1">
-                            <p className="text-[11.5px] text-amber-400 font-medium leading-relaxed">මගියා විසින් අවසාන මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ගමන අවසන් කිරීමට අවශ්‍ය නම්:</p>
+                            <p className="text-[11.5px] text-sky-400 font-medium leading-relaxed">මගියා විසින් අවසාන මීටරය ඇතුලත් කරන තෙක් රැඳී සිටී. ස්වයංක්‍රීයව ගමන අවසන් කිරීමට අවශ්‍ය නම්:</p>
                             <Button
                               size="sm"
                               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs"
@@ -1161,9 +1161,9 @@ export default function DriverDashboard() {
                           const element = document.getElementById(`trip-card-${trip.id}`);
                           if (element) {
                             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            element.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2', 'ring-offset-slate-950');
+                            element.classList.add('ring-2', 'ring-sky-500', 'ring-offset-2', 'ring-offset-slate-950');
                             setTimeout(() => {
-                              element.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2', 'ring-offset-slate-950');
+                              element.classList.remove('ring-2', 'ring-sky-500', 'ring-offset-2', 'ring-offset-slate-950');
                             }, 3000);
                           } else {
                             toast.error("Could not locate trip card in view.");
@@ -1172,7 +1172,7 @@ export default function DriverDashboard() {
                         }}
                         className="w-full flex items-center justify-center gap-1.5 py-2 bg-slate-800/40 hover:bg-slate-800/80 text-xs text-slate-300 font-semibold rounded-lg border border-slate-800 transition-all active:scale-95 cursor-pointer"
                       >
-                        <Navigation className="w-3.5 h-3.5 text-orange-400" />
+                        <Navigation className="w-3.5 h-3.5 text-sky-400" />
                         <span>ප්‍රධාන පැනලයෙහි විස්තර බලන්න (View Details)</span>
                       </button>
                     </div>
@@ -1190,7 +1190,7 @@ export default function DriverDashboard() {
             className={`h-14 w-14 rounded-full flex items-center justify-center text-white shadow-2xl relative select-none cursor-pointer duration-300 ring-4 ring-slate-950 border border-white/5
               ${isQuickMenuOpen 
                 ? 'bg-slate-850 text-slate-300 hover:bg-slate-800' 
-                : 'bg-gradient-to-tr from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white ring-orange-500/10'
+                : 'bg-gradient-to-tr from-blue-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white ring-sky-500/10'
               }`}
           >
             {isQuickMenuOpen ? (
