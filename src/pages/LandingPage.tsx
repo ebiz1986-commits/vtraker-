@@ -5,27 +5,26 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Button } from '../components/ui/Button';
-import { Download, Sun, Moon, ShieldCheck, Lock, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Lock, RefreshCw, ArrowRight } from 'lucide-react';
 import { InstallPWA } from '../components/InstallPWA';
 import { clearBrowserCacheMemory } from '../lib/cacheUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function LandingPage() {
   const { user, profile, loading } = useAuth();
-  const { isLight, toggleTheme } = useTheme();
+  useTheme();
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isInstallOpen, setIsInstallOpen] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  
+
   // Custom interaction states
   const [isFocused, setIsFocused] = useState(false);
   const [shake, setShake] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,24 +45,24 @@ export default function LandingPage() {
     e.preventDefault();
     setLoginError('');
     if (!pin || pin.length < 6) return;
-    
+
     // Clear browser cache memory to guarantee fresh state clean of prior session traces
     clearBrowserCacheMemory();
-    
+
     setIsLoggingIn(true);
     const generatedEmail = `${pin}@sanken.app`;
-    
+
     try {
       let result;
       try {
         result = await signInWithEmailAndPassword(auth, generatedEmail, pin);
       } catch (authError: any) {
         // Dynamically register the user if they do not exist yet on this Firebase instance for seamless staging
-        const isAuthCredentialIssue = authError.code === 'auth/invalid-credential' || 
+        const isAuthCredentialIssue = authError.code === 'auth/invalid-credential' ||
                                       authError.code === 'auth/user-not-found' ||
                                       authError.message?.toLowerCase().includes('invalid-credential') ||
                                       authError.message?.toLowerCase().includes('user-not-found');
-        
+
         if (isAuthCredentialIssue && pin.length >= 6) {
           try {
             result = await createUserWithEmailAndPassword(auth, generatedEmail, pin);
@@ -79,10 +78,10 @@ export default function LandingPage() {
       }
 
       const loggedUser = result.user;
-      
+
       const userDocRef = doc(db, 'users', loggedUser.uid);
       const userDoc = await getDoc(userDocRef);
-      
+
       const role = pin === '445566' ? 'admin' : pin === '222222' ? 'driver' : 'user';
 
       if (!userDoc.exists()) {
@@ -110,8 +109,8 @@ export default function LandingPage() {
            }
          }
       }
-      
-      // Trigger a dramatic cinematic camera flash effect on success
+
+      // Brief success flash before routing to the dashboard
       setIsSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
@@ -136,77 +135,24 @@ export default function LandingPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 justify-center items-center h-screen w-full bg-[#050814] text-orange-500 font-sans">
-        <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
-        <span className="text-xs font-bold tracking-[0.2em] uppercase">Loading System...</span>
+      <div className="flex flex-col gap-4 justify-center items-center h-screen w-full bg-[#070d1a] text-sky-400 font-sans">
+        <RefreshCw className="w-8 h-8 animate-spin" />
+        <span className="text-xs font-bold tracking-[0.2em] uppercase text-slate-400">Loading System…</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto bg-[#040612] font-sans select-none py-10 px-4">
-      {/* Embedded High-Performance CSS Animations */}
+    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans select-none py-10 px-4 bg-[#070d1a]">
       <style>{`
-        @keyframes shimmer-sweep {
+        @keyframes sg-shimmer {
           0% { transform: translateX(-150%) skewX(-15deg); }
           100% { transform: translateX(250%) skewX(-15deg); }
         }
-        .animate-shimmer {
-          animation: shimmer-sweep 2.5s infinite ease-in-out;
-        }
-        
-        @keyframes subtle-lens-pulse {
-          0%, 100% { transform: scale(1) opacity(0.8); filter: blur(2px); }
-          50% { transform: scale(1.4) opacity(1); filter: blur(3px); }
-        }
-        .animate-lens {
-          animation: subtle-lens-pulse 3s infinite ease-in-out;
-        }
-
-        @keyframes gold-glow-pulse {
-          0%, 100% {
-            box-shadow: 0 4px 20px rgba(223, 149, 20, 0.45), 0 0 12px rgba(255, 215, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-          }
-          50% {
-            box-shadow: 0 4px 35px rgba(223, 149, 20, 0.85), 0 0 25px rgba(255, 215, 0, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-          }
-        }
-        .animate-gold-glow {
-          animation: gold-glow-pulse 2s infinite ease-in-out;
-        }
-
-        @keyframes card-glow-pulse {
-          0%, 100% {
-            border-color: rgba(223, 149, 20, 0.15);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), 0 0 35px rgba(223, 149, 20, 0.12), inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
-          }
-          50% {
-            border-color: rgba(223, 149, 20, 0.45);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), 0 0 55px rgba(223, 149, 20, 0.32), inset 0 0 1px 2px rgba(255, 255, 255, 0.18);
-          }
-        }
-        .animate-card-glow {
-          animation: card-glow-pulse 4.5s infinite ease-in-out;
-        }
-
-        @keyframes orb-zoom-glow {
-          0%, 100% {
-            transform: scale(0.9);
-            box-shadow: 0 0 10px rgba(223, 149, 20, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-            filter: brightness(0.9);
-          }
-          50% {
-            transform: scale(1.85);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 1), 0 0 45px rgba(223, 149, 20, 0.95), 0 0 65px rgba(255, 255, 255, 0.85);
-            filter: brightness(1.4);
-          }
-        }
-        .animate-orb-glow-pulse {
-          animation: orb-zoom-glow 3.5s infinite ease-in-out;
-        }
+        .sg-shimmer { animation: sg-shimmer 2.8s infinite ease-in-out; }
       `}</style>
 
-      {/* Cinematic Camera Flash Success Overlay */}
+      {/* Success flash overlay */}
       <AnimatePresence>
         {isSuccess && (
           <motion.div
@@ -219,174 +165,103 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Luxury Background Tech Grid & Map Vector Nodes */}
+      {/* Background: navy gradient, fine grid, soft blue glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Fine Indigo Grid */}
-        <div 
-          className="absolute inset-0 opacity-[0.08]"
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1324] via-[#070d1a] to-[#05080f]" />
+        <div
+          className="absolute inset-0 opacity-[0.06]"
           style={{
             backgroundImage: `
-              linear-gradient(to right, rgba(99, 102, 241, 0.3) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(99, 102, 241, 0.3) 1px, transparent 1px)
+              linear-gradient(to right, rgba(96, 165, 250, 0.4) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(96, 165, 250, 0.4) 1px, transparent 1px)
             `,
-            backgroundSize: '50px 50px',
+            backgroundSize: '48px 48px',
           }}
-        />
-
-        {/* Global Dispatch coordinate text */}
-        <div className="absolute top-6 left-6 font-mono text-[9px] text-slate-500/50 tracking-widest hidden md:block">
-          <div>SYS_NODE: SKO_SYS_ACTIVE</div>
-          <div>LOC_LAT: 6.9271° N</div>
-          <div>LOC_LON: 79.8612° E</div>
-        </div>
-
-        {/* Dynamic Floating Ambient Luxury Orbs */}
-        <motion.div
-          animate={{
-            x: [0, 40, -20, 0],
-            y: [0, -50, 30, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-[15%] left-[10%] w-[380px] h-[380px] bg-blue-600/10 rounded-full filter blur-[120px]"
         />
         <motion.div
-          animate={{
-            x: [0, -30, 50, 0],
-            y: [0, 40, -40, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-          className="absolute bottom-[10%] right-[10%] w-[420px] h-[420px] bg-[#df9514]/5 rounded-full filter blur-[140px]"
+          animate={{ x: [0, 40, -20, 0], y: [0, -40, 30, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-[12%] left-[8%] w-[380px] h-[380px] bg-sky-500/10 rounded-full blur-[130px]"
         />
+        <motion.div
+          animate={{ x: [0, -30, 40, 0], y: [0, 40, -30, 0] }}
+          transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          className="absolute bottom-[8%] right-[8%] w-[420px] h-[420px] bg-blue-700/10 rounded-full blur-[150px]"
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[620px] bg-sky-600/[0.07] blur-[140px] rounded-full" />
+      </div>
 
-        {/* Left Map Continent Vector Group */}
-        <svg className="absolute left-[2%] lg:left-[5%] top-[25%] w-[260px] h-[260px] opacity-[0.12] hidden md:block" viewBox="0 0 200 200" fill="none">
-          <circle cx="40" cy="50" r="2" fill="#3b82f6" />
-          <circle cx="50" cy="45" r="1.5" fill="#3b82f6" />
-          <circle cx="60" cy="55" r="2.5" fill="#3b82f6" />
-          <circle cx="70" cy="65" r="2" fill="#3b82f6" />
-          <circle cx="55" cy="70" r="3" fill="#3b82f6" />
-          <circle cx="80" cy="80" r="1.5" fill="#3b82f6" />
-          <circle cx="90" cy="75" r="2.5" fill="#3b82f6" />
-          <circle cx="100" cy="90" r="2" fill="#3b82f6" />
-          <circle cx="110" cy="110" r="3" fill="#3b82f6" />
-          <circle cx="120" cy="100" r="1.5" fill="#3b82f6" />
-          <path d="M40 50 L60 55 L70 65 L90 75 L110 110" stroke="rgba(59, 130, 246, 0.25)" strokeWidth="0.75" strokeDasharray="3 3"/>
-          <path d="M50 45 L60 55 L55 70 L100 90 L120 100" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="0.75" strokeDasharray="2 2"/>
-        </svg>
-
-        {/* Right Map Continent Vector Group */}
-        <svg className="absolute right-[2%] lg:right-[5%] top-[35%] w-[260px] h-[260px] opacity-[0.12] hidden md:block" viewBox="0 0 200 200" fill="none">
-          <circle cx="160" cy="60" r="2" fill="#3b82f6" />
-          <circle cx="150" cy="75" r="2.5" fill="#3b82f6" />
-          <circle cx="140" cy="90" r="1.5" fill="#3b82f6" />
-          <circle cx="130" cy="80" r="3" fill="#3b82f6" />
-          <circle cx="120" cy="110" r="2" fill="#3b82f6" />
-          <circle cx="110" cy="125" r="1.5" fill="#3b82f6" />
-          <circle cx="100" cy="140" r="2.5" fill="#3b82f6" />
-          <circle cx="90" cy="150" r="2" fill="#3b82f6" />
-          <path d="M160 60 L150 75 L130 80 L120 110 L100 140" stroke="rgba(59, 130, 246, 0.25)" strokeWidth="0.75" strokeDasharray="3 3"/>
-          <path d="M150 75 L140 90 L120 110 L110 125 L90 150" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="0.75" strokeDasharray="2 2"/>
-        </svg>
-
-        {/* Central Ambient Glow Spotlights */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#df9514]/5 blur-[90px] rounded-full pointer-events-none" />
-      </div>      {/* Primary Card Container - Sized according to executive mockup layout */}
-      <div className="w-full max-w-[420px] z-10 relative group">
+      {/* Card */}
+      <div className="w-full max-w-[420px] z-10 relative">
         <motion.div
           animate={shake ? { x: [-10, 10, -8, 8, -5, 5, 0] } : {}}
           transition={{ duration: 0.5 }}
-          className="w-full rounded-[32px] sm:rounded-[40px] p-5 min-[375px]:p-6 min-[410px]:p-10 relative overflow-hidden bg-[#060a17]/92 border backdrop-blur-2xl animate-card-glow"
+          className="w-full rounded-[28px] sm:rounded-[32px] p-6 min-[410px]:p-9 relative overflow-hidden bg-[#0b1526]/90 border border-white/10 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.9)]"
         >
-          {/* Top Edge Ambient Light Gleam */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent shadow-[0_0_12px_rgba(255,215,0,0.8)]" />
+          {/* Top accent line */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-sky-400 to-transparent" />
 
-          {/* Bottom Edge Ambient Light Gleam */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[180px] h-[2.5px] bg-gradient-to-r from-transparent via-[#df9514] to-transparent shadow-[0_0_12px_rgba(223,149,20,0.6)]" />
-
-          {/* Form Content */}
-          <form onSubmit={handlePinLogin} className="flex flex-col gap-6 min-[410px]:gap-7 relative z-10">
-            {/* Logo Area & Brand Header */}
-            <div className="flex flex-col items-center justify-center gap-1.5 min-[375px]:gap-2.5 select-none text-center">
-              {/* Brand Logo */}
-              <div className="flex items-center justify-center mb-1">
-                <div className="rounded-xl bg-white px-5 py-3 shadow-[0_6px_20px_rgba(0,0,0,0.5)]">
-                  <img
-                    src="/sanken-gen-logo.png"
-                    alt="Sanken Gen"
-                    className="h-12 min-[400px]:h-14 w-auto object-contain"
-                    draggable={false}
-                  />
-                </div>
+          <form onSubmit={handlePinLogin} className="flex flex-col gap-6 relative z-10">
+            {/* Brand header */}
+            <div className="flex flex-col items-center text-center">
+              <div className="rounded-2xl bg-white px-5 py-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                <img
+                  src="/sanken-gen-logo.png"
+                  alt="Sanken Gen"
+                  className="h-11 min-[400px]:h-14 w-auto object-contain"
+                  draggable={false}
+                />
               </div>
-
-              {/* Subtitle */}
-              <div className="flex flex-col items-center">
-                <p className="text-[10px] min-[410px]:text-[11px] tracking-[0.24em] font-black uppercase text-[#df9a28] mt-3 font-mono text-center">
-                  VEHICLE TRACKING & DISPATCH SYSTEM
-                </p>
-              </div>
+              <p className="text-[10px] min-[410px]:text-[11px] tracking-[0.26em] font-bold uppercase text-sky-300/80 mt-5">
+                Vehicle Tracking &amp; Dispatch System
+              </p>
             </div>
 
-            {/* Glowing Divider Line with Centered Gold Lens Flare Orb */}
-            <div className="relative w-full py-2 flex items-center justify-center">
-              <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#df9514]/35 to-transparent" />
-              <div className="absolute w-2.5 h-2.5 rounded-full bg-[#df9514] border border-[#ffe3a1] animate-orb-glow-pulse" />
-            </div>
+            {/* Error banner */}
+            <AnimatePresence>
+              {loginError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="p-3.5 text-xs rounded-xl text-center font-semibold border border-red-500/30 text-red-300 bg-red-950/40"
+                >
+                  {loginError}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Form Error Notification Banner */}
-            {loginError && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3.5 text-xs rounded-xl text-center font-bold border border-red-500/30 text-red-300 bg-red-950/40 backdrop-blur-md"
-              >
-                {loginError}
-              </motion.div>
-            )}
-
-            {/* Input PIN Entry Block */}
-            <div className="space-y-4">
-              <div className="text-center text-[11px] font-bold tracking-[0.22em] uppercase font-sans text-slate-300">
-                ENTER 6-DIGIT PIN
+            {/* PIN entry */}
+            <div className="space-y-3.5">
+              <div className="text-center text-[11px] font-bold tracking-[0.22em] uppercase text-slate-400">
+                Enter 6-digit PIN
               </div>
-              
-              {/* Gold Gilded Capsule Container */}
-              <div 
+
+              <div
                 onClick={handleContainerClick}
-                className={`relative rounded-[24px] px-8 py-5.5 flex justify-between items-center w-full max-w-[310px] mx-auto cursor-pointer transition-all duration-300 bg-[#040715]/90 border border-[#df9514]/40 ${
-                  isFocused 
-                    ? 'border-[#df9514] shadow-[0_0_20px_rgba(223,149,20,0.22)]' 
-                    : ''
+                className={`relative rounded-2xl px-7 py-5 flex justify-between items-center w-full max-w-[300px] mx-auto cursor-text transition-all duration-300 bg-[#060c18] border ${
+                  isFocused
+                    ? 'border-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.15)]'
+                    : 'border-white/10'
                 }`}
-                style={{
-                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.45)'
-                }}
               >
                 {Array.from({ length: 6 }).map((_, i) => {
                   const hasDigit = pin.length > i;
+                  const isNext = pin.length === i && isFocused;
                   return (
                     <div
                       key={i}
-                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 flex items-center justify-center ${
-                        hasDigit 
-                          ? 'bg-gradient-to-b from-[#ffdfa1] via-[#df9514] to-[#a36306] shadow-[0_0_12px_#df9514]' 
-                          : 'border-2 border-[#df9514]/65 bg-transparent'
+                      className={`w-3.5 h-3.5 rounded-full transition-all duration-200 ${
+                        hasDigit
+                          ? 'bg-gradient-to-b from-sky-300 to-blue-600 shadow-[0_0_10px_rgba(56,189,248,0.7)]'
+                          : isNext
+                            ? 'border-2 border-sky-400'
+                            : 'border-2 border-white/20'
                       }`}
                     />
                   );
                 })}
-                
-                {/* Fully hidden HTML input laid transparently on top */}
+
                 <input
                   ref={inputRef}
                   type="password"
@@ -396,67 +271,63 @@ export default function LandingPage() {
                   value={pin}
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '');
-                    if (val.length <= 6) {
-                      setPin(val);
-                    }
+                    if (val.length <= 6) setPin(val);
                   }}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-text"
                   disabled={isLoggingIn}
                   autoComplete="one-time-code"
+                  autoFocus
                 />
               </div>
             </div>
 
-            {/* Secure Authentication Status Banner */}
-            <div className="flex items-center justify-center gap-2 select-none text-[10px] font-bold tracking-[0.22em] text-slate-500 uppercase">
-              <ShieldCheck className="w-5 h-5 text-cyan-400 filter drop-shadow-[0_0_6px_rgba(34,211,238,0.6)] stroke-[2]" />
-              <span>SECURE AUTHENTICATION</span>
+            {/* Secure auth note */}
+            <div className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">
+              <ShieldCheck className="w-4 h-4 text-sky-400 stroke-[2]" />
+              <span>Secure Authentication</span>
             </div>
 
-            {/* Gilded Metallic Authorization Button */}
+            {/* Submit */}
             <motion.button
-              whileHover={{ scale: 1.015 }}
+              whileHover={{ scale: 1.012 }}
               whileTap={{ scale: 0.985 }}
               type="submit"
               disabled={isLoggingIn || pin.length < 6}
-              className="relative w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-[0.16em] text-[#1a0f02] transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap bg-gradient-to-b from-[#ffd166] via-[#df9514] to-[#ad6c09] border border-[#ffe5a3]/50 animate-gold-glow"
+              className="relative w-full py-4 px-6 rounded-2xl font-bold text-sm uppercase tracking-[0.14em] text-white transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group overflow-hidden whitespace-nowrap bg-gradient-to-b from-sky-500 to-blue-700 border border-sky-400/40 shadow-[0_8px_24px_rgba(37,99,235,0.35)]"
             >
-              {/* Gold specular highlight beam sweep on hover */}
-              <div className="absolute inset-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12 -translate-x-full group-hover:animate-shimmer" />
-
+              <div className="absolute inset-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:sg-shimmer" />
               {isLoggingIn ? (
                 <>
-                  <RefreshCw className="w-4 h-4 text-[#1a0f02] animate-spin" />
-                  <span>Authorizing Access...</span>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Authorizing…</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-4.5 h-4.5 text-[#1a0f02] stroke-[2.5]" />
-                  <span>AUTHORIZE ACCESS</span>
+                  <Lock className="w-4 h-4 stroke-[2.5]" />
+                  <span>Authorize Access</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5] transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
             </motion.button>
           </form>
 
-          {/* Privacy GPS Disclaimer bar */}
-          <div className="mt-6 text-center select-none relative z-10 px-2">
-            <p className="text-[11px] font-semibold text-[#df9a28] flex items-center justify-center gap-1.5 leading-relaxed max-w-[325px] mx-auto">
-              <span>⚠️</span>
-              <span>This app is not using your GPS location, or any other personal information.</span>
+          {/* GPS disclaimer */}
+          <div className="mt-6 text-center px-2">
+            <p className="text-[11px] font-medium text-slate-400 flex items-center justify-center gap-1.5 leading-relaxed max-w-[325px] mx-auto">
+              <span>🔒</span>
+              <span>This app does not use your GPS location or any other personal information.</span>
             </p>
           </div>
 
-          {/* Bottom Divider */}
+          {/* Divider + footer */}
           <div className="relative w-full py-4 flex items-center justify-center">
-            <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#df9514]/25 to-transparent" />
-            <div className="absolute w-1.5 h-1.5 rounded-full bg-[#df9514] shadow-[0_0_8px_#df9514]" />
+            <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="absolute w-1.5 h-1.5 rounded-full bg-sky-500/70" />
           </div>
-
-          {/* Copyright Branding Footer */}
-          <div className="text-center text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase select-none">
-            COPYRIGHT © {new Date().getFullYear()} @SKOADMIN. ALL RIGHTS RESERVED.
+          <div className="text-center text-[9px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+            © {new Date().getFullYear()} Sanken Gen · All Rights Reserved
           </div>
         </motion.div>
       </div>
@@ -465,4 +336,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
