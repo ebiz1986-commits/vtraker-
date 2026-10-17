@@ -80,7 +80,7 @@ const AdminPendingTripItem = ({
         damping: 24,
         delay: Math.min(index * 0.05, 0.3)
       }}
-      className={`glass-card ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-orange-500/50 bg-orange-500/20 shadow-[0_0_15px_rgba(255,140,0,0.3)]' : ''} mb-4 overflow-hidden`}
+      className={`glass-card ${isCouplingMode && coupledTripIds.includes(trip.id) ? 'border-sky-500/50 bg-sky-500/20 shadow-[0_0_15px_rgba(255,140,0,0.3)]' : ''} mb-4 overflow-hidden`}
     >
       <div 
         className="p-4 sm:p-5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 group cursor-pointer"
@@ -99,7 +99,7 @@ const AdminPendingTripItem = ({
               <div className="pt-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                 <input 
                   type="checkbox" 
-                  className="w-5 h-5 accent-orange-600 cursor-pointer"
+                  className="w-5 h-5 accent-blue-600 cursor-pointer"
                   checked={coupledTripIds.includes(trip.id)}
                   onChange={(e) => {
                     if (e.target.checked) setCoupledTripIds([...coupledTripIds, trip.id]);
@@ -110,7 +110,7 @@ const AdminPendingTripItem = ({
             )}
             
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-yellow-900/30 text-yellow-500 border-yellow-900/50`}>
+              <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit bg-blue-900/30 text-sky-500 border-blue-900/50`}>
                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
@@ -118,7 +118,7 @@ const AdminPendingTripItem = ({
                  {trip.status.replace('_', ' ')}
               </span>
               {trip.isJointTrip && (
-                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                <span className="text-xs font-medium text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#38bdf8]/20 flex items-center gap-1.5">
                   <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
@@ -127,8 +127,8 @@ const AdminPendingTripItem = ({
                 </span>
               )}
               {trip.nominatedName && (
-                <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-400/20 flex items-center gap-1.5 animate-pulse">
-                  <Users className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-medium text-sky-400 bg-sky-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-sky-400/20 flex items-center gap-1.5 animate-pulse">
+                  <Users className="w-3.5 h-3.5 text-sky-500" />
                   Nominee trip: {trip.nominatedName}
                 </span>
               )}
@@ -227,7 +227,7 @@ const AdminPendingTripItem = ({
             <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900/80 transition-colors mb-4 max-w-lg">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-orange-500 animate-pulse' : 'bg-slate-500'}`}></span>
+                  <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-sky-500 animate-pulse' : 'bg-slate-500'}`}></span>
                   <p className="text-sm font-semibold text-slate-100">Normal Flow</p>
                 </div>
                 <p className="text-[11px] text-slate-400 font-sans">Driver logs start/end ODO directly (removes passenger steps)</p>
@@ -249,7 +249,7 @@ const AdminPendingTripItem = ({
                       toast.error("Failed to update booking mode.");
                     }
                   }}
-                  className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-705 cursor-pointer"
+                  className="w-4 h-4 rounded accent-blue-600 bg-slate-950 border-slate-705 cursor-pointer"
                 />
               </div>
             </div>
@@ -577,7 +577,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className={`px-2 py-0.5 text-xs rounded-full font-medium uppercase tracking-wider border flex items-center gap-2 max-w-fit
                 ${trip.status === 'allocated' ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
-                  trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-amber-900/30 text-amber-500 border-amber-900/50'}`}>
+                  trip.status === 'in_progress' ? 'bg-purple-900/30 text-purple-400 border-purple-900/50' : 'bg-blue-900/30 text-sky-500 border-blue-900/50'}`}>
                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
@@ -585,7 +585,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                  {trip.status.replace('_', ' ')}
               </span>
               {trip.isJointTrip && (
-                <span className="text-xs font-medium text-[#ff9900] bg-[#ff9900]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#ff9900]/20 flex items-center gap-1.5">
+                <span className="text-xs font-medium text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded uppercase tracking-wider border border-[#38bdf8]/20 flex items-center gap-1.5">
                   <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-current"></span>
@@ -594,8 +594,8 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                 </span>
               )}
               {trip.nominatedName && (
-                <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-400/20 flex items-center gap-1.5 animate-pulse">
-                  <Users className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-medium text-sky-400 bg-sky-400/10 px-2 py-0.5 rounded uppercase tracking-wider border border-sky-400/20 flex items-center gap-1.5 animate-pulse">
+                  <Users className="w-3.5 h-3.5 text-sky-500" />
                   Nominee trip: {trip.nominatedName}
                 </span>
               )}
@@ -722,7 +722,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                 <div className="space-y-1.5 text-xs text-slate-300 font-sans">
                   <p><span className="text-slate-500 font-medium">Driver:</span> <span className="text-slate-100 font-semibold">{driver?.name || trip.driverName || 'N/A'}</span></p>
                   <p><span className="text-slate-500 font-medium font-sans">Driver Phone:</span> <span className="text-emerald-300 font-mono select-all font-semibold font-sans">{driver?.phone || trip.driverPhone || 'N/A'}</span></p>
-                  <p><span className="text-slate-500 font-medium font-sans">Vehicle info:</span> <span className="text-amber-300 font-semibold">{trip.vehicleName || 'N/A'}</span></p>
+                  <p><span className="text-slate-500 font-medium font-sans">Vehicle info:</span> <span className="text-sky-300 font-semibold">{trip.vehicleName || 'N/A'}</span></p>
                   {trip.vehicleId && (
                     <p>
                       <span className="text-slate-500 font-medium font-sans">Vehicle plate number:</span>{' '}
@@ -757,8 +757,8 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
 
             {/* Admin Override & hot-swap control strip */}
             <div className="border border-[#1e293b] bg-[#0c1424] p-4 rounded-lg mt-2 mb-4 space-y-4 shadow-md font-sans">
-              <h4 className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5 font-sans">
-                <span className="p-1 rounded bg-[#ff9900]/10 text-[#ff9900]">🔧</span>
+              <h4 className="text-xs font-bold text-sky-500 uppercase tracking-wider flex items-center gap-1.5 font-sans">
+                <span className="p-1 rounded bg-[#38bdf8]/10 text-[#38bdf8]">🔧</span>
                 Admin Authority Panel
               </h4>
 
@@ -766,7 +766,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
               <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl hover:bg-slate-900/80 transition-colors font-sans">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-orange-500 animate-pulse' : 'bg-slate-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full ${trip.normal !== false ? 'bg-sky-500 animate-pulse' : 'bg-slate-500'}`}></span>
                     <p className="text-sm font-semibold text-slate-100">Normal Flow</p>
                   </div>
                   <p className="text-[11px] text-slate-400">Driver logs start/end ODO directly (removes passenger steps)</p>
@@ -788,7 +788,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                         toast.error("Failed to update booking mode.");
                       }
                     }}
-                    className="w-4 h-4 rounded accent-orange-600 bg-slate-950 border-slate-705 cursor-pointer"
+                    className="w-4 h-4 rounded accent-blue-600 bg-slate-950 border-slate-705 cursor-pointer"
                   />
                 </div>
               </div>
@@ -858,7 +858,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
 
                 {/* Bypass odometer input fields */}
                 <div className="space-y-2 bg-[#090e1a]/85 p-3 rounded-lg border border-white/5 font-sans">
-                  <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider block">
+                  <span className="text-[10px] font-semibold text-sky-500 uppercase tracking-wider block">
                     Bypass Passenger Odometer Input & Force Halt
                   </span>
                   <div className="flex flex-col gap-2">
@@ -895,7 +895,7 @@ const AdminActiveTripItem = ({ trip, drivers, handleForceCompleteTrip, handleCan
                       <Button
                         size="sm"
                         onClick={handleBypassOdometer}
-                        className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold py-2 px-1.5 h-auto rounded transition-colors font-sans"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-2 px-1.5 h-auto rounded transition-colors font-sans"
                       >
                         Bypass & Complete
                       </Button>
@@ -989,7 +989,7 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
               {trip.status}
             </span>
             {trip.forceCompleted && (
-              <span className="bg-amber-900/20 text-[#ff9900]/80 text-[10px] px-2 py-0.5 rounded border border-amber-900/30 font-medium uppercase tracking-wider">
+              <span className="bg-blue-900/20 text-[#38bdf8]/80 text-[10px] px-2 py-0.5 rounded border border-blue-900/30 font-medium uppercase tracking-wider">
                 Force Finished
               </span>
             )}
@@ -1000,13 +1000,13 @@ const AdminCompletedTripItem = ({ trip, drivers, allUsers, index = 0, vehicles =
               {(!trip.tripType || trip.tripType === 'dropoff') ? 'Drop down trip' : trip.tripType === 'return' ? 'Round trip' : trip.tripType}
             </span>
             {trip.nominatedName && (
-              <span className="bg-amber-950/20 text-amber-400 text-[10px] px-2 py-0.5 rounded border border-amber-900/30 font-medium uppercase tracking-wider flex items-center gap-1">
-                <Users className="w-3 h-3 text-amber-500" />
+              <span className="bg-blue-950/20 text-sky-400 text-[10px] px-2 py-0.5 rounded border border-blue-900/30 font-medium uppercase tracking-wider flex items-center gap-1">
+                <Users className="w-3 h-3 text-sky-500" />
                 Nominee trip: {trip.nominatedName}
               </span>
             )}
             <span className={`text-[10px] px-2 py-0.5 rounded border font-medium uppercase tracking-wider
-              ${trip.normal !== false ? 'bg-orange-950/20 text-orange-400 border-orange-900/30' : 'bg-slate-800/40 text-slate-400 border-slate-700/50'}`}>
+              ${trip.normal !== false ? 'bg-blue-950/20 text-sky-400 border-blue-900/30' : 'bg-slate-800/40 text-slate-400 border-slate-700/50'}`}>
               {trip.normal !== false ? 'Normal Mode' : 'Passenger ODO Mode'}
             </span>
           </div>
@@ -1546,9 +1546,9 @@ export default function AdminDashboard() {
         iconColor: 'text-rose-500'
       },
       warning: {
-        bg: 'from-amber-950/40 to-slate-900/40 border-amber-500/30 text-amber-200',
-        badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-        iconColor: 'text-amber-400'
+        bg: 'from-blue-950/40 to-slate-900/40 border-sky-500/30 text-sky-200',
+        badge: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+        iconColor: 'text-sky-400'
       },
       success: {
         bg: 'from-emerald-950/40 to-slate-900/40 border-emerald-500/30 text-emerald-200',
@@ -1615,7 +1615,7 @@ export default function AdminDashboard() {
                 className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors cursor-pointer"
                 title={newsPaused ? "Play Autoplay" : "Pause Autoplay"}
               >
-                {newsPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-amber-400" />}
+                {newsPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-sky-400" />}
               </button>
 
               <button 
@@ -2490,9 +2490,9 @@ export default function AdminDashboard() {
       <div className="flex flex-wrap justify-between items-center gap-2">
         <label className="text-xs font-medium text-slate-400">Select Driver</label>
         <div className="flex gap-1 text-[10px]">
-          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'all' ? 'bg-[#ff9900] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('all')}>All</button>
+          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'all' ? 'bg-[#38bdf8] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('all')}>All</button>
           <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'available' ? 'bg-emerald-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('available')}>Available</button>
-          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'busy' ? 'bg-orange-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('busy')}>Busy</button>
+          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${driverFilter === 'busy' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setDriverFilter('busy')}>Busy</button>
         </div>
       </div>
       <select 
@@ -2515,9 +2515,9 @@ export default function AdminDashboard() {
       <div className="flex flex-wrap justify-between items-center gap-2">
         <label className="text-xs font-medium text-slate-400">Select Vehicle</label>
         <div className="flex gap-1 text-[10px]">
-          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'all' ? 'bg-[#ff9900] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('all')}>All</button>
+          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'all' ? 'bg-[#38bdf8] text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('all')}>All</button>
           <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'available' ? 'bg-emerald-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('available')}>Available</button>
-          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'busy' ? 'bg-orange-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('busy')}>Busy</button>
+          <button type="button" className={`px-2 py-0.5 rounded transition-colors ${vehicleFilter === 'busy' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] hover:bg-[#1f2937]'}`} onClick={() => setVehicleFilter('busy')}>Busy</button>
         </div>
       </div>
       <select 
@@ -2669,9 +2669,9 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         {/* KPI Top Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-orange-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
+          <Card className="border-sky-500/20 bg-[#0d1425]/50 p-4 relative overflow-hidden shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20 shrink-0">
+              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
                 <Droplet className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
@@ -2679,9 +2679,9 @@ export default function AdminDashboard() {
                 <p className="text-xl font-mono font-black text-slate-100">{totalFuelLiters.toLocaleString(undefined, { maximumFractionDigits: 1 })} L</p>
                 <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
                   <span className="text-slate-400 flex items-center gap-1 font-medium">
-                    <Calendar className="w-3 h-3 text-orange-400" /> Past 30 Days:
+                    <Calendar className="w-3 h-3 text-sky-400" /> Past 30 Days:
                   </span>
-                  <span className="font-mono font-extrabold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+                  <span className="font-mono font-extrabold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
                     {last30FuelLiters.toLocaleString(undefined, { maximumFractionDigits: 1 })} L
                   </span>
                 </div>
@@ -2758,9 +2758,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Recording form and efficiency bar comparison */}
           <div className="lg:col-span-1 space-y-6">
-            <Card className="border-orange-500/20 bg-[#0d1425]/30">
-              <CardHeader className="bg-orange-500/5 border-b border-orange-500/10">
-                <CardTitle className="text-orange-400 flex items-center gap-2 text-sm sm:text-base font-bold uppercase tracking-wider">
+            <Card className="border-sky-500/20 bg-[#0d1425]/30">
+              <CardHeader className="bg-sky-500/5 border-b border-sky-500/10">
+                <CardTitle className="text-sky-400 flex items-center gap-2 text-sm sm:text-base font-bold uppercase tracking-wider">
                   <PlusCircle className="w-4 h-4" />
                   Log Refueling Event
                 </CardTitle>
@@ -2774,7 +2774,7 @@ export default function AdminDashboard() {
                       required
                       value={fuelVehicleId}
                       onChange={e => setFuelVehicleId(e.target.value)}
-                      className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 focus:outline-none focus:border-orange-500 transition-colors"
+                      className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 focus:outline-none focus:border-sky-500 transition-colors"
                     >
                       <option value="">-- Select Vehicle --</option>
                       {vehicles.map(v => (
@@ -2794,7 +2794,7 @@ export default function AdminDashboard() {
                         required
                         value={fuelDate}
                         onChange={e => setFuelDate(e.target.value)}
-                        className="w-full mt-1.5 p-2.5 text-xs sm:text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-sans focus:outline-none focus:border-orange-500 transition-colors"
+                        className="w-full mt-1.5 p-2.5 text-xs sm:text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-sans focus:outline-none focus:border-sky-500 transition-colors"
                       />
                     </div>
                     <div>
@@ -2806,7 +2806,7 @@ export default function AdminDashboard() {
                         required
                         value={fuelTime}
                         onChange={e => setFuelTime(e.target.value)}
-                        className="w-full mt-1.5 p-2.5 text-xs sm:text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-orange-500 transition-colors"
+                        className="w-full mt-1.5 p-2.5 text-xs sm:text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-sky-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -2823,14 +2823,14 @@ export default function AdminDashboard() {
                         placeholder="e.g. 45.5"
                         value={fuelLiters}
                         onChange={e => setFuelLiters(e.target.value)}
-                        className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-orange-500 transition-colors"
+                        className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-sky-500 transition-colors"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between items-center">
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Meter (KM)</label>
                         {lastOdoValue !== null && (
-                          <span className="text-[9px] font-mono text-orange-400">Last: {lastOdoValue} KM</span>
+                          <span className="text-[9px] font-mono text-sky-400">Last: {lastOdoValue} KM</span>
                         )}
                       </div>
                       <input 
@@ -2839,7 +2839,7 @@ export default function AdminDashboard() {
                         placeholder="Odometer reading"
                         value={fuelOdometer}
                         onChange={e => setFuelOdometer(e.target.value)}
-                        className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-orange-500 transition-colors"
+                        className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-sky-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -2852,14 +2852,14 @@ export default function AdminDashboard() {
                       placeholder="e.g. 16500"
                       value={fuelCost}
                       onChange={e => setFuelCost(e.target.value)}
-                      className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-orange-500 transition-colors"
+                      className="w-full mt-1.5 p-2.5 text-sm border border-[#1f2937] rounded-lg bg-[#070b14] text-slate-100 font-mono focus:outline-none focus:border-sky-500 transition-colors"
                     />
                   </div>
 
                   {/* Button */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
                     disabled={isSavingFuel}
                   >
                     {isSavingFuel ? (
@@ -2879,9 +2879,9 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Horizontal Bar Chart Compare Card */}
-            <Card className="border-orange-500/15 bg-[#0d1425]/40">
+            <Card className="border-sky-500/15 bg-[#0d1425]/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-orange-400 flex items-center gap-2 text-sm sm:text-base font-bold uppercase tracking-wider">
+                <CardTitle className="text-sky-400 flex items-center gap-2 text-sm sm:text-base font-bold uppercase tracking-wider">
                   <TrendingUp className="w-4 h-4" />
                   Fuel Efficiency comparison (km/L)
                 </CardTitle>
@@ -2890,7 +2890,7 @@ export default function AdminDashboard() {
                 {activeStats.length === 0 ? (
                   <div className="text-slate-500 text-center py-6 text-xs leading-relaxed">
                     Not enough fuel records to compare efficiency.<br />
-                    At least <span className="text-orange-400 font-bold">2 entries per vehicle</span> are required to analyze distance and calculate average consumption.
+                    At least <span className="text-sky-400 font-bold">2 entries per vehicle</span> are required to analyze distance and calculate average consumption.
                   </div>
                 ) : (
                   [...activeStats]
@@ -2903,7 +2903,7 @@ export default function AdminDashboard() {
                             <span className="font-bold text-slate-200">
                               {v.registrationNumber} <span className="text-slate-500 font-normal capitalize">({v.type})</span>
                             </span>
-                            <span className="font-mono text-orange-400 font-bold">{v.avgConsumption.toFixed(2)} km/L</span>
+                            <span className="font-mono text-sky-400 font-bold">{v.avgConsumption.toFixed(2)} km/L</span>
                           </div>
                           <div className="w-full bg-[#070b14] rounded-full h-3 border border-[#1f2937] overflow-hidden flex items-center">
                             <motion.div 
@@ -2914,7 +2914,7 @@ export default function AdminDashboard() {
                                 v.avgConsumption >= 12 
                                   ? 'from-emerald-600 to-emerald-400' 
                                   : v.avgConsumption >= 8 
-                                    ? 'from-amber-600 to-amber-400' 
+                                    ? 'from-blue-600 to-sky-400' 
                                     : 'from-rose-600 to-rose-400'
                               }`}
                             />
@@ -2946,7 +2946,7 @@ export default function AdminDashboard() {
                         <th className="py-3 px-2 text-center">Entries</th>
                         <th className="py-3 px-2 text-right">Fuel added</th>
                         <th className="py-3 px-2 text-right">Distance</th>
-                        <th className="py-3 px-3 text-right text-orange-400">Consumption</th>
+                        <th className="py-3 px-3 text-right text-sky-400">Consumption</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#1f2937]/50">
@@ -2967,13 +2967,13 @@ export default function AdminDashboard() {
                           <td className="py-3 px-2 text-right font-mono text-slate-300">
                             {v.count >= 2 ? `${v.distance.toLocaleString()} km` : '-'}
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-orange-400">
+                          <td className="py-3 px-3 text-right font-mono font-bold text-sky-400">
                             {v.count >= 2 ? (
                               <div className="flex flex-col items-end gap-0.5">
-                                <span className="bg-orange-500/10 border border-orange-500/15 px-2 py-0.5 rounded text-[11px]">
+                                <span className="bg-sky-500/10 border border-sky-500/15 px-2 py-0.5 rounded text-[11px]">
                                   {v.avgConsumption.toFixed(2)} km/L
                                 </span>
-                                <span className="text-[10px] text-amber-400/80 font-normal">
+                                <span className="text-[10px] text-sky-400/80 font-normal">
                                   30d: {v.last30Count >= 2 ? `${v.last30AvgConsumption.toFixed(2)} km/L` : 'N/A'}
                                 </span>
                               </div>
@@ -3209,19 +3209,19 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0d1527] border border-amber-500/20 shadow-lg relative overflow-hidden">
+          <div className="p-4 rounded-xl bg-[#0d1527] border border-sky-500/20 shadow-lg relative overflow-hidden">
             <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+              <div className="p-2.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
                 <Gauge className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Mileage (KM)</p>
-                <p className="text-xl sm:text-2xl font-black text-amber-300">{totalKM.toLocaleString()} KM</p>
+                <p className="text-xl sm:text-2xl font-black text-sky-300">{totalKM.toLocaleString()} KM</p>
                 <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
                   <span className="text-slate-400 flex items-center gap-1 font-medium">
-                    <Calendar className="w-3 h-3 text-amber-400" /> Past 30 Days:
+                    <Calendar className="w-3 h-3 text-sky-400" /> Past 30 Days:
                   </span>
-                  <span className="font-mono font-extrabold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  <span className="font-mono font-extrabold text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
                     {last30KM.toLocaleString()} KM
                   </span>
                 </div>
@@ -3374,7 +3374,7 @@ export default function AdminDashboard() {
             </div>
 
             {filteredKM > 0 && (
-              <span className="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+              <span className="text-xs font-extrabold text-sky-400 bg-sky-500/10 px-3 py-1 rounded-lg border border-sky-500/20">
                 Filtered Distance: {filteredKM.toLocaleString()} KM
               </span>
             )}
@@ -3440,8 +3440,8 @@ export default function AdminDashboard() {
                         );
                       } else if (t.status === 'in_progress' || t.status === 'driver_started') {
                         statusBadge = (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 w-fit animate-pulse">
-                            <Clock3 className="w-3 h-3 text-amber-400" /> {t.status === 'driver_started' ? 'At Pickup' : 'In Progress'}
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 w-fit animate-pulse">
+                            <Clock3 className="w-3 h-3 text-sky-400" /> {t.status === 'driver_started' ? 'At Pickup' : 'In Progress'}
                           </span>
                         );
                       } else if (t.status === 'allocated') {
@@ -3452,7 +3452,7 @@ export default function AdminDashboard() {
                         );
                       } else if (t.status === 'pending') {
                         statusBadge = (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 flex items-center gap-1 w-fit">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 w-fit">
                             Pending
                           </span>
                         );
@@ -3474,7 +3474,7 @@ export default function AdminDashboard() {
                                 <span className="bg-purple-500/20 text-purple-300 px-1.5 rounded text-[9px] font-bold">Round Trip</span>
                               )}
                               {t.isJointTrip && (
-                                <span className="bg-orange-500/20 text-orange-300 px-1.5 rounded text-[9px] font-bold">Joint</span>
+                                <span className="bg-sky-500/20 text-sky-300 px-1.5 rounded text-[9px] font-bold">Joint</span>
                               )}
                             </div>
                           </td>
@@ -3489,7 +3489,7 @@ export default function AdminDashboard() {
                               <div className="text-[10px] text-slate-400 font-mono">{user.department}</div>
                             )}
                             {Array.isArray(t.jointPassengers) && t.jointPassengers.length > 0 && (
-                              <div className="text-[10px] text-amber-400 font-medium mt-0.5">
+                              <div className="text-[10px] text-sky-400 font-medium mt-0.5">
                                 +{t.jointPassengers.length} Joint Passenger(s)
                               </div>
                             )}
@@ -3518,7 +3518,7 @@ export default function AdminDashboard() {
 
                           <td className="py-3.5 px-3 text-center font-mono">
                             {distKM !== null ? (
-                              <div className="inline-block px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold">
+                              <div className="inline-block px-2.5 py-1 rounded bg-sky-500/10 border border-sky-500/30 text-sky-300 font-extrabold">
                                 {distKM} KM
                                 <div className="text-[9px] text-slate-400 font-normal">
                                   {startOdo} → {endOdo}
@@ -3581,7 +3581,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] uppercase font-mono block">Status</span>
-                    <span className="font-extrabold text-amber-400 capitalize">{selectedTravelRecord.status}</span>
+                    <span className="font-extrabold text-sky-400 capitalize">{selectedTravelRecord.status}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] uppercase font-mono block">Driver</span>
@@ -3617,7 +3617,7 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] uppercase block">Distance</span>
-                    <span className="font-extrabold text-amber-300">
+                    <span className="font-extrabold text-sky-300">
                       {(typeof selectedTravelRecord.startOdometer === 'number' && typeof selectedTravelRecord.endOdometer === 'number')
                         ? `${selectedTravelRecord.endOdometer - selectedTravelRecord.startOdometer} KM`
                         : '-'}
@@ -3705,7 +3705,7 @@ export default function AdminDashboard() {
           
           {/* Notifications & Expiry Alerts Section */}
           <Card className={`border-rose-500/20 bg-gradient-to-b from-[#1c0f16]/40 to-[#0d1425]/40 overflow-hidden relative ${activeAlerts.length > 0 ? 'ring-1 ring-rose-500/30' : ''}`}>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-orange-500 animate-pulse" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-sky-500 animate-pulse" />
             <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-rose-400 flex items-center gap-2 text-sm sm:text-base font-bold uppercase tracking-wider">
                 <ShieldAlert className="w-4 h-4 animate-bounce" />
@@ -3740,7 +3740,7 @@ export default function AdminDashboard() {
                             EXPIRED
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/25 text-amber-300 border border-amber-500/30">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-sky-500/25 text-sky-300 border border-sky-500/30">
                             Renew in {alert.daysLeftRev ?? alert.daysLeftIns} Days
                           </span>
                         )}
@@ -4189,7 +4189,7 @@ export default function AdminDashboard() {
             <Card className="border-[#1f2937] bg-slate-900/40 p-4">
               <div className="space-y-1.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Pending Claims</span>
-                <p className="text-base sm:text-lg font-bold text-amber-400 font-mono">{pendingClaims} Claims</p>
+                <p className="text-base sm:text-lg font-bold text-sky-400 font-mono">{pendingClaims} Claims</p>
                 <span className="text-[9px] text-slate-500 block">Awaiting provider processing</span>
               </div>
             </Card>
@@ -4269,7 +4269,7 @@ export default function AdminDashboard() {
                                     EXPIRED
                                   </span>
                                 ) : isRevAlert ? (
-                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse">
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 animate-pulse">
                                     EXPIRES IN {Math.ceil(revTimeLeft / (24 * 60 * 60 * 1000))}D
                                   </span>
                                 ) : (
@@ -4287,7 +4287,7 @@ export default function AdminDashboard() {
                                     EXPIRED
                                   </span>
                                 ) : isInsAlert ? (
-                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse">
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 animate-pulse">
                                     EXPIRES IN {Math.ceil(insTimeLeft / (24 * 60 * 60 * 1000))}D
                                   </span>
                                 ) : (
@@ -4407,7 +4407,7 @@ export default function AdminDashboard() {
                                     MAJOR
                                   </span>
                                 ) : r.severity === 'moderate' ? (
-                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
                                     MODERATE
                                   </span>
                                 ) : (
@@ -4429,7 +4429,7 @@ export default function AdminDashboard() {
                                       APPROVED
                                     </span>
                                   ) : r.claimStatus === 'pending' ? (
-                                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 animate-pulse">
                                       PENDING
                                     </span>
                                   ) : r.claimStatus === 'rejected' ? (
@@ -4513,7 +4513,7 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab('fuel')}
           className={`pb-3 text-xs sm:text-sm font-bold tracking-wider uppercase transition-all duration-200 border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
             activeTab === 'fuel' 
-              ? 'border-orange-500 text-orange-400 font-extrabold' 
+              ? 'border-sky-500 text-sky-400 font-extrabold' 
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
           }`}
         >
@@ -4546,7 +4546,7 @@ export default function AdminDashboard() {
                 <Download className="w-4 h-4" />
                 <span>Download Travel Records (CSV)</span>
               </Button>
-              <Button onClick={handleClearData} className="w-full bg-orange-600 hover:bg-orange-700 text-white" variant="destructive">
+              <Button onClick={handleClearData} className="w-full bg-blue-600 hover:bg-blue-700 text-white" variant="destructive">
                 Reset Operations Data
               </Button>
               <Button onClick={handleFullWipe} className="w-full bg-red-600 hover:bg-red-700 text-white" variant="destructive">
@@ -4788,9 +4788,9 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs space-y-1 text-amber-200">
-                <p className="font-bold flex items-center gap-1 text-amber-300">
-                  <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+              <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-lg text-xs space-y-1 text-sky-200">
+                <p className="font-bold flex items-center gap-1 text-sky-300">
+                  <ShieldAlert className="w-4 h-4 text-sky-400 shrink-0" />
                   Important Text.lk Sender ID Instructions:
                 </p>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
@@ -5314,11 +5314,11 @@ export default function AdminDashboard() {
 
             {wipeModal === 'operations' && (
               <div className="p-6 space-y-4">
-                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/25 flex items-start gap-2.5">
+                <div className="p-3 bg-sky-500/10 text-sky-400 rounded-lg border border-sky-500/25 flex items-start gap-2.5">
                   <span className="text-xl">⚠️</span>
                   <div>
                     <h4 className="text-sm font-bold">Clear Operations Data (Start Fresh)</h4>
-                    <p className="text-xs text-amber-400/80 mt-1">This will permanently delete all logged trips, bookings, and timesheets from the system, preparing it for clean test runs or going live.</p>
+                    <p className="text-xs text-sky-400/80 mt-1">This will permanently delete all logged trips, bookings, and timesheets from the system, preparing it for clean test runs or going live.</p>
                   </div>
                 </div>
                 <div className="text-sm text-slate-300 leading-relaxed pt-2">
@@ -5326,7 +5326,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2.5 pt-4">
                   <Button 
-                    className="w-full sm:flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                    className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                     onClick={executeClearData}
                   >
                     Yes, Clear All Logs
