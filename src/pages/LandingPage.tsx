@@ -317,70 +317,20 @@ export default function LandingPage() {
           <form onSubmit={handlePinLogin} className="flex flex-col gap-6 min-[410px]:gap-7 relative z-10">
             {/* Logo Area & Brand Header */}
             <div className="flex flex-col items-center justify-center gap-1.5 min-[375px]:gap-2.5 select-none text-center">
-              {/* Three Overlapping Glossy Blue Diamonds */}
-              <div className="flex items-center justify-center mb-0.5">
-                <svg viewBox="0 0 160 90" className="w-36 h-20 min-[400px]:w-44 min-[400px]:h-24 overflow-visible" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="diamondGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#1e5cb3" />
-                      <stop offset="100%" stopColor="#3d8cf0" />
-                    </linearGradient>
-                    <linearGradient id="diamondGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#2572e0" />
-                      <stop offset="100%" stopColor="#5ea5ff" />
-                    </linearGradient>
-                    <linearGradient id="diamondGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#3b8cf3" />
-                      <stop offset="100%" stopColor="#8cc1ff" />
-                    </linearGradient>
-                    <filter id="diamondDropShadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000000" floodOpacity="0.45" />
-                    </filter>
-                  </defs>
-
-                  {/* Left Diamond */}
-                  <g transform="translate(48, 45) rotate(45)" filter="url(#diamondDropShadow)">
-                    <rect 
-                      x="-22" 
-                      y="-22" 
-                      width="44" 
-                      height="44" 
-                      rx="6" 
-                      fill="url(#diamondGrad1)" 
-                    />
-                  </g>
-                  
-                  {/* Middle Diamond */}
-                  <g transform="translate(80, 45) rotate(45)" filter="url(#diamondDropShadow)">
-                    <rect 
-                      x="-22" 
-                      y="-22" 
-                      width="44" 
-                      height="44" 
-                      rx="6" 
-                      fill="url(#diamondGrad2)" 
-                    />
-                  </g>
-                  
-                  {/* Right Diamond */}
-                  <g transform="translate(112, 45) rotate(45)" filter="url(#diamondDropShadow)">
-                    <rect 
-                      x="-22" 
-                      y="-22" 
-                      width="44" 
-                      height="44" 
-                      rx="6" 
-                      fill="url(#diamondGrad3)" 
-                    />
-                  </g>
-                </svg>
+              {/* Brand Logo */}
+              <div className="flex items-center justify-center mb-1">
+                <div className="rounded-xl bg-white px-5 py-3 shadow-[0_6px_20px_rgba(0,0,0,0.5)]">
+                  <img
+                    src="/sanken-gen-logo.png"
+                    alt="Sanken Gen"
+                    className="h-12 min-[400px]:h-14 w-auto object-contain"
+                    draggable={false}
+                  />
+                </div>
               </div>
 
-              {/* Company Title & Subtitle */}
+              {/* Subtitle */}
               <div className="flex flex-col items-center">
-                <h1 className="font-sans font-extrabold tracking-[0.08em] min-[360px]:tracking-[0.14em] text-[1.35rem] min-[360px]:text-2xl min-[410px]:text-3xl text-white uppercase leading-none text-center">
-                  SANKEN OVERSEAS
-                </h1>
                 <p className="text-[10px] min-[410px]:text-[11px] tracking-[0.24em] font-black uppercase text-[#df9a28] mt-3 font-mono text-center">
                   VEHICLE TRACKING & DISPATCH SYSTEM
                 </p>
