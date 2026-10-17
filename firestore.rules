@@ -77,7 +77,8 @@ service cloud.firestore {
           && (!('lastUpdated' in data) || (data.lastUpdated is timestamp));
       }
 
-      allow read: if isSignedIn();
+      // Vehicle details and live GPS location are internal; passengers have no need to see them
+      allow read: if isAdmin() || isDriver();
       allow create: if isAdmin() && isValidId(vehicleId) && isValidVehicle(incoming())
         && incoming().keys().hasAll(['type', 'registrationNumber', 'status']) && incoming().keys().size() <= 7;
         
@@ -158,8 +159,7 @@ service cloud.firestore {
         isDriver() ||
         resource.data.userId == request.auth.uid ||
         ('driverId' in resource.data && resource.data.driverId == request.auth.uid) ||
-        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name) ||
-        ('vehicleId' in resource.data && 'email' in request.auth.token && (request.auth.token.email.matches('.*@sanken\\.app') || request.auth.token.email == 'ebiz1986@gmail.com'))
+        ('nominatedName' in resource.data && 'name' in request.auth.token && resource.data.nominatedName == request.auth.token.name)
       );
 
       allow create: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming())
@@ -234,7 +234,7 @@ service cloud.firestore {
           && data.createdAt is timestamp;
       }
 
-      allow read: if isSignedIn();
+      allow read: if isAdmin();
       allow create: if isAdmin() && isValidId(recordId) && isValidFuelRecord(incoming())
         && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'liters', 'odometer', 'timestamp', 'createdAt'])
         && incoming().createdAt == request.time;
@@ -260,7 +260,7 @@ service cloud.firestore {
           && data.updatedAt is timestamp;
       }
 
-      allow read: if isSignedIn();
+      allow read: if isAdmin();
       allow create: if isAdmin() && isValidId(complianceId) && isValidComplianceRecord(incoming())
         && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'revenueLicenseExpiry', 'insuranceExpiry', 'valuationAmount', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
@@ -289,7 +289,7 @@ service cloud.firestore {
           && data.updatedAt is timestamp;
       }
 
-      allow read: if isSignedIn();
+      allow read: if isAdmin();
       allow create: if isAdmin() && isValidId(accidentId) && isValidAccidentRecord(incoming())
         && incoming().keys().hasAll(['vehicleId', 'vehicleRegistration', 'accidentDate', 'severity', 'hasClaim', 'createdAt', 'updatedAt'])
         && incoming().createdAt == request.time
