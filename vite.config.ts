@@ -22,8 +22,8 @@ export default defineConfig(({mode}) => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}']
         },
         manifest: {
-          name: 'SKO VBooking',
-          short_name: 'SKO VBooking',
+          name: 'Sanken Gen VBooking',
+          short_name: 'Sanken Gen',
           description: 'A fleet management app for employees and drivers',
           start_url: '/',
           display: 'standalone',
