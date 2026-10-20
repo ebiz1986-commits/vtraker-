@@ -1098,6 +1098,19 @@ export default function AdminDashboard() {
   const [travelTypeFilter, setTravelTypeFilter] = useState<string>('all');
   const [selectedTravelRecord, setSelectedTravelRecord] = useState<any | null>(null);
 
+  // Odometer correction inputs for the selected travel record
+  const [editOdoStart, setEditOdoStart] = useState('');
+  const [editOdoEnd, setEditOdoEnd] = useState('');
+  const [savingOdoEdit, setSavingOdoEdit] = useState(false);
+
+  // Keep the odometer correction inputs in sync with the currently opened record
+  useEffect(() => {
+    if (selectedTravelRecord) {
+      setEditOdoStart(selectedTravelRecord.startOdometer !== undefined && selectedTravelRecord.startOdometer !== null ? String(selectedTravelRecord.startOdometer) : '');
+      setEditOdoEnd(selectedTravelRecord.endOdometer !== undefined && selectedTravelRecord.endOdometer !== null ? String(selectedTravelRecord.endOdometer) : '');
+    }
+  }, [selectedTravelRecord?.id]);
+
   // Fuel states
   const [fuelRecords, setFuelRecords] = useState<any[]>([]);
   
@@ -2010,6 +2023,61 @@ export default function AdminDashboard() {
       toast.success("Fuel record deleted.");
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `fuel_records/${recordId}`);
+    }
+  };
+
+  // Permanently delete a travel record (trip). The vehicle's "current meter" is
+  // derived from the latest completed trip's end odometer, so removing an
+  // erroneous record automatically reverts the meter to the previous reading.
+  const handleDeleteTrip = async (trip: any) => {
+    if (!trip?.id) return;
+    const label = trip.vehicleName || 'this vehicle';
+    if (!window.confirm(`Permanently delete this travel record for ${label}?\n\nThis cannot be undone. If this is the vehicle's latest completed trip, the current meter will revert to the previous completed trip's end odometer.`)) return;
+    try {
+      await deleteDoc(doc(db, 'trips', trip.id));
+      toast.success("Travel record deleted.");
+      if (selectedTravelRecord?.id === trip.id) setSelectedTravelRecord(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `trips/${trip.id}`);
+    }
+  };
+
+  // Correct the start/end odometer of an existing travel record. For a completed
+  // trip this is the direct lever on the vehicle's current meter, because the app
+  // reads the latest completed trip's end odometer as the vehicle's current reading.
+  const handleCorrectTripOdometer = async (trip: any) => {
+    if (!trip?.id) return;
+    const startNum = Number(editOdoStart);
+    const endNum = Number(editOdoEnd);
+
+    if (editOdoStart.trim() === '' || isNaN(startNum) || startNum < 0) {
+      toast.error("Please enter a valid start odometer (0 KM or greater).");
+      return;
+    }
+    if (editOdoEnd.trim() === '' || isNaN(endNum) || endNum < 0) {
+      toast.error("Please enter a valid end odometer (0 KM or greater).");
+      return;
+    }
+    if (endNum < startNum) {
+      toast.error("End odometer cannot be lower than the start odometer.");
+      return;
+    }
+
+    setSavingOdoEdit(true);
+    try {
+      await updateDoc(doc(db, 'trips', trip.id), {
+        startOdometer: startNum,
+        endOdometer: endNum,
+        currentOdometer: endNum,
+        expectedEndOdometer: endNum,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success(`Odometer corrected: ${startNum} → ${endNum} KM. The vehicle's current meter now reads ${endNum} KM.`);
+      setSelectedTravelRecord((prev: any) => prev ? { ...prev, startOdometer: startNum, endOdometer: endNum, currentOdometer: endNum, expectedEndOdometer: endNum } : prev);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${trip.id}`);
+    } finally {
+      setSavingOdoEdit(false);
     }
   };
 
@@ -3534,14 +3602,23 @@ export default function AdminDashboard() {
                           </td>
 
                           <td className="py-3.5 px-3 text-right">
-                            <button
-                              onClick={() => setSelectedTravelRecord(t)}
-                              className="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                              title="View Record Details"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-sky-400" />
-                              <span>View</span>
-                            </button>
+                            <div className="flex justify-end items-center gap-1.5">
+                              <button
+                                onClick={() => setSelectedTravelRecord(t)}
+                                className="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                title="View Record Details"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-sky-400" />
+                                <span>View</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTrip(t)}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/15 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -3631,6 +3708,47 @@ export default function AdminDashboard() {
                     <p className="text-slate-300 italic mt-0.5">{selectedTravelRecord.remarks}</p>
                   </div>
                 )}
+
+                {/* Admin Odometer Correction */}
+                <div className="bg-[#0a0f1d] p-3 rounded-xl border border-amber-500/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-amber-400 text-[10px] uppercase font-mono font-bold tracking-wider">Correct Odometer</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-slate-400 text-[9px] uppercase font-bold block mb-1">Start Meter (KM)</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={editOdoStart}
+                        onChange={(e) => setEditOdoStart(e.target.value)}
+                        className="w-full bg-[#0e1626] border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500/60"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-[9px] uppercase font-bold block mb-1">End Meter (KM)</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={editOdoEnd}
+                        onChange={(e) => setEditOdoEnd(e.target.value)}
+                        className="w-full bg-[#0e1626] border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500/60"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-slate-500 mt-1.5 leading-snug">
+                    For the latest completed trip of a vehicle, the End Meter becomes the vehicle's current meter reading.
+                  </p>
+                  <Button
+                    onClick={() => handleCorrectTripOdometer(selectedTravelRecord)}
+                    disabled={savingOdoEdit}
+                    className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-1.5 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{savingOdoEdit ? 'Saving...' : 'Save Odometer Correction'}</span>
+                  </Button>
+                </div>
               </div>
 
               <div className="pt-2 flex gap-2">
@@ -3639,7 +3757,14 @@ export default function AdminDashboard() {
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 flex items-center justify-center gap-1.5"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Export This Record (CSV)</span>
+                  <span>Export (CSV)</span>
+                </Button>
+                <Button
+                  onClick={() => handleDeleteTrip(selectedTravelRecord)}
+                  className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-2 flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Record</span>
                 </Button>
                 <Button
                   onClick={() => setSelectedTravelRecord(null)}
