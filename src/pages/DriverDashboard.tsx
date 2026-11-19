@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
 import Layout from '../components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -130,7 +130,7 @@ const TripItem = ({
         <div className="flex flex-col gap-2">
            <div>
              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-               මගියා (USER): <span className="text-blue-300 font-bold ml-1">{(!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName}</span>{trip.nominatedName && <span className="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded text-[10px] font-bold border border-sky-500/20 uppercase tracking-widest ml-2 inline-flex items-center">පත්කළ මගියා (Nominee): {trip.nominatedName}</span>}
+               මගියා (USER): <span className="text-blue-300 font-bold ml-1">{trip.isJointTrip && Array.isArray(trip.jointPassengers) && trip.jointPassengers.length > 0 ? trip.jointPassengers.map((p: any) => p.name || 'Unknown User').join(' + ') : ((!trip.passengerName || trip.passengerName === 'Unknown' || trip.passengerName === 'Unknown User') ? 'Sanken User' : trip.passengerName)}</span>{trip.nominatedName && <span className="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded text-[10px] font-bold border border-sky-500/20 uppercase tracking-widest ml-2 inline-flex items-center">පත්කළ මගියා (Nominee): {trip.nominatedName}</span>}
              </span>
            </div>
            
@@ -515,6 +515,18 @@ const isPinLikeName = (name: string) => {
 export default function DriverDashboard() {
   const { profile } = useAuth();
   const [activeTrips, setActiveTrips] = useState<any[]>([]);
+  // Collapse joint-trip legs into a single card: one representative per
+  // jointGroupId, standalone trips kept as-is. Closing it closes every leg.
+  const displayActiveTrips = useMemo(() => {
+    const seen = new Set<string>();
+    return activeTrips.filter(t => {
+      if (t.isJointTrip && t.jointGroupId) {
+        if (seen.has(t.jointGroupId)) return false;
+        seen.add(t.jointGroupId);
+      }
+      return true;
+    });
+  }, [activeTrips]);
   const [completedTrips, setCompletedTrips] = useState<any[]>([]);
   const [lastOdoValues, setLastOdoValues] = useState<Record<string, number>>({});
   const [loadingStartTrip, setLoadingStartTrip] = useState<Record<string, boolean>>({});
@@ -628,22 +640,39 @@ export default function DriverDashboard() {
     return unsubSettings;
   }, []);
 
+  // For a joint trip, return the ids of every active leg sharing the same
+  // jointGroupId (so they start/close together); otherwise just this trip's id.
+  const getTripIdsToUpdate = (tripId: string): string[] => {
+    const trip = activeTrips.find(t => t.id === tripId);
+    if (trip?.isJointTrip && trip.jointGroupId) {
+      const siblings = activeTrips
+        .filter(t => t.jointGroupId === trip.jointGroupId)
+        .map(t => t.id);
+      return siblings.length > 0 ? siblings : [tripId];
+    }
+    return [tripId];
+  };
+
   const handleStartTripWithOdo = async (tripId: string, odoVal: string) => {
     if (!odoVal || isNaN(Number(odoVal))) {
       toast.error("කරුණාකර වලංගු ආරම්භක ඕඩොමීටර කියවීමක් (KM) ඇතුළත් කරන්න.");
       return;
     }
     const odometer = Number(odoVal);
+    const ids = getTripIdsToUpdate(tripId);
     try {
-      await updateDoc(doc(db, 'trips', tripId), {
+      await Promise.all(ids.map(id => updateDoc(doc(db, 'trips', id), {
         status: 'in_progress',
         startOdometer: odometer,
         currentOdometer: odometer,
         expectedEndOdometer: odometer + 15,
         pickupTime: Date.now(),
         updatedAt: serverTimestamp()
-      });
-      toast.success("ගමන සාර්ථකව ආරම්භ කරන ලදී! ඕඩොමීටරය " + odometer + " KM ලෙස සටහන් විය.");
+      })));
+      toast.success(
+        (ids.length > 1 ? `හවුල් ගමන් ${ids.length}ක් ` : "ගමන ") +
+        "සාර්ථකව ආරම්භ කරන ලදී! ඕඩොමීටරය " + odometer + " KM ලෙස සටහන් විය."
+      );
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -659,14 +688,18 @@ export default function DriverDashboard() {
       toast.error("ඔබ ඇතුලත් කල ඔඩෝ මීටර් අගය වැරදියි. කරුණාකර පරීක්ෂා කර නැවත ඇතුලත් කරන්න. (Odometer reading you entered is wrong, check and enter)");
       return;
     }
+    const ids = getTripIdsToUpdate(tripId);
     try {
-      await updateDoc(doc(db, 'trips', tripId), {
+      await Promise.all(ids.map(id => updateDoc(doc(db, 'trips', id), {
         status: 'completed',
         endOdometer: odometer,
         dropoffTime: Date.now(),
         updatedAt: serverTimestamp()
-      });
-      toast.success("ගමන සාර්ථකව අවසන් කර වාර්තා කරන ලදී! අවසාන ඕඩොමීටරය: " + odometer + " KM.");
+      })));
+      toast.success(
+        (ids.length > 1 ? `හවුල් ගමන් ${ids.length}ක් ` : "ගමන ") +
+        "සාර්ථකව අවසන් කර වාර්තා කරන ලදී! අවසාන ඕඩොමීටරය: " + odometer + " KM."
+      );
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -895,7 +928,7 @@ export default function DriverDashboard() {
                 <div className="space-y-4">
                   {(() => {
                     const groups: { [key: string]: typeof activeTrips } = {};
-                    activeTrips.forEach(trip => {
+                    displayActiveTrips.forEach(trip => {
                       const date = trip.requestedDate || 'Unspecified Date';
                       if (!groups[date]) groups[date] = [];
                       groups[date].push(trip);
@@ -989,7 +1022,7 @@ export default function DriverDashboard() {
                   </div>
                   <div className="text-left">
                     <h4 className="text-sm font-bold text-slate-100">ක්ෂණික ගමන් පාලකය (Quick Controls)</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeTrips.length} සක්‍රීය වෙන්කිරීම් (Active)</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{displayActiveTrips.length} සක්‍රීය වෙන්කිරීම් (Active)</p>
                   </div>
                 </div>
                 <button
@@ -1002,7 +1035,7 @@ export default function DriverDashboard() {
               </div>
 
               <div className="space-y-4 divide-y divide-slate-850">
-                {activeTrips.map((trip, idx) => {
+                {displayActiveTrips.map((trip, idx) => {
                   const dest = trip.tripType === 'return' ? trip.returnLocations : trip.dropoffAddress;
                   
                   // Local validations specifically for the quick action inputs
@@ -1029,7 +1062,7 @@ export default function DriverDashboard() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                            <Car className="w-3" /> මගියා: {trip.passengerName || 'N/A'}
+                            <Car className="w-3" /> මගියා: {trip.isJointTrip && Array.isArray(trip.jointPassengers) && trip.jointPassengers.length > 0 ? trip.jointPassengers.map((p: any) => p.name || 'Unknown').join(' + ') : (trip.passengerName || 'N/A')}
                           </p>
                           <h5 className="font-bold text-sm text-slate-200 truncate mt-0.5">
                             ගමනාන්තය: {dest || 'N/A'}
@@ -1199,7 +1232,7 @@ export default function DriverDashboard() {
               <div className="relative">
                 <Zap className="w-6 h-6 fill-current text-white animate-pulse" />
                 <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-bold text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center animate-bounce border border-slate-950">
-                  {activeTrips.length}
+                  {displayActiveTrips.length}
                 </span>
               </div>
             )}
