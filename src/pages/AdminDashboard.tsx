@@ -1839,6 +1839,10 @@ export default function AdminDashboard() {
       const coupledTripDocs = pendingTrips.filter(t => coupledTripIds.includes(t.id));
       const jointPassengers = coupledTripDocs.map(t => ({ name: t.passengerName || 'Unknown', department: t.passengerDepartment || '' }));
 
+      // Shared id that links every leg of this joint trip, so the driver can
+      // start/close them together with a single odometer entry.
+      const jointGroupId = `joint_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
       const promises = coupledTripIds.map(id => updateDoc(doc(db, 'trips', id), {
         status: 'allocated',
         driverId: selectedDriver,
@@ -1848,6 +1852,7 @@ export default function AdminDashboard() {
         vehicleId: selectedVehicle,
         vehicleName: vehicle ? `${vehicle.registrationNumber} (${vehicle.type})` : 'Unknown Vehicle',
         isJointTrip: true,
+        jointGroupId,
         jointPassengers,
         allocatedAt: serverTimestamp(),
         updatedAt: serverTimestamp()

@@ -129,6 +129,7 @@ service cloud.firestore {
           && (!('dropoffCoords' in data) || (data.dropoffCoords is map))
           && (!('forceCompleted' in data) || (data.forceCompleted is bool))
           && (!('isJointTrip' in data) || (data.isJointTrip is bool))
+          && (!('jointGroupId' in data) || (data.jointGroupId is string && data.jointGroupId.size() <= 128))
           && (!('expectedDistance' in data) || (data.expectedDistance is number))
           && (!('requestedDate' in data) || (data.requestedDate is string && data.requestedDate.size() <= 50))
           && (!('estimatedDestinationTime' in data) || data.estimatedDestinationTime == null || (data.estimatedDestinationTime is string && data.estimatedDestinationTime.size() <= 50))
@@ -171,7 +172,7 @@ service cloud.firestore {
         && incoming().updatedAt == request.time;
         
        allow update: if isSignedIn() && isValidId(tripId) && isValidTrip(incoming()) && incoming().updatedAt == request.time && (
-        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'adminStatusUpdate', 'smsUid', 'smsSentAt', 'smsError', 'passengerPhone'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'driverHasSmartphone', 'vehicleId', 'vehicleName', 'allocatedAt', 'updatedAt', 'requestedStartTime', 'pickupTime', 'remarks', 'dropoffTime', 'forceCompleted', 'isJointTrip', 'jointGroupId', 'jointPassengers', 'startOdometer', 'endOdometer', 'currentOdometer', 'expectedEndOdometer', 'driverStartedTime', 'driverEndedTime', 'nominatedUserId', 'nominatedName', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'adminStatusUpdate', 'smsUid', 'smsSentAt', 'smsError', 'passengerPhone'])) ||
         (isDriver() && existing().driverId == request.auth.uid && !(existing().status in ['completed', 'cancelled']) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime', 'driverEndedTime', 'startOdometer', 'endOdometer', 'currentOdometer', 'currentLocation', 'pickupCoords', 'dropoffCoords', 'expectedEndOdometer', 'pickupTime', 'dropoffTime'])) ||
         (isParticipant(existing()) && existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'cancelled') ||
         (isParticipant(existing()) && existing().status == 'allocated' && existing().driverHasSmartphone == false && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'driverStartedTime']) && incoming().status == 'driver_started') ||
