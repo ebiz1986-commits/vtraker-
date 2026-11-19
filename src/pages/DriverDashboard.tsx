@@ -690,12 +690,18 @@ export default function DriverDashboard() {
     }
     const ids = getTripIdsToUpdate(tripId);
     try {
-      await Promise.all(ids.map(id => updateDoc(doc(db, 'trips', id), {
-        status: 'completed',
-        endOdometer: odometer,
-        dropoffTime: Date.now(),
-        updatedAt: serverTimestamp()
-      })));
+      // One physical journey: only the primary leg carries the real end
+      // odometer (and therefore the distance). Other legs close with
+      // end == start (0 KM) so the trip is counted once across all reports.
+      await Promise.all(ids.map(id => {
+        const legStart = Number(activeTrips.find(t => t.id === id)?.startOdometer) || startOdo;
+        return updateDoc(doc(db, 'trips', id), {
+          status: 'completed',
+          endOdometer: id === tripId ? odometer : legStart,
+          dropoffTime: Date.now(),
+          updatedAt: serverTimestamp()
+        });
+      }));
       toast.success(
         (ids.length > 1 ? `හවුල් ගමන් ${ids.length}ක් ` : "ගමන ") +
         "සාර්ථකව අවසන් කර වාර්තා කරන ලදී! අවසාන ඕඩොමීටරය: " + odometer + " KM."
