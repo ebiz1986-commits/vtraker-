@@ -29,8 +29,9 @@ const TripItem = ({
   isNormalFlow, 
   driverOdoValues, 
   setDriverOdoValues, 
-  handleStartTripWithOdo, 
+  handleStartTripWithOdo,
   handleEndTripWithOdo,
+  handleCancelTrip,
   lastOdo,
   loadingStart,
   handleStartTripAuto
@@ -295,13 +296,23 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'in_progress' && (
-                  <div className="w-full text-center">
-                    <Button 
+                  <div className="w-full text-center space-y-2.5">
+                    <Button
                       className="w-full font-bold py-4 text-base bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-950/50 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                       onClick={() => setShowEndModal(true)}
                     >
                       <Check className="w-5 h-5 animate-pulse" /> ගමන අවසන් කරන්න (End Trip)
                     </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full font-semibold py-3 text-sm border-red-500/40 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                      onClick={() => handleCancelTrip(trip.id)}
+                    >
+                      <X className="w-4 h-4" /> ගමන අවලංගු කරන්න (Cancel Trip)
+                    </Button>
+                    <p className="text-[10px] text-slate-500 leading-snug">
+                      මීටර කියවීමක් ඇතුළත් නොකර ගමන අවලංගු කරයි. (Cancels the trip without entering an odometer reading.)
+                    </p>
                   </div>
                 )}
                 {trip.status === 'driver_ended' && (
@@ -373,12 +384,21 @@ const TripItem = ({
                   </div>
                 )}
                 {trip.status === 'in_progress' && (
-                  <Button 
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
-                    onClick={() => handleUpdateStatus(trip.id, trip.status)}
-                  >
-                    ගමන අවසන් කරන්න (End Trip)
-                  </Button>
+                  <div className="w-full space-y-2.5">
+                    <Button
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 h-auto whitespace-normal text-lg shadow-lg shadow-emerald-900/20"
+                      onClick={() => handleUpdateStatus(trip.id, trip.status)}
+                    >
+                      ගමන අවසන් කරන්න (End Trip)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full font-semibold py-3 text-sm border-red-500/40 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                      onClick={() => handleCancelTrip(trip.id)}
+                    >
+                      <X className="w-4 h-4" /> ගමන අවලංගු කරන්න (Cancel Trip)
+                    </Button>
+                  </div>
                 )}
                 {trip.status === 'driver_ended' && (
                   <div className="p-4 w-full bg-blue-900/20 text-sky-500 border border-blue-900/50 rounded flex items-center justify-center gap-2 text-sm font-medium w-full">
@@ -773,7 +793,20 @@ export default function DriverDashboard() {
       }
       
       await updateDoc(doc(db, 'trips', tripId), updates);
-      
+
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
+    }
+  };
+
+  const handleCancelTrip = async (tripId: string) => {
+    if (!window.confirm("ඔබට මෙම ගමන අවලංගු කිරීමට අවශ්‍ය බව විශ්වාසද? අවසාන මීටර කියවීමක් සටහන් නොවේ.\n\nAre you sure you want to cancel this trip? No ending odometer reading will be recorded.")) return;
+    try {
+      await updateDoc(doc(db, 'trips', tripId), {
+        status: 'cancelled',
+        updatedAt: serverTimestamp()
+      });
+      toast.success("ගමන අවලංගු කරන ලදී. (Trip cancelled.)");
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `trips/${tripId}`);
     }
@@ -953,6 +986,7 @@ export default function DriverDashboard() {
                                   setDriverOdoValues={setDriverOdoValues}
                                   handleStartTripWithOdo={handleStartTripWithOdo}
                                   handleEndTripWithOdo={handleEndTripWithOdo}
+                                  handleCancelTrip={handleCancelTrip}
                                   lastOdo={lastOdoValues[trip.id]}
                                   loadingStart={loadingStartTrip[trip.id]}
                                   handleStartTripAuto={handleStartTripAuto}
@@ -1137,6 +1171,17 @@ export default function DriverDashboard() {
                                 </Button>
                               </div>
                             </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-red-500/40 text-red-300 hover:bg-red-500/10 hover:text-red-200 font-semibold py-2 rounded-lg text-xs flex items-center justify-center gap-1.5"
+                              onClick={() => {
+                                handleCancelTrip(trip.id);
+                                setIsQuickMenuOpen(false);
+                              }}
+                            >
+                              <X className="w-3.5 h-3.5" /> ගමන අවලංගු කරන්න (Cancel)
+                            </Button>
                           </div>
                         )}
 
