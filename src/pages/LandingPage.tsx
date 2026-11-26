@@ -118,7 +118,15 @@ export default function LandingPage() {
 
     } catch (error: any) {
       console.error("PIN Login failed:", error);
-      setLoginError(error.message || "Invalid PIN code. Please contact the admin department to get your pin code.");
+      const rawMessage = String(error?.message || '');
+      const isQuotaOrLimitIssue =
+        error?.code === 'resource-exhausted' ||
+        /quota|resource-exhausted|exceeded|free tier|quota limit|daily read units/i.test(rawMessage);
+      if (isQuotaOrLimitIssue) {
+        setLoginError("LIMIT ISSUE. CONTACT ADMIN");
+      } else {
+        setLoginError(rawMessage || "Invalid PIN code. Please contact the admin department to get your pin code.");
+      }
       setShake(true);
       setPin(''); // Reset on failure
       setTimeout(() => setShake(false), 500);
